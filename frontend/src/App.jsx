@@ -10,11 +10,13 @@ import LoginIcon from '@mui/icons-material/Login'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import LogoutIcon from '@mui/icons-material/Logout'
 import EmailIcon from '@mui/icons-material/Email'
+import CampaignIcon from '@mui/icons-material/Campaign'
 import MapView from './components/MapView'
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
 import Register from './components/Register'
 import Newsletter from './components/Newsletter'
+import Campaigns from './components/Campaigns'
 import { ROMANIA_REGIONS } from './constants/regions'
 import { fetchRivers } from './utils'
 
@@ -144,6 +146,23 @@ useEffect(() => {
     )
   }
 
+  if (page === 'campaigns') {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Campaigns
+        onBack={() => setPage('map')}
+        onGoToLogin={() => setPage('login')}
+        onGoToRegister={() => setPage('register')}
+        onGoToNewsletter={() => setPage('newsletter')}
+        onGoToAddCampaign={() => setPage('add-campaign')}
+        user={user}
+        onLogout={handleLogout}
+      />
+    </ThemeProvider>
+  )
+}
+
   const regionLabel = user?.region
     ? ROMANIA_REGIONS.find(r => r.value === user.region)?.label
     : null
@@ -191,7 +210,15 @@ useEffect(() => {
               }}
             >
               Newsletter
+
             </Button>
+
+                            <Button startIcon={<CampaignIcon />}
+                        size="small"
+                        onClick={() => setPage('campaigns')}
+                        sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
+                  Campaigns
+                </Button>
 
             {/* Login / Avatar */}
             {user ? (
