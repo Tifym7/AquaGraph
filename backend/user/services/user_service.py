@@ -4,6 +4,7 @@ import smtplib
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from multiprocessing.context import AuthenticationError
+from werkzeug.security import check_password_hash
 
 from werkzeug.routing import ValidationError
 
@@ -99,10 +100,10 @@ class UserService:
         raises AuthenticationError if the username or password is incorrect.
         """
         user = self.__userRepo.get_user_by_username(username)
-        if user is not None and user.get_password() == password:
+        if user is not None and check_password_hash(user.get_password(), password):
             return user
         else:
-            raise AuthenticationError("Email or password is incorrect")
+            raise AuthenticationError("Username or password is incorrect")
 
     def authenticate_email(self, email, password):
         """
@@ -110,7 +111,7 @@ class UserService:
         raises AuthenticationError if the email or password is incorrect.
         """
         user = self.__userRepo.get_user_by_email(email)
-        if user is not None and user.get_password() == password:
+        if user is not None and check_password_hash(user.get_password(), password):
             return user
         else:
             raise AuthenticationError("Email or password is incorrect")

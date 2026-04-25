@@ -1,8 +1,8 @@
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from backend.user.model.campaign import Campaign
-from backend.user.persistence.campaign_repository import CampaignRepository
+from user.model.campaign import Campaign
+from user.persistence.campaign_repository import CampaignRepository
 
 
 class CampaignDBRepository(CampaignRepository):

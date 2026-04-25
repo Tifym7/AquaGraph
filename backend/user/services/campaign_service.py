@@ -1,7 +1,7 @@
 import datetime as dt
 from werkzeug.routing import ValidationError
 
-from backend.user.model.validator import CampaignValidator
+from user.model.validator import CampaignValidator
 
 class CampaignService:
 

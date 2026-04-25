@@ -13,9 +13,15 @@ from flask_cors import CORS
 import urllib.request
 import xml.etree.ElementTree as ET
 from auth import auth_bp
+from user.persistence.campaign_db_repository import CampaignDBRepository
 
 app = Flask(__name__)
 app.register_blueprint(auth_bp)
+_campaign_repo = CampaignDBRepository(
+    url=os.getenv('DB_URL', 'postgresql://localhost:5432/aquagraph'),
+    username=os.getenv('DB_USER', ''),
+    password=os.getenv('DB_PASSWORD', ''),
+)
 CORS(app)
 
 # ---------------------------------------------------------------------------
@@ -333,6 +339,69 @@ def get_news():
     except Exception as e:
         print(f"News fetch failed: {e}")
         return jsonify({'articles': FALLBACK})
+
+@app.route('/api/campaigns', methods=['GET'])
+def get_campaigns():
+    try:
+        campaigns = _campaign_repo.get_all_campaigns()
+        return jsonify({
+            'campaigns': [
+                {
+                    'id': c.get_campaign_id(),
+                    'campaign_name': c.get_campaign_name(),
+                    'organization_name': c.get_organization_name(),
+                    'river_name': c.get_river_name(),
+                    'coordinates': c.get_coordinates(),
+                    'start_date': str(c.get_start_date()),
+                    'end_date': str(c.get_end_date()),
+                    'likes': c.get_likes(),
+                    'participants': c.get_participants(),
+                }
+                for c in campaigns
+            ]
+        })
+    except Exception as e:
+        print(f"Error fetching campaigns: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<int:campaign_id>/participate', methods=['POST'])
+def participate_campaign(campaign_id):
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        if not email:
+            return jsonify({'error': 'Email lipsă'}), 400
+        campaign = _campaign_repo.get_campaign_by_id(campaign_id)
+        if not campaign:
+            return jsonify({'error': 'Campanie negăsită'}), 404
+        _campaign_repo.add_participant(campaign_id, email)
+        return jsonify({'message': 'Înscris cu succes'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<int:campaign_id>/like', methods=['POST'])
+def like_campaign(campaign_id):
+    try:
+        campaign = _campaign_repo.get_campaign_by_id(campaign_id)
+        if not campaign:
+            return jsonify({'error': 'Campanie negăsită'}), 404
+        campaign.set_likes(campaign.get_likes() + 1)
+        _campaign_repo.update_campaign(campaign)
+        return jsonify({'likes': campaign.get_likes()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<int:campaign_id>/unlike', methods=['POST'])
+def unlike_campaign(campaign_id):
+    try:
+        campaign = _campaign_repo.get_campaign_by_id(campaign_id)
+        if not campaign:
+            return jsonify({'error': 'Campanie negăsită'}), 404
+        campaign.set_likes(max(0, campaign.get_likes() - 1))
+        _campaign_repo.update_campaign(campaign)
+        return jsonify({'likes': campaign.get_likes()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     print(f"Loaded {len(RIVERS)} rivers with graph data")

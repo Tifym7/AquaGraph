@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
-
 import psycopg2
 from psycopg2.extras import RealDictCursor
-
+from werkzeug.security import generate_password_hash, check_password_hash
 from user.model.user import User
 from user.persistence.user_repository import UserRepository
 
@@ -25,8 +24,7 @@ class UserDBRepo(UserRepository):
     def __ensure_schema(self):
         with self.__get_connection() as connection:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     CREATE TABLE IF NOT EXISTS users (
                         id BIGSERIAL PRIMARY KEY,
                         username VARCHAR(255) UNIQUE NOT NULL,
@@ -35,10 +33,8 @@ class UserDBRepo(UserRepository):
                         region VARCHAR(255) NOT NULL,
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     )
-                    """
-                )
-                cursor.execute(
-                    """
+                """)
+                cursor.execute("""
                     CREATE TABLE IF NOT EXISTS pending_user_verifications (
                         email VARCHAR(255) PRIMARY KEY,
                         username VARCHAR(255) UNIQUE NOT NULL,
@@ -48,32 +44,23 @@ class UserDBRepo(UserRepository):
                         expires_at TIMESTAMPTZ NOT NULL,
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     )
-                    """
-                )
-                cursor.execute(
-                    """
-                    DELETE FROM pending_user_verifications
-                    WHERE expires_at < NOW()
-                    """
-                )
+                """)
+                cursor.execute("""
+                    DELETE FROM pending_user_verifications WHERE expires_at < NOW()
+                """)
 
     @staticmethod
     def __to_user(row):
         if row is None:
             return None
-
-        return User(
-            row["username"],
-            row["password"],
-            row["email"],
-            row["region"],
-        )
+        return User(row["username"], row["password"], row["email"], row["region"])
 
     def save(self, user):
+        # ← hash parola înainte de salvare
+        hashed = generate_password_hash(user.get_password())
         with self.__get_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     INSERT INTO users (username, password, email, region)
                     VALUES (%s, %s, %s, %s)
                     ON CONFLICT (username) DO UPDATE
@@ -81,61 +68,34 @@ class UserDBRepo(UserRepository):
                         email = EXCLUDED.email,
                         region = EXCLUDED.region
                     RETURNING username, password, email, region
-                    """,
-                    (
-                        user.get_username(),
-                        user.get_password(),
-                        user.get_email(),
-                        user.get_region(),
-                    ),
-                )
-                return self.__to_user(cursor.fetchone())
-
-    def save_user(self, user):
-        return self.save(user)
-
-    def delete(self, user):
-        with self.__get_connection() as connection:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    DELETE FROM users
-                    WHERE email = %s
-                    """,
-                    (user.get_email(),),
-                )
-
-    def get_user_by_email(self, mail):
-        with self.__get_connection() as connection:
-            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute(
-                    """
-                    SELECT username, password, email, region
-                    FROM users
-                    WHERE email = %s
-                    """,
-                    (mail,),
-                )
+                """, (user.get_username(), hashed, user.get_email(), user.get_region()))
                 return self.__to_user(cursor.fetchone())
 
     def get_user_by_username(self, username):
         with self.__get_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute(
-                    """
-                    SELECT username, password, email, region
-                    FROM users
-                    WHERE username = %s
-                    """,
-                    (username,),
-                )
+                cursor.execute("""
+                    SELECT username, password, email, region FROM users WHERE username = %s
+                """, (username,))
                 return self.__to_user(cursor.fetchone())
+
+    def get_user_by_email(self, mail):
+        with self.__get_connection() as connection:
+            with connection.cursor(cursor_factory=RealDictCursor) as cursor:
+                cursor.execute("""
+                    SELECT username, password, email, region FROM users WHERE email = %s
+                """, (mail,))
+                return self.__to_user(cursor.fetchone())
+
+    def delete(self, user):
+        with self.__get_connection() as connection:
+            with connection.cursor() as cursor:
+                cursor.execute("DELETE FROM users WHERE email = %s", (user.get_email(),))
 
     def save_pending_verification(self, user, verification_code, expires_at):
         with self.__get_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     INSERT INTO pending_user_verifications
                         (email, username, password, region, verification_code, expires_at)
                     VALUES (%s, %s, %s, %s, %s, %s)
@@ -146,29 +106,17 @@ class UserDBRepo(UserRepository):
                         verification_code = EXCLUDED.verification_code,
                         expires_at = EXCLUDED.expires_at
                     RETURNING email, username, password, region, verification_code, expires_at
-                    """,
-                    (
-                        user.get_email(),
-                        user.get_username(),
-                        user.get_password(),
-                        user.get_region(),
-                        verification_code,
-                        expires_at,
-                    ),
-                )
+                """, (user.get_email(), user.get_username(), user.get_password(),
+                      user.get_region(), verification_code, expires_at))
                 return cursor.fetchone()
 
     def get_pending_verification_by_email(self, email):
         with self.__get_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
-                cursor.execute(
-                    """
+                cursor.execute("""
                     SELECT email, username, password, region, verification_code, expires_at
-                    FROM pending_user_verifications
-                    WHERE email = %s
-                    """,
-                    (email,),
-                )
+                    FROM pending_user_verifications WHERE email = %s
+                """, (email,))
                 row = cursor.fetchone()
                 if row and row["expires_at"] <= datetime.now(timezone.utc):
                     self.delete_pending_verification(email)
@@ -179,9 +127,4 @@ class UserDBRepo(UserRepository):
         with self.__get_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    """
-                    DELETE FROM pending_user_verifications
-                    WHERE email = %s
-                    """,
-                    (email,),
-                )
+                    "DELETE FROM pending_user_verifications WHERE email = %s", (email,))
