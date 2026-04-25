@@ -63,15 +63,21 @@ export default function App() {
   const timeoutRef = useRef(null)
 
   const handleMapChange = useCallback((bounds, zoom) => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    timeoutRef.current = setTimeout(() => {
-      fetchRivers(zoom, bounds).then(setRivers).catch(console.error)
-    }, 250)
+  if (timeoutRef.current) clearTimeout(timeoutRef.current)
+  timeoutRef.current = setTimeout(() => {
+    fetchRivers(zoom, null).then(setRivers).catch(console.error) // ← null, fără bbox
+  }, 250)
   }, [])
 
   useEffect(() => {
     fetchRivers(7, null).then(setRivers).catch(console.error)
   }, [])
+
+useEffect(() => {
+  if (initialRegion) {
+    fetchRivers(initialRegion.zoom || 9, null).then(setRivers).catch(console.error)
+  }
+}, [initialRegion])
 
   const handleLogin = (userData) => {
     setUser(userData)
