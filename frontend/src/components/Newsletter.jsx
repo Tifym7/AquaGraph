@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import {
   Box, AppBar, Toolbar, Typography, Chip, Button,
-  CircularProgress, Alert
+  CircularProgress, Alert, Avatar
 } from '@mui/material'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
@@ -24,7 +24,7 @@ const C = {
   lightest: '#e0aaff',
 }
 
-export default function Newsletter({ onBack }) {
+export default function Newsletter({ onBack, onGoToLogin, onGoToRegister, user, onLogout }) {
   const [articles, setArticles] = useState([])
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
@@ -95,7 +95,7 @@ async function fetchWaterPollutionNews() {
               '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5,
             }}
           >
-            Hartă
+            Map
           </Button>
 
           <Button
@@ -109,30 +109,47 @@ async function fetchWaterPollutionNews() {
           >
             Newsletter
           </Button>
-
-          <Button
-            startIcon={<PersonAddIcon />}
-            size="small"
-            sx={{
-              color: '#fff', border: '1px solid rgba(255,255,255,0.25)',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5,
-            }}
-          >
-            Register
-          </Button>
-
-          <Button
-            startIcon={<LoginIcon />}
-            variant="contained"
-            size="small"
-            sx={{
-              bgcolor: 'rgba(255,255,255,0.2)', color: '#fff',
-              border: '1px solid rgba(255,255,255,0.35)', boxShadow: 'none',
-              '&:hover': { bgcolor: 'rgba(255,255,255,0.3)', boxShadow: 'none' }, px: 1.5,
-            }}
-          >
-            Login
-          </Button>
+          {user ? (
+              <Avatar
+                  onClick={onLogout}
+                  title="Deconectare"
+                  sx={{
+                    width: 34, height: 34,
+                    bgcolor: 'rgba(255,255,255,0.25)',
+                    color: '#fff', fontSize: 14, fontWeight: 700,
+                    cursor: 'pointer',
+                    border: '2px solid rgba(255,255,255,0.4)',
+                    '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
+                  }}
+              >
+                {user.username?.[0]?.toUpperCase() || 'U'}
+              </Avatar>
+          ) : (
+              <>
+                <Button
+                    startIcon={<LoginIcon />}
+                    size="small"
+                    onClick={onGoToLogin}
+                    sx={{
+                      color: '#fff', border: '1px solid rgba(255,255,255,0.25)',
+                      '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5,
+                    }}
+                >
+                  Login
+                </Button>
+    <Button
+      startIcon={<PersonAddIcon />}
+      size="small"
+      onClick={onGoToRegister}
+      sx={{
+        color: '#fff', border: '1px solid rgba(255,255,255,0.25)',
+        '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5,
+      }}
+    >
+      Register
+    </Button>
+  </>
+)}
         </Toolbar>
       </AppBar>
 

@@ -133,7 +133,13 @@ useEffect(() => {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Newsletter onBack={() => setPage('map')} />
+        <Newsletter
+            onBack={() => setPage('map')}
+            onGoToLogin={() => setPage('login')}
+            onGoToRegister={() => setPage('register')}
+            user={user}
+            onLogout={handleLogout}
+        />
       </ThemeProvider>
     )
   }
