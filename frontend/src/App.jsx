@@ -214,7 +214,7 @@ useEffect(() => {
 
             </Button>
 
-                            <Button startIcon={<CampaignIcon />}
+            <Button startIcon={<CampaignIcon />}
                         size="small"
                         onClick={() => setPage('campaigns')}
                         sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
