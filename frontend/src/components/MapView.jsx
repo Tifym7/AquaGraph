@@ -3,6 +3,23 @@ import { MapContainer, TileLayer, Polyline, Popup, useMap, useMapEvents } from '
 import 'leaflet/dist/leaflet.css'
 import { getPollutionColor } from '../utils'
 
+
+function InitialRegionSetter({ initialRegion }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (initialRegion) {
+      map.setView([initialRegion.lat, initialRegion.lng], initialRegion.zoom, {
+        animate: true,
+        duration: 1.5
+      })
+    }
+  }, [map, initialRegion])
+
+  return null
+}
+
+
 function FitBounds({ bounds }) {
   const map = useMap()
   useEffect(() => {
@@ -40,7 +57,7 @@ function MapEventHandler({ onMapChange }) {
       onMapChange(map.getBounds(), map.getZoom())
     },
   })
-  
+
   // Trigger initial boundary report on mount
   useEffect(() => {
     onMapChange(map.getBounds(), map.getZoom())
@@ -129,7 +146,7 @@ const ROMANIA_BOUNDS = [
   [48.3, 30.0],
 ]
 
-export default function MapView({ rivers, selectedRiver, onRiverSelect, onMapChange }) {
+export default function MapView({ rivers, selectedRiver, onRiverSelect, onMapChange, initialRegion }) {
   return (
     <div className="map-container" style={{ flex: 1, position: 'relative', minWidth: 0 }}>
       <MapContainer
@@ -147,9 +164,12 @@ export default function MapView({ rivers, selectedRiver, onRiverSelect, onMapCha
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+
+        <InitialRegionSetter initialRegion={initialRegion} />
+
         <FitBounds bounds={ROMANIA_BOUNDS} />
         <RiverFocus selectedRiver={selectedRiver} />
-        
+
         {/* Listen to map events */}
         <MapEventHandler onMapChange={onMapChange} />
 

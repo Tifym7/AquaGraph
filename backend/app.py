@@ -12,8 +12,10 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import urllib.request
 import xml.etree.ElementTree as ET
+from auth import auth_bp
 
 app = Flask(__name__)
+app.register_blueprint(auth_bp)
 CORS(app)
 
 # ---------------------------------------------------------------------------
