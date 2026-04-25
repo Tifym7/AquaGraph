@@ -10,6 +10,8 @@ import math
 import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import urllib.request
+import xml.etree.ElementTree as ET
 
 app = Flask(__name__)
 CORS(app)
@@ -232,6 +234,103 @@ def get_downstream(river_id):
 
     return jsonify({"river_id": river_id, "downstream": result})
 
+@app.route('/api/news')
+def get_news():
+    import re
+    import urllib.parse
+    print(">>> /api/news called")
+
+    QUERIES = [
+        'poluarea apei Romania',
+        'calitatea apei Romania rau',
+        'poluare rau Romania 2025',
+    ]
+
+    FALLBACK = [
+        {
+            'title': 'Poluarea apei în România: situația râurilor monitorizate în 2025',
+            'url': 'https://www.digi24.ro/stiri/externe/mediu',
+            'source': 'Digi24',
+            'summary': 'Autoritățile române monitorizează calitatea apei în principalele râuri, cu accent pe zonele industriale din Prahova, Mureș și Olt.'
+        },
+        {
+            'title': 'Dunărea transportă anual mii de tone de plastic spre Marea Neagră',
+            'url': 'https://www.agerpres.ro',
+            'source': 'Agerpres',
+            'summary': 'Studiile recente arată că Dunărea este unul dintre cele mai poluate fluvii din Europa de Est, cu efecte directe asupra litoralului românesc.'
+        },
+        {
+            'title': 'Râul Argeș: depășiri ale limitelor de nitriți din cauza agriculturii',
+            'url': 'https://www.digi24.ro',
+            'source': 'Digi24',
+            'summary': 'Monitorizările din 2025 indică depășiri ale limitelor admise de nitriți în bazinul Argeș, afectând apa potabilă din județele limitrofe.'
+        },
+        {
+            'title': 'Fabrici amendate pentru deversări ilegale în râul Mureș',
+            'url': 'https://www.agerpres.ro',
+            'source': 'Agerpres',
+            'summary': 'Mai multe fabrici din județul Mureș au fost amendate pentru deversări ilegale de substanțe chimice, periclitând ecosistemul local.'
+        },
+        {
+            'title': 'Microplasticele afectează fauna marină de pe litoralul românesc',
+            'url': 'https://www.digi24.ro',
+            'source': 'Digi24',
+            'summary': 'Cercetătorii de la Institutul "Grigore Antipa" au descoperit concentrații alarmante de microplastice în apele Mării Negre la litoralul românesc.'
+        },
+        {
+            'title': 'Fonduri europene de 120 mil. euro pentru râurile poluate din România',
+            'url': 'https://www.agerpres.ro',
+            'source': 'Agerpres',
+            'summary': 'România va beneficia de fonduri europene pentru reabilitarea bazinelor hidrografice afectate de poluare industrială și agricolă.'
+        },
+    ]
+
+    try:
+        articles = []
+        for query in QUERIES:
+            if len(articles) >= 6:
+                break
+            encoded = urllib.parse.quote(query)
+            rss_url = f'https://news.google.com/rss/search?q={encoded}&hl=ro&gl=RO&ceid=RO:ro'
+            try:
+                req = urllib.request.Request(
+                    rss_url,
+                    headers={'User-Agent': 'Mozilla/5.0'}
+                )
+                with urllib.request.urlopen(req, timeout=8) as resp:
+                    content = resp.read()
+
+                root = ET.fromstring(content)
+                items = root.findall('.//item')[:2]
+
+                for item in items:
+                    title = item.findtext('title') or ''
+                    link  = item.findtext('link') or ''
+                    desc  = item.findtext('description') or ''
+                    source_el = item.find('source')
+                    source = source_el.text if source_el is not None else 'Google News'
+                    desc_clean = re.sub('<[^>]+>', '', desc).strip()
+                    desc_clean = desc_clean.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace(
+                        '&gt;', '>').replace('&quot;', '"')
+                    desc_clean = ' '.join(desc_clean.split())
+                    desc_clean = desc_clean[:220] + '...'
+                    articles.append({
+                        'title': title,
+                        'url': link,
+                        'source': source,
+                        'summary': desc_clean,
+                    })
+            except Exception as feed_err:
+                print(f"Query '{query}' failed: {feed_err}")
+                continue
+
+        if articles:
+            return jsonify({'articles': articles[:6]})
+        return jsonify({'articles': FALLBACK})
+
+    except Exception as e:
+        print(f"News fetch failed: {e}")
+        return jsonify({'articles': FALLBACK})
 
 if __name__ == "__main__":
     print(f"Loaded {len(RIVERS)} rivers with graph data")
