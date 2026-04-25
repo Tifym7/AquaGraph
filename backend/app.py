@@ -8,10 +8,12 @@ import hashlib
 import json
 import math
 import os
+from auth import auth_bp
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 
 app = Flask(__name__)
+app.register_blueprint(auth_bp)
 CORS(app)
 
 # ---------------------------------------------------------------------------
