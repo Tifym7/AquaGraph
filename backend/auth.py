@@ -19,7 +19,7 @@ TOKEN_EXPIRY_HOURS = int(os.getenv('TOKEN_EXPIRY_HOURS', 24))
 
 # Conectare la PostgreSQL
 _repo = UserDBRepo(
-    url=os.getenv('DB_URL', 'postgresql://localhost:5432/aquagraph'),
+    url=os.getenv('DB_URL', 'postgresql://localhost:5432/aquaGraph'),
     username=os.getenv('DB_USER', ''),
     password=os.getenv('DB_PASSWORD', ''),
 )

@@ -7,21 +7,30 @@ with synthetic pollution values and a river connectivity graph.
 import hashlib
 import json
 import math
+import datetime
 import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import urllib.request
 import xml.etree.ElementTree as ET
+
+from user.services.campaign_service import CampaignService
+from user.model.campaign import Campaign
 from auth import auth_bp
 from user.persistence.campaign_db_repository import CampaignDBRepository
 
+
 app = Flask(__name__)
 app.register_blueprint(auth_bp)
+
 _campaign_repo = CampaignDBRepository(
     url=os.getenv('DB_URL', 'postgresql://localhost:5432/aquagraph'),
     username=os.getenv('DB_USER', ''),
     password=os.getenv('DB_PASSWORD', ''),
 )
+
+_campaign_service = CampaignService(_campaign_repo)
+
 CORS(app)
 
 # ---------------------------------------------------------------------------
@@ -124,6 +133,23 @@ for r in RAW_RIVERS:
     enriched.update(_mock_pollution(r))
     RIVERS.append(enriched)
     RIVERS_BY_ID[r["id"]] = enriched
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+def _campaign_to_dict(c):
+    return {
+        'id': c.get_campaign_id(),
+        'campaign_name': c.get_campaign_name(),
+        'organization_name': c.get_organization_name(),
+        'river_name': c.get_river_name(),
+        'coordinates': c.get_coordinates(),
+        'start_date': str(c.get_start_date()),
+        'end_date': str(c.get_end_date()),
+        'likes': c.get_likes(),
+        'participants': c.get_participants(),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -401,6 +427,47 @@ def unlike_campaign(campaign_id):
         _campaign_repo.update_campaign(campaign)
         return jsonify({'likes': campaign.get_likes()}), 200
     except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/campaigns', methods=['POST'])
+def create_campaign():
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({'error': 'JSON body lipsa'}), 400
+
+        required = ['campaignName', 'organizationName', 'riverName', 'startDate', 'endDate']
+        for field in required:
+            if not data.get(field):
+                return jsonify({'error': f'Câmpul {field} este obligatoriu'}), 400
+
+        if data['endDate'] < data['startDate']:
+            return jsonify({'error': 'endDate nu poate fi înainte de startDate'}), 400
+
+        coords = data.get('coordinates', {})
+        lat = coords.get('lat', '')
+        lng = coords.get('lng', '')
+        coordinates_str = f"{lat},{lng}" if lat and lng else "0,0"
+
+        campaign = Campaign(
+            campaign_id=None,
+            campaign_name=data['campaignName'],
+            organization_name=data['organizationName'],
+            river_name=data['riverName'],
+            coordinates=coordinates_str,
+            start_date=data['startDate'],
+            end_date=data['endDate'],
+            likes=0,
+            participants=[],
+        )
+
+        saved = _campaign_service.create_campaign(campaign)
+        return jsonify(_campaign_to_dict(saved)), 201
+
+
+    except Exception as e:
+        print(f"Error creating campaign: {e}")
         return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":

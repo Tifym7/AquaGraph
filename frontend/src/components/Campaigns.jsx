@@ -15,6 +15,7 @@ import WaterIcon from '@mui/icons-material/Water'
 import GroupsIcon from '@mui/icons-material/Groups'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import axios from 'axios'
+import CampaniiForm from './CampaignsForm.jsx'
 
 const C = {
   darkest:  '#10002b',
@@ -36,7 +37,10 @@ const FALLBACK_CAMPAIGNS = [
   { id: 4, campaign_name: 'Argeșul Curat', organization_name: 'Voluntari pentru Natură', river_name: 'Argeș', coordinates: '44.9,25.1', start_date: '2025-08-01', end_date: '2025-09-01', likes: 38, participants: [] },
 ]
 
-export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToAddCampaign, user, onLogout }) {
+export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToNewsletter, user, onLogout }) {
+  // 'list' | 'add'
+  const [view, setView] = useState('list')
+
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -44,6 +48,7 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
   const [participating, setParticipating] = useState({})
   const [likes, setLikes] = useState({})
   const [likedCampaigns, setLikedCampaigns] = useState({})
+  const [pendingCampaign, setPendingCampaign] = useState(null)
 
   useEffect(() => {
     fetchCampaigns()
@@ -72,7 +77,8 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
 
   async function handleParticipate(campaign) {
     if (!user) {
-      onGoToLogin && onGoToLogin()
+      setPendingCampaign(campaign)
+      onGoToLogin && onGoToLogin();
       return
     }
     setParticipating(p => ({ ...p, [campaign.id]: true }))
@@ -85,28 +91,77 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
       setSnackbar({ open: true, message: 'Te-ai înscris cu succes la campanie!' })
       fetchCampaigns()
     } catch (err) {
-      const msg = err.response?.data?.error || 'Eroare la înscriere. Încearcă din nou.'
-      setSnackbar({ open: true, message: msg })
+      setSnackbar({ open: true, message: err.response?.data?.error || 'Eroare la înscriere.' })
     } finally {
       setParticipating(p => ({ ...p, [campaign.id]: false }))
     }
   }
 
   async function handleLike(campaign) {
-  const alreadyLiked = likedCampaigns[campaign.id]
-  try {
-    const endpoint = alreadyLiked ? 'unlike' : 'like'
-    const res = await axios.post(`${API_BASE}/campaigns/${campaign.id}/${endpoint}`)
-    setLikes(l => ({ ...l, [campaign.id]: res.data.likes }))
-    setLikedCampaigns(l => ({ ...l, [campaign.id]: !alreadyLiked }))
-  } catch (err) {
-    console.error(err)
+    const alreadyLiked = likedCampaigns[campaign.id]
+    try {
+      const endpoint = alreadyLiked ? 'unlike' : 'like'
+      const res = await axios.post(`${API_BASE}/campaigns/${campaign.id}/${endpoint}`)
+      setLikes(l => ({ ...l, [campaign.id]: res.data.likes }))
+      setLikedCampaigns(l => ({ ...l, [campaign.id]: !alreadyLiked }))
+    } catch (err) {
+      console.error(err)
+    }
   }
-}
+
+  async function handleFormSubmit(payload) {
+    await axios.post(`${API_BASE}/campaigns`, payload, {
+    headers: { Authorization: `Bearer ${localStorage.getItem('aq_token')}` }
+  })
+  }
+
+  const handleBackToList = () => {
+    fetchCampaigns()
+    setView('list')
+  }
 
   const isParticipant = (campaign) =>
     user && campaign.participants?.includes(user.email)
 
+  // ── Dacă suntem pe view=add, randăm formularul ──
+  if (view === 'add') {
+    return (
+      <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa' }}>
+        {/* AppBar cu back */}
+        <AppBar position="sticky" elevation={0} sx={{
+          background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)`,
+          boxShadow: '0 2px 12px rgba(109,40,217,0.35)',
+        }}>
+          <Toolbar sx={{ gap: 1.5 }}>
+            <SatelliteAltIcon sx={{ fontSize: 28 }} />
+            <Box sx={{ flexGrow: 0, mr: 2 }}>
+              <Typography variant="h6" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px', color: '#fff' }}>
+                AquaGraph
+              </Typography>
+              <Typography variant="caption" sx={{ opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#fff' }}>
+                Satellite Water Pollution Monitor
+              </Typography>
+            </Box>
+            <Box sx={{ flexGrow: 1 }} />
+            <Button startIcon={<ArrowBackIcon />} size="small" onClick={handleBackToList}
+              sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
+              Back to Campaigns
+            </Button>
+          </Toolbar>
+        </AppBar>
+
+        <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, md: 4 }, py: 4 }}>
+          <CampaniiForm
+            user={user}
+            onSubmit={handleFormSubmit}
+            onCancel={handleBackToList}
+          />
+        </Box>
+      </Box>
+    )
+  }
+
+  // ── View lista campanii ──
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', overflowY: 'auto' }}>
 
@@ -190,7 +245,7 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
         {error && (
           <Alert severity="error"
             sx={{ bgcolor: `${C.dark2}cc`, color: C.lightest, border: `1px solid ${C.mid1}` }}
-            action={<Button size="small" sx={{ color: C.lightest }} onClick={fetchCampaigns}>Reîncearcă</Button>}>
+            action={<Button size="small" sx={{ color: C.lightest }} onClick={fetchCampaigns}>Retry</Button>}>
             {error}
           </Alert>
         )}
@@ -217,10 +272,10 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography sx={{ color: '#fff', fontWeight: 700, fontSize: '1.05rem', lineHeight: 1.4 }}>
-                        {campaign.campaign_name}
+                        {campaign.campaign_name || campaign.campaignName}
                       </Typography>
                       <Typography sx={{ color: C.light1, fontSize: '0.72rem', fontWeight: 600, mt: 0.5, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                        {campaign.organization_name}
+                        {campaign.organization_name || campaign.organizationName}
                       </Typography>
                     </Box>
                   </Box>
@@ -231,7 +286,7 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <WaterIcon sx={{ fontSize: 16, color: C.mid1 }} />
                       <Typography sx={{ fontSize: '0.85rem', color: C.dark2, fontWeight: 600 }}>
-                        {campaign.river_name}
+                        {campaign.river_name || campaign.riverName}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
@@ -243,7 +298,7 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
                   </Box>
 
                   <Typography sx={{ fontSize: '0.82rem', color: '#64748b', mb: 2 }}>
-                    📅 {campaign.start_date} → {campaign.end_date}
+                    📅 {campaign.start_date || campaign.startDate} → {campaign.end_date || campaign.endDate}
                   </Typography>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -270,7 +325,8 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
                       <IconButton
                         onClick={() => handleLike(campaign)}
                         size="small"
-                        sx={{color: likedCampaigns[campaign.id] ? '#e91e63' : C.mid2,
+                        sx={{
+                          color: likedCampaigns[campaign.id] ? '#e91e63' : C.mid2,
                           '&:hover': { color: '#e91e63', bgcolor: 'rgba(233,30,99,0.08)' },
                           transition: 'color 0.2s',
                         }}
@@ -289,8 +345,16 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
         )}
       </Box>
 
-      <Fab onClick={onGoToAddCampaign}
-        sx={{ position: 'fixed', bottom: 32, right: 32, bgcolor: C.mid2, color: '#fff', '&:hover': { bgcolor: C.mid1 }, boxShadow: '0 4px 20px rgba(123,44,191,0.4)' }}>
+      {/* FAB — deschide formularul de adaugare */}
+      <Fab
+        onClick={() => setView('add')}
+        sx={{
+          position: 'fixed', bottom: 32, right: 32,
+          bgcolor: C.mid2, color: '#fff',
+          '&:hover': { bgcolor: C.mid1 },
+          boxShadow: '0 4px 20px rgba(123,44,191,0.4)',
+        }}
+      >
         <AddIcon />
       </Fab>
 

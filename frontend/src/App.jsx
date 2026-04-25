@@ -64,6 +64,7 @@ export default function App() {
   const menuOpen = Boolean(anchorEl)
   const timeoutRef = useRef(null)
 
+
   const handleMapChange = useCallback((bounds, zoom) => {
   if (timeoutRef.current) clearTimeout(timeoutRef.current)
   timeoutRef.current = setTimeout(() => {
