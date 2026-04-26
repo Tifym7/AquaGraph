@@ -180,13 +180,6 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
             </Typography>
           </Box>
 
-          <Chip
-            icon={<FiberManualRecordIcon sx={{ fontSize: '10px !important', color: '#69f0ae !important' }} />}
-            label="Live Monitoring — Romania"
-            size="small"
-            sx={{ bgcolor: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.22)', '& .MuiChip-icon': { ml: 0.5 } }}
-          />
-
           <Box sx={{ flexGrow: 1 }} />
 
           <Button startIcon={<ArrowBackIcon />} size="small" onClick={onBack}

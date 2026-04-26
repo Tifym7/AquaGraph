@@ -91,12 +91,29 @@ for _rid, _m in POLY_MATCH.items():
     for _pid in _m.get("polygon_ids", []) or []:
         POLYGON_TO_RIVER.setdefault(_pid, _rid)
 
+# EFAS-derived discharge (m³/s) per river — used as a metric and later for
+# downstream pollution-impact propagation.
+DISCHARGE_BY_RIVER = {}
+DISCHARGE_PATH = os.path.join(DATA_DIR, "efas_discharge_mapped.json")
+if os.path.exists(DISCHARGE_PATH):
+    with open(DISCHARGE_PATH) as f:
+        for rid, entry in json.load(f).items():
+            DISCHARGE_BY_RIVER[rid] = entry.get("discharge", {})
+    print(f"Loaded EFAS discharge for {len(DISCHARGE_BY_RIVER)} rivers")
+
 # Build rivers index used by detail endpoints + graph traversal.
+# Each segment gets the river's discharge attached so the unified metric
+# pipeline (metrics.get_raw_value) can read it like any other field.
 RIVERS_BY_ID = {}
 for r in RAW_RIVERS:
     rid = r["id"]
     lats, lons = [], []
+    river_discharge = DISCHARGE_BY_RIVER.get(rid)
+    segments_with_discharge = []
     for seg in r.get("segments", []):
+        if river_discharge:
+            seg = {**seg, "discharge": river_discharge}
+        segments_with_discharge.append(seg)
         for line in seg.get("coordinates", []):
             for pt in line:
                 lats.append(pt[0]); lons.append(pt[1])
@@ -104,7 +121,7 @@ for r in RAW_RIVERS:
         "id": rid, "name": r["name"],
         "strahler": r.get("strahler", 1),
         "length_m": r.get("length_m", 0),
-        "segments": r.get("segments", []),
+        "segments": segments_with_discharge,
         "bbox": {"min_lat": min(lats) if lats else 0, "max_lat": max(lats) if lats else 0,
                  "min_lon": min(lons) if lons else 0, "max_lon": max(lons) if lons else 0},
     }
@@ -292,10 +309,43 @@ def get_rivers():
             "segments": segs_out,
             "water_polygons": wpolys,
             "bbox": river["bbox"],
+            "avg_normalized": avg_normalized(river["segments"], metric),
         })
 
     return jsonify({
         "rivers": final, "total": len(final),
+        "metric": metric,
+        "metric_label": METRIC_LABELS.get(metric, metric),
+    })
+
+
+@app.route("/api/top-rivers", methods=["GET"])
+def get_top_rivers():
+    """Lightweight ranked list for the sidebar's "Top N" view — returns
+    river metadata + the metric average only (no segments, no polygons),
+    so it's cheap to fetch and recompute on every metric change."""
+    metric = request.args.get("metric", "pollution")
+    limit = max(1, min(100, request.args.get("limit", 10, type=int)))
+
+    ranked = []
+    for river in RIVERS_BY_ID.values():
+        name = river.get("name") or ""
+        if name.startswith("Tributary") or name.startswith("Unnamed"):
+            continue
+        avg = avg_normalized(river["segments"], metric)
+        ranked.append({
+            "id": river["id"],
+            "name": name,
+            "strahler": river.get("strahler", 1),
+            "length_m": river.get("length_m", 0),
+            "segment_count": len(river["segments"]),
+            "avg_normalized": avg,
+            "bbox": river["bbox"],
+        })
+
+    ranked.sort(key=lambda r: r["avg_normalized"], reverse=True)
+    return jsonify({
+        "rivers": ranked[:limit],
         "metric": metric,
         "metric_label": METRIC_LABELS.get(metric, metric),
     })
@@ -340,6 +390,7 @@ def get_river(river_id):
         "segments": segs_out,
         "water_polygons": wpolys,
         "bbox": river["bbox"],
+        "avg_normalized": avg_normalized(river["segments"], metric),
     })
 
 @app.route("/api/river-graph", methods=["GET"])
@@ -351,6 +402,7 @@ def get_upstream(river_id):
     """Recursively collect upstream tributaries. Tracks an `appended` set so
     a river that is a tributary of multiple ancestors in the same subtree
     only shows up once (frontend keys break otherwise)."""
+    metric = request.args.get("metric", "pollution")
     visited = set()
     appended = set()
     result = []
@@ -362,9 +414,10 @@ def get_upstream(river_id):
             rd = RIVERS_BY_ID.get(tid)
             if rd and tid not in appended:
                 appended.add(tid)
-                mn = avg_normalized(rd["segments"], "pollution")
+                mn = avg_normalized(rd["segments"], metric)
                 result.append({"id":tid,"name":rd["name"],"strahler":rd.get("strahler",1),
-                               "pollution_level":mn,"pollution_label":_label_from(mn)})
+                               "pollution_level":mn,"pollution_label":_label_from(mn),
+                               "avg_normalized":mn})
             _walk(tid)
     _walk(river_id)
     return jsonify({"river_id":river_id,"upstream":result})
@@ -374,6 +427,7 @@ def get_downstream(river_id):
     """Walk the flows_into chain, deduping any river that re-appears (graph
     cycles in the data shouldn't exist but do, and a duplicate id breaks
     React keys in the sidebar)."""
+    metric = request.args.get("metric", "pollution")
     result = []
     visited = set()
     appended = set()
@@ -387,9 +441,10 @@ def get_downstream(river_id):
         rd = RIVERS_BY_ID.get(did)
         if rd and did not in appended:
             appended.add(did)
-            mn = avg_normalized(rd["segments"], "pollution")
+            mn = avg_normalized(rd["segments"], metric)
             result.append({"id":did,"name":rd["name"],"strahler":rd.get("strahler",1),
-                           "pollution_level":mn,"pollution_label":_label_from(mn)})
+                           "pollution_level":mn,"pollution_label":_label_from(mn),
+                           "avg_normalized":mn})
         cur = did
     return jsonify({"river_id":river_id,"downstream":result})
 

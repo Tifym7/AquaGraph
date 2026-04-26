@@ -9,14 +9,17 @@ would have rendered live.
 
 import math
 
-METRIC_KEYS = ["NDVI", "MNDWI", "NDCI", "BSI", "TURBIDITY", "water", "land", "risk"]
-METRICS_FOR_TILES = ["pollution", "risk", "NDVI", "MNDWI", "NDCI", "BSI", "TURBIDITY", "water", "land"]
+METRIC_KEYS = ["NDVI", "MNDWI", "NDCI", "BSI", "TURBIDITY", "water", "land", "risk", "discharge"]
+METRICS_FOR_TILES = ["pollution", "risk", "NDVI", "MNDWI", "NDCI", "BSI", "TURBIDITY", "water", "land", "discharge"]
 
 METRIC_RANGES = {
     "NDVI": (-1, 1), "MNDWI": (-1, 1), "NDCI": (-1, 1),
     "BSI": (-0.5, 0.3), "TURBIDITY": (0, 2000),
     "water": (0, 2), "land": (0, 1), "risk": (0, 5),
     "pollution": (0, 5),
+    # discharge is normalized in log10 space (1 m³/s → 10⁴ m³/s) so the
+    # Danube doesn't crush every smaller river to the same low color.
+    "discharge": (0, 4),
 }
 
 METRIC_LABELS = dict(METRIC_RANGES)
@@ -48,6 +51,21 @@ def get_raw_value(seg, metric):
         return float(risk.get("water_risk", 0))
     if metric == "land":
         return float(risk.get("land_risk", 0))
+    if metric == "discharge":
+        # Discharge lives at the river level (m³/s, EFAS median over 6h)
+        # but is attached to each segment for uniform per-segment lookup.
+        # Log-transform here so 0..4 in log10 space maps Danube ~9200 →
+        # top of gradient and tiny streams ~0..5 → bottom.
+        d = seg.get("discharge")
+        if not d:
+            return None
+        v = d.get("median_discharge_m3s") if isinstance(d, dict) else d
+        if v is None:
+            return None
+        try:
+            return math.log10(max(1.0, float(v)))
+        except (TypeError, ValueError):
+            return None
     indices = seg.get("indices", {})
     if indices:
         for k in indices:
@@ -115,6 +133,24 @@ def spectral_color(raw_val, metric):
         r = int(255 - t * (255 - 220))
         g = int(204 - t * (204 - 180))
         b = int(153 - t * (153 - 100))
+    elif metric == "discharge":
+        # Trickle → torrent palette, mirrors frontend METRIC_GRADIENTS.discharge
+        # (#e0f7fa → #4dd0e1 → #00838f → #1565c0 → #311b92).
+        t = normalize(raw_val, metric)
+        stops = [
+            (0xe0, 0xf7, 0xfa),
+            (0x4d, 0xd0, 0xe1),
+            (0x00, 0x83, 0x8f),
+            (0x15, 0x65, 0xc0),
+            (0x31, 0x1b, 0x92),
+        ]
+        n = len(stops) - 1
+        idx = min(int(t * n), n - 1)
+        local = (t * n) - idx
+        c1, c2 = stops[idx], stops[idx + 1]
+        r = int(c1[0] + (c2[0] - c1[0]) * local)
+        g = int(c1[1] + (c2[1] - c1[1]) * local)
+        b = int(c1[2] + (c2[2] - c1[2]) * local)
     elif metric == "risk":
         t = raw_val / 5.0
         if t < 0.2:

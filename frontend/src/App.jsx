@@ -98,9 +98,9 @@ export default function App() {
      the user zooms past the threshold but the segment JSON hasn't arrived
      yet, which leaves the metric tile layer hidden (z>=12 vector mode)
      while the vector layer has nothing to render. */
-  // const [rivers, setRivers] = useState([])
-  // const [anchorEl, setAnchorEl] = useState(null)
-  // const menuOpen = Boolean(anchorEl)
+  const [rivers, setRivers] = useState([])
+  const [anchorEl, setAnchorEl] = useState(null)
+  const menuOpen = Boolean(anchorEl)
   // const timeoutRef = useRef(null)
 
 
@@ -233,18 +233,6 @@ useEffect(() => {
                 Satellite Water Pollution Monitor
               </Typography>
             </Box>
-
-            <Chip
-              icon={<FiberManualRecordIcon sx={{ fontSize: '10px !important', color: '#69f0ae !important' }} />}
-              label={regionLabel ? regionLabel : 'Live Monitoring — Romania'}
-              size="small"
-              sx={{
-                bgcolor: 'rgba(255,255,255,0.12)',
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.22)',
-                '& .MuiChip-icon': { ml: 0.5 },
-              }}
-            />
 
             <Box sx={{ flexGrow: 1 }} />
 

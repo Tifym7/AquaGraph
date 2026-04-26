@@ -240,7 +240,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
             value={form.campaignName} onChange={set('campaignName')}
             placeholder="e.g. Clean Someș River 2026"
             sx={{ mb: 2, ...inputSx }}
-            InputProps={{ startAdornment: <Adornment><CampaignOutlinedIcon /></Adornment> }}
+            slotProps={{ input: { startAdornment: <Adornment><CampaignOutlinedIcon /></Adornment> } }}
           />
 
           <TextField
@@ -248,7 +248,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
             value={form.organizationName} onChange={set('organizationName')}
             placeholder="e.g. EcoRomania NGO"
             sx={{ mb: 2, ...inputSx }}
-            InputProps={{ startAdornment: <Adornment><BusinessOutlinedIcon /></Adornment> }}
+            slotProps={{ input: { startAdornment: <Adornment><BusinessOutlinedIcon /></Adornment> } }}
           />
 
           <TextField
@@ -256,7 +256,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
             value={form.riverName} onChange={set('riverName')}
             placeholder="e.g. Someș, Mureș, Dâmbovița"
             sx={{ mb: 2.5, ...inputSx }}
-            InputProps={{ startAdornment: <Adornment><WaterOutlinedIcon /></Adornment> }}
+            slotProps={{ input: { startAdornment: <Adornment><WaterOutlinedIcon /></Adornment> } }}
           />
 
           <Divider sx={{ mb: 2.5, borderColor: `${C.mid1}22` }} />
@@ -270,7 +270,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
               value={form.judet} onChange={handleJudetChange}
               input={<OutlinedInput label="County (Județ)" />}
               startAdornment={<Adornment><LocationOnOutlinedIcon /></Adornment>}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 280, borderRadius: 2 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 280, borderRadius: 2 } } } }}
               sx={selectSx}
             >
               {JUDETE_LIST.map(j => <MenuItem key={j} value={j} sx={{ fontSize: 14 }}>{j}</MenuItem>)}
@@ -285,7 +285,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
               value={form.localitate} onChange={handleLocalitateChange}
               input={<OutlinedInput label={form.judet ? 'City / Town' : 'Select county first'} />}
               startAdornment={<Adornment><MapOutlinedIcon sx={{ color: form.judet ? C.mid3 : '#ccc' }} /></Adornment>}
-              MenuProps={{ PaperProps: { sx: { maxHeight: 280, borderRadius: 2 } } }}
+              MenuProps={{ slotProps: { paper: { sx: { maxHeight: 280, borderRadius: 2 } } } }}
               sx={selectSx}
             >
               {localitatiDisponibile.map(l => <MenuItem key={l.name} value={l.name} sx={{ fontSize: 14 }}>{l.name}</MenuItem>)}
@@ -300,7 +300,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
                 value={form.coordLat} onChange={set('coordLat')} onBlur={handleCoordBlur}
                 placeholder="e.g. 46.7712"
                 sx={inputSx}
-                InputProps={{ startAdornment: <Adornment><MyLocationIcon sx={{ fontSize: '17px !important' }} /></Adornment> }}
+                slotProps={{ input: { startAdornment: <Adornment><MyLocationIcon sx={{ fontSize: '17px !important' }} /></Adornment> } }}
               />
             </Tooltip>
             <Tooltip title="Longitude — or click on the map" placement="top">
@@ -334,18 +334,22 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
             <TextField
               label="" variant="outlined" size="small" type="date"
               value={form.startDate} onChange={set('startDate')}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: TODAY }}
               sx={inputSx}
-              InputProps={{ startAdornment: <Adornment><CalendarTodayOutlinedIcon sx={{ fontSize: '17px !important' }} /></Adornment> }}
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { min: TODAY },
+                input: { startAdornment: <Adornment><CalendarTodayOutlinedIcon sx={{ fontSize: '17px !important' }} /></Adornment> },
+              }}
             />
             <TextField
               label="" variant="outlined" size="small" type="date"
               value={form.endDate} onChange={set('endDate')}
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: form.startDate || TODAY }}
               sx={inputSx}
-              InputProps={{ startAdornment: <Adornment><EventOutlinedIcon sx={{ fontSize: '17px !important' }} /></Adornment> }}
+              slotProps={{
+                inputLabel: { shrink: true },
+                htmlInput: { min: form.startDate || TODAY },
+                input: { startAdornment: <Adornment><EventOutlinedIcon sx={{ fontSize: '17px !important' }} /></Adornment> },
+              }}
             />
           </Box>
 
@@ -355,7 +359,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
             value={createdAt}
             disabled
             sx={{ mb: 3, ...inputSx, '& .MuiOutlinedInput-root': { ...inputSx['& .MuiOutlinedInput-root'], bgcolor: `${C.mid1}06` } }}
-            InputProps={{ startAdornment: <Adornment><AccessTimeOutlinedIcon sx={{ color: '#bbb !important' }} /></Adornment> }}
+            slotProps={{ input: { startAdornment: <Adornment><AccessTimeOutlinedIcon sx={{ color: '#bbb !important' }} /></Adornment> } }}
           />
 
           {error && (

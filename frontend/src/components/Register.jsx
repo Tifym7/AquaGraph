@@ -98,12 +98,6 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
               <Typography sx={{ fontSize: 11, color: '#e0aaff', textTransform: 'uppercase', letterSpacing: '1px', mt: 0.5 }}>
                 Satellite Water Pollution Monitor
               </Typography>
-              <Chip
-                icon={<FiberManualRecordIcon sx={{ fontSize: '9px !important', color: '#c77dff !important' }} />}
-                label="Live — Romania"
-                size="small"
-                sx={{ mt: 1.5, bgcolor: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(224,170,255,0.3)', fontSize: 10, fontWeight: 600, height: 22 }}
-              />
             </Box>
             {/* Buton Back */}
             {onBack && (
@@ -135,12 +129,12 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
 
             <TextField fullWidth label="Username" variant="outlined" size="small"
               value={form.username} onChange={set('username')} onKeyDown={handleKeyDown} sx={{ mb: 2 }}
-              InputProps={{ startAdornment: <InputAdornment position="start"><AccountCircleOutlined sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment> }}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><AccountCircleOutlined sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment> } }}
             />
 
             <TextField fullWidth label="Email" variant="outlined" size="small"
               value={form.email} onChange={set('email')} onKeyDown={handleKeyDown} type="email" sx={{ mb: 2 }}
-              InputProps={{ startAdornment: <InputAdornment position="start"><EmailOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment> }}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><EmailOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment> } }}
             />
 
             <FormControl fullWidth size="small" sx={{ mb: 2 }}>
@@ -156,17 +150,21 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
 
             <TextField fullWidth label="Parolă" variant="outlined" size="small"
               type={showPassword ? 'text' : 'password'} value={form.password} onChange={set('password')} onKeyDown={handleKeyDown} sx={{ mb: 2 }}
-              InputProps={{
-                startAdornment: <InputAdornment position="start"><LockOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment>,
-                endAdornment: <InputAdornment position="end"><IconButton size="small" onClick={() => setShowPassword(v => !v)}>{showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}</IconButton></InputAdornment>,
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><LockOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment>,
+                  endAdornment: <InputAdornment position="end"><IconButton size="small" onClick={() => setShowPassword(v => !v)}>{showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}</IconButton></InputAdornment>,
+                },
               }}
             />
 
             <TextField fullWidth label="Confirmă parola" variant="outlined" size="small"
               type={showConfirm ? 'text' : 'password'} value={form.confirmPassword} onChange={set('confirmPassword')} onKeyDown={handleKeyDown} sx={{ mb: 3 }}
-              InputProps={{
-                startAdornment: <InputAdornment position="start"><LockOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment>,
-                endAdornment: <InputAdornment position="end"><IconButton size="small" onClick={() => setShowConfirm(v => !v)}>{showConfirm ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}</IconButton></InputAdornment>,
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><LockOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment>,
+                  endAdornment: <InputAdornment position="end"><IconButton size="small" onClick={() => setShowConfirm(v => !v)}>{showConfirm ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}</IconButton></InputAdornment>,
+                },
               }}
             />
 

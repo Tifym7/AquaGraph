@@ -87,12 +87,6 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
               <Typography sx={{ fontSize: 11, color: '#e0aaff', textTransform: 'uppercase', letterSpacing: '1px', mt: 0.5, opacity: 0.9 }}>
                 Satellite Water Pollution Monitor
               </Typography>
-              <Chip
-                icon={<FiberManualRecordIcon sx={{ fontSize: '9px !important', color: '#c77dff !important', animation: 'pulse 2s infinite', '@keyframes pulse': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.4 } } }} />}
-                label="Live — Romania"
-                size="small"
-                sx={{ mt: 1.5, bgcolor: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(224,170,255,0.3)', fontSize: 10, fontWeight: 600, height: 22 }}
-              />
             </Box>
             {/* Buton Back */}
             {onBack && (
@@ -126,7 +120,7 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
               fullWidth label="Username" variant="outlined" size="small"
               value={username} onChange={(e) => setUsername(e.target.value)} onKeyDown={handleKeyDown}
               sx={{ mb: 2 }}
-              InputProps={{ startAdornment: <InputAdornment position="start"><PersonOutlineIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment> }}
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><PersonOutlineIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment> } }}
             />
 
             <TextField
@@ -134,15 +128,17 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
               type={showPassword ? 'text' : 'password'}
               value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown}
               sx={{ mb: 1 }}
-              InputProps={{
-                startAdornment: <InputAdornment position="start"><LockOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment>,
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton size="small" onClick={() => setShowPassword(v => !v)} edge="end">
-                      {showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start"><LockOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd' }} /></InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton size="small" onClick={() => setShowPassword(v => !v)} edge="end">
+                        {showPassword ? <VisibilityOffOutlinedIcon /> : <VisibilityOutlinedIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
               }}
             />
 

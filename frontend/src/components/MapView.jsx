@@ -7,6 +7,7 @@ import {
   getRawMetricValue, normalizeMetric,
   ZOOM_SNAP, ZOOM_DELTA, ZOOM_MIN, ZOOM_MAX, VECTOR_ZOOM_THRESHOLD,
   CLICK_OVERLAY_ZOOM_THRESHOLD, POLYGON_ZOOM_THRESHOLD,
+  METRIC_GRADIENTS, gradientColor,
 } from '../utils'
 import duckUrl from '../assets/duck.svg'
 
@@ -21,14 +22,13 @@ const BASEMAP_OPTIONS = [
 ]
 
 const METRIC_OPTIONS = [
-  { key: 'pollution', label: 'Pollution Risk', gradient: ['#4caf50', '#8bc34a', '#ffeb3b', '#ff9800', '#f44335', '#e53935'], labels: ['Clean', 'Moderate', 'Critical'] },
-  { key: 'risk', label: 'Risk Score', gradient: ['#4caf50', '#ffeb3b', '#ff9800', '#f44335', '#9c27b0'], labels: ['Low', 'Medium', 'Critical'] },
-  { key: 'NDVI', label: 'NDVI (vegetation)', gradient: ['#1e428f', '#00aaff', '#49d0d1', '#74dc23', '#ffc600', '#d40746'], labels: ['Low Veg', 'Moderate', 'Dense'] },
-  { key: 'MNDWI', label: 'MNDWI (water)', gradient: ['#ff5252', '#ffee58', '#4caf50', '#00897b', '#1e428f'], labels: ['No Water', 'Moderate', 'High Water'] },
-  { key: 'NDCI', label: 'NDCI (chlorophyll)', gradient: ['#4caf50', '#ffeb3b', '#e53935'], labels: ['Low', 'Moderate', 'High'] },
-  { key: 'TURBIDITY', label: 'TURBIDITY (sediment)', gradient: ['#0055cc', '#00aaff', '#49d0d1', '#74dc23', '#ffc600', '#e53935'], labels: ['Clear', 'Moderate', 'High Turbidity'] },
-  { key: 'water', label: 'Water Index', gradient: ['#0055cc', '#00aaff', '#49d0d1'], labels: ['No Water', 'Moderate', 'High Water'] },
-  { key: 'land', label: 'Land Index', gradient: ['#ff9800', '#d4a76a', '#653215'], labels: ['Low Land', 'Moderate', 'High Land'] },
+  { key: 'pollution', label: 'Pollution Risk', gradient: METRIC_GRADIENTS.pollution, labels: ['Clean', 'Moderate', 'Critical'] },
+  { key: 'NDVI', label: 'NDVI (vegetation)', gradient: METRIC_GRADIENTS.NDVI, labels: ['Low Veg', 'Moderate', 'Dense'] },
+  { key: 'MNDWI', label: 'MNDWI (water)', gradient: METRIC_GRADIENTS.MNDWI, labels: ['No Water', 'Moderate', 'High Water'] },
+  { key: 'NDCI', label: 'NDCI (chlorophyll)', gradient: METRIC_GRADIENTS.NDCI, labels: ['Low', 'Moderate', 'High'] },
+  { key: 'TURBIDITY', label: 'TURBIDITY (sediment)', gradient: METRIC_GRADIENTS.TURBIDITY, labels: ['Clear', 'Moderate', 'High Turbidity'] },
+  { key: 'land', label: 'Oil leackage', gradient: METRIC_GRADIENTS.land, labels: ['Low', 'Moderate', 'High'] },
+  { key: 'discharge', label: 'Discharge (m³/s)', gradient: METRIC_GRADIENTS.discharge, labels: ['Trickle', 'River', 'Danube'] },
 ]
 
 const LOD_FADE_MS = 350
@@ -67,9 +67,9 @@ function MapPanes() {
     // other vector content (the segments inside use a higher z because their
     // pane is set explicitly).
     setup('selected-river', 620, { pointerEvents: 'none' })
-    // Ducks pane sits above polygons + colored centerlines but below the
-    // selected-river highlight.
-    setup('ducks-pane', 550, { pointerEvents: 'none' })
+    // Ducks float on top of every vector line — including the highlighted
+    // selected-river segments. Sits just under tooltipPane (650).
+    setup('ducks-pane', 640, { pointerEvents: 'none' })
   }, [map])
   return null
 }
@@ -173,19 +173,6 @@ function bboxIntersects(segBbox, mapBounds) {
     segBbox.max_lat < s || segBbox.min_lat > n)
 }
 
-function gradientColor(value, gradient) {
-  const t = Math.max(0, Math.min(1, value))
-  const segs = gradient.length - 1
-  const idx = Math.min(Math.floor(t * segs), segs - 1)
-  const localT = (t * segs) - idx
-  const c1 = hexToRgb(gradient[idx]), c2 = hexToRgb(gradient[idx + 1])
-  return `rgb(${Math.round(c1.r + (c2.r - c1.r) * localT)},${Math.round(c1.g + (c2.g - c1.g) * localT)},${Math.round(c1.b + (c2.b - c1.b) * localT)})`
-}
-
-function hexToRgb(hex) {
-  const m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex)
-  return m ? { r: parseInt(m[1], 16), g: parseInt(m[2], 16), b: parseInt(m[3], 16) } : { r: 0, g: 0, b: 0 }
-}
 
 function HighZoomVectorLayer({ segments, mapBounds, metric, isActive, onSegmentClick, onSegmentHover }) {
   const colors = METRIC_OPTIONS.find(m => m.key === metric) || METRIC_OPTIONS[0]
@@ -461,8 +448,8 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
         className: 'duck-icon',
         // Mount at scale(0) so the CSS transition can pop the duck in.
         html: `<div class="duck-wrap" style="transform:scale(0)"><img src="${duckUrl}" alt="" /></div>`,
-        iconSize: [30, 22],
-        iconAnchor: [15, 11],
+        iconSize: [60, 44],
+        iconAnchor: [30, 22],
       })
       const m = L.marker(start, { icon, interactive: false, pane: 'ducks-pane', keyboard: false })
       m.addTo(map)

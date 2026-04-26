@@ -7,12 +7,31 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import WaterIcon from '@mui/icons-material/Water'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
-import { fetchUpstream, fetchDownstream, getPollutionColor, fetchRiver, METRIC_LABELS, METRIC_KEYS } from '../utils'
+import { fetchUpstream, fetchDownstream, getMetricColor, fetchRiver, METRIC_LABELS, METRIC_KEYS } from '../utils'
 
 const SIDEBAR_WIDTH = 360
 
+/* Purple/aubergine palette — kept consistent with the App-level theme
+   (primary #6d28d9) and the AppBar gradient (#10002b → #3c096c → #5a189a). */
+const C = {
+  bgPaper:   '#ffffff',
+  bgTint:    '#f5f3ff',
+  bgTintHover: '#ede9fe',
+  border:    '#ddd6fe',
+  borderStrong: '#c4b5fd',
+  primary:   '#6d28d9',
+  primaryDeep: '#5a189a',
+  textMuted: '#5a189a',
+  selectedBg: 'rgba(109, 40, 217, 0.08)',
+}
+
 function getSegmentNormalized(river) {
   if (river.selectedSegment?.normalized != null) return river.selectedSegment.normalized
+  /* Prefer the backend-computed average — it skips segments that have no
+     data for the active metric, matching the ranking on /api/rivers. The
+     naive client-side average dilutes a high-signal river with zero-padded
+     no-data segments and the sidebar ends up reporting 0% for top-10 rivers. */
+  if (river.avg_normalized != null) return river.avg_normalized
   const segments = river.segments || []
   if (!segments.length) return 0
   const total = segments.reduce((sum, s) => sum + (s.normalized ?? 0), 0)
@@ -67,15 +86,26 @@ const CAPTION_LABEL = {
   sx: { textTransform: 'uppercase', letterSpacing: 1 },
 }
 
-function FlowCard({ text, children }) {
+function FlowCard({ text, icon, accentColor, children, sx }) {
   return (
-    <Box mb={2}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        fontWeight={700}
-        sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1 }}
-      >{text}</Typography>
+    <Box mb={2} sx={sx}>
+      <Stack
+        direction="row"
+        alignItems="center"
+        spacing={0.75}
+        sx={{ mb: 1, pl: 0.25 }}
+      >
+        {icon}
+        <Typography
+          variant="caption"
+          fontWeight={700}
+          sx={{
+            textTransform: 'uppercase',
+            letterSpacing: 1,
+            color: accentColor || 'text.secondary',
+          }}
+        >{text}</Typography>
+      </Stack>
       <Stack spacing={0.5}>{children}</Stack>
     </Box>
   )
@@ -102,14 +132,14 @@ function FlowItem({ river, direction, color, onClick }) {
       onClick={() => onClick && onClick(river)}
       sx={{
         px: 1.5, py: 1, borderRadius: 1,
-        bgcolor: 'grey.50', border: '1px solid', borderColor: 'grey.200',
+        bgcolor: '#ffffff', border: '1px solid', borderColor: C.border,
         cursor: onClick ? 'pointer' : 'default',
-        '&:hover': onClick ? { bgcolor: 'grey.100' } : {},
+        '&:hover': onClick ? { bgcolor: C.bgTint } : {},
       }}
     >
       {direction === 'up'
-        ? <ArrowUpwardIcon sx={{ fontSize: 14, color: 'text.disabled' }} />
-        : <ArrowDownwardIcon sx={{ fontSize: 14, color: 'text.disabled' }} />}
+        ? <ArrowUpwardIcon sx={{ fontSize: 14, color: C.primaryDeep }} />
+        : <ArrowDownwardIcon sx={{ fontSize: 14, color: C.primaryDeep }} />}
       <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: color, flexShrink: 0 }} />
       <Typography variant="body2" fontWeight={600} sx={{ flex: 1, fontSize: 12 }} noWrap>{river.name}</Typography>
       <Typography variant="caption" fontWeight={700} sx={{ color, minWidth: 32, textAlign: 'right' }}>{pct}%</Typography>
@@ -117,7 +147,7 @@ function FlowItem({ river, direction, color, onClick }) {
   )
 }
 
-function PropagationSection({ riverId, onRiverClick }) {
+function PropagationSection({ riverId, onRiverClick, metric }) {
   const [upstream, setUpstream] = useState(null)
   const [downstream, setDownstream] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -135,13 +165,13 @@ function PropagationSection({ riverId, onRiverClick }) {
         return true
       })
     }
-    Promise.all([fetchUpstream(riverId), fetchDownstream(riverId)]).then(([up, down]) => {
+    Promise.all([fetchUpstream(riverId, metric), fetchDownstream(riverId, metric)]).then(([up, down]) => {
       const filterFn = r => !r.name.startsWith('Tributary') && !r.name.startsWith('Unnamed')
       setUpstream(dedupe(up.filter(filterFn)).slice(0, 10))
       setDownstream(dedupe(down.filter(filterFn)).slice(0, 5))
       setLoading(false)
     }).catch(() => setLoading(false))
-  }, [riverId])
+  }, [riverId, metric])
 
   if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}><CircularProgress size={20} /></Box>
 
@@ -165,18 +195,27 @@ function PropagationSection({ riverId, onRiverClick }) {
   return (
     <Box>
       {upstream && upstream.length > 0 && (
-        <FlowCard text="Feeds into">
+        <FlowCard
+          text="Feeds into"
+          icon={<ArrowUpwardIcon sx={{ fontSize: 14, color: '#2e7d32' }} />}
+          accentColor="#2e7d32"
+        >
           {uniq(upstream.filter(r => filterName(r.name))).map((r, i) => {
             const norm = getSegmentNormalized(r)
-            return <FlowItem key={`up-${i}-${r.id}`} river={r} direction="up" color={getPollutionColor(norm)} onClick={onRiverClick} />
+            return <FlowItem key={`up-${i}-${r.id}`} river={r} direction="up" color={getMetricColor(norm, metric)} onClick={onRiverClick} />
           })}
         </FlowCard>
       )}
       {downstream && downstream.length > 0 && (
-        <FlowCard text="Flows downstream to">
+        <FlowCard
+          text="Flows downstream to"
+          icon={<ArrowDownwardIcon sx={{ fontSize: 14, color: '#c2410c' }} />}
+          accentColor="#c2410c"
+          sx={{ pt: '16px' }}
+        >
           {uniq(downstream.filter(r => filterName(r.name))).map((r, i) => {
             const norm = getSegmentNormalized(r)
-            return <FlowItem key={`down-${i}-${r.id}`} river={r} direction="down" color={getPollutionColor(norm)} onClick={onRiverClick} />
+            return <FlowItem key={`down-${i}-${r.id}`} river={r} direction="down" color={getMetricColor(norm, metric)} onClick={onRiverClick} />
           })}
         </FlowCard>
       )}
@@ -187,7 +226,7 @@ function PropagationSection({ riverId, onRiverClick }) {
 function SatelliteIndices({ indices }) {
   if (!indices || Object.keys(indices).length === 0) return null
   return (
-    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+    <Card variant="outlined" sx={{ borderRadius: 2, borderColor: C.border }}>
       <CardContent sx={{ p: '12px 14px !important' }}>
         <Stack spacing={0.5}>
           {Object.entries(indices).map(([key, value]) => (
@@ -214,25 +253,25 @@ function SegmentRiskCards({ risk }) {
 
   return (
     <Stack direction="row" spacing={1}>
-      <Card variant="outlined" sx={{ flex: 1 }}>
+      <Card variant="outlined" sx={{ flex: 1, borderColor: C.border }}>
         <CardContent sx={{ p: '8px 12px !important' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', display: 'block', fontSize: 10 }}>Risk Score</Typography>
           <Typography variant="body1" fontWeight={800} sx={{ fontSize: 16, color: scoreColor }}>{scoreVal} / 5</Typography>
-          <Typography variant="caption" fontWeight={600} sx={{ color: '#666' }}>{risk.level}</Typography>
+          <Typography variant="caption" fontWeight={600} sx={{ color: C.textMuted }}>{risk.level}</Typography>
         </CardContent>
       </Card>
-      <Card variant="outlined" sx={{ flex: 1 }}>
+      <Card variant="outlined" sx={{ flex: 1, borderColor: C.border }}>
         <CardContent sx={{ p: '8px 12px !important' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', display: 'block', fontSize: 10 }}>Water Index</Typography>
           <Typography variant="body1" fontWeight={800} sx={{ fontSize: 16, color: waterColor }}>{safe(waterVal)}</Typography>
-          <Typography variant="caption" fontWeight={600} sx={{ color: '#666' }}>{risk.is_water ? 'Water' : 'Land'}</Typography>
+          <Typography variant="caption" fontWeight={600} sx={{ color: C.textMuted }}>{risk.is_water ? 'Water' : 'Land'}</Typography>
         </CardContent>
       </Card>
-      <Card variant="outlined" sx={{ flex: 1 }}>
+      <Card variant="outlined" sx={{ flex: 1, borderColor: C.border }}>
         <CardContent sx={{ p: '8px 12px !important' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', display: 'block', fontSize: 10 }}>Land Index</Typography>
           <Typography variant="body1" fontWeight={800} sx={{ fontSize: 16, color: landColor }}>{safe(landVal)}</Typography>
-          <Typography variant="caption" fontWeight={600} sx={{ color: '#666' }}>{landVal > 0.5 ? 'High' : 'Low'}</Typography>
+          <Typography variant="caption" fontWeight={600} sx={{ color: C.textMuted }}>{landVal > 0.5 ? 'High' : 'Low'}</Typography>
         </CardContent>
       </Card>
     </Stack>
@@ -241,7 +280,7 @@ function SegmentRiskCards({ risk }) {
 
 function RiverDetail({ river, onClose, onRiverClick, metric }) {
   const norm = getSegmentNormalized(river)
-  const color = getPollutionColor(norm)
+  const color = getMetricColor(norm, metric)
   const risk = getSegmentRisk(river)
   const indices = getSegmentIndices(river)
   const percentage = Math.round(norm * 100)
@@ -267,13 +306,13 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
             <Typography variant="caption" color="text.secondary">{isSegmentView ? `Segment ${river.selectedSegment.object_id}` : 'Full river overview'}</Typography>
           </Box>
         </Stack>
-        <Card variant="outlined" sx={{ borderRadius: 2, mb: SECTION_MB }}>
+        <Card variant="outlined" sx={{ borderRadius: 2, mb: SECTION_MB, borderColor: C.border }}>
           <CardContent sx={{ p: 2, pb: '16px !important' }}>
-            <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5 }}>{metricLabel} Value</Typography>
+            <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>{metricLabel} Value</Typography>
             <LinearProgress
               variant="determinate" value={percentage}
               sx={{
-                height: 10, borderRadius: 4, bgcolor: 'grey.200', mb: 2.5,
+                height: 10, borderRadius: 4, bgcolor: C.bgTintHover, mb: 2.5,
                 '& .MuiLinearProgress-bar': { borderRadius: 4, background: `linear-gradient(to right, #4caf50, ${color})` },
               }}
             />
@@ -284,40 +323,41 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
                 sx={{
                   fontWeight: 800, fontSize: 11, letterSpacing: 0.5,
                   textTransform: 'uppercase', color,
-                  bgcolor: `${color}18`, border: `1px solid ${color}40`, borderRadius: 1,
+                  bgcolor: 'transparent', border: 'none',
+                  '& .MuiChip-label': { px: 0 },
                 }}
               />
             </Stack>
           </CardContent>
         </Card>
         <Box mb={SECTION_MB}>
-          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5 }}>Satellite Indices</Typography>
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Satellite Indices</Typography>
           <SatelliteIndices indices={indices} />
         </Box>
-        <Box mb={SECTION_MB}>
-          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5 }}>Risk Indicators</Typography>
+        <Box mb={SECTION_MB} sx={{ pt: '16px' }}>
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Risk Indicators</Typography>
           <SegmentRiskCards risk={risk} />
         </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5 }}>Connected Rivers</Typography>
-          <PropagationSection riverId={river.id} onRiverClick={onRiverClick} />
+        <Box sx={{ pt: '16px' }}>
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Connected Rivers</Typography>
+          <PropagationSection riverId={river.id} onRiverClick={onRiverClick} metric={metric} />
         </Box>
       </Box>
     </Box>
   )
 }
 
-function RiverListItem({ river, isSelected, onSelect }) {
+function RiverListItem({ river, isSelected, onSelect, metric }) {
   const norm = getSegmentNormalized(river)
-  const color = getPollutionColor(norm)
+  const color = getMetricColor(norm, metric)
   const percentage = Math.round(norm * 100)
 
   return (
-    <ListItemButton selected={isSelected} onClick={() => onSelect(river)} sx={{ borderRadius: 2, mx: 1, mb: 0.5, '&.Mui-selected': { bgcolor: 'primary.50', borderLeft: '3px solid', borderColor: 'primary.main' } }}>
+    <ListItemButton selected={isSelected} onClick={() => onSelect(river)} sx={{ borderRadius: 2, mx: 1, mb: 0.5, '&:hover': { bgcolor: C.bgTint }, '&.Mui-selected': { bgcolor: C.selectedBg, borderLeft: '3px solid', borderColor: C.primary, '&:hover': { bgcolor: C.selectedBg } } }}>
       <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, mr: 1.5, flexShrink: 0, boxShadow: `0 0 6px ${color}` }} />
       <ListItemText
         primary={<Typography variant="body2" fontWeight={600} noWrap>{river.name}</Typography>}
-        secondary={<LinearProgress variant="determinate" value={percentage} sx={{ height: 4, borderRadius: 2, mt: 0.5, bgcolor: 'grey.200', '& .MuiLinearProgress-bar': { borderRadius: 2, bgcolor: color } }} />}
+        secondary={<LinearProgress variant="determinate" value={percentage} sx={{ height: 4, borderRadius: 2, mt: 0.5, bgcolor: C.bgTintHover, '& .MuiLinearProgress-bar': { borderRadius: 2, bgcolor: color } }} />}
       />
       <Typography variant="body2" fontWeight={700} sx={{ color, ml: 1.5, minWidth: 38, textAlign: 'right' }}>{percentage}%</Typography>
     </ListItemButton>
@@ -347,8 +387,8 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
 
   return (
     <Box sx={{
-      width: SIDEBAR_WIDTH, flexShrink: 0, bgcolor: 'background.paper',
-      borderRight: '1px solid', borderColor: 'divider',
+      width: SIDEBAR_WIDTH, flexShrink: 0, bgcolor: C.bgPaper,
+      borderRight: '1px solid', borderColor: C.border,
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
       {/* Metric selector — moved here from the map. */}
@@ -365,9 +405,9 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
             onChange={(e) => onMetricChange(e.target.value)}
             style={{
               width: '100%', padding: '8px 10px',
-              border: '1px solid #e0e0e0', borderRadius: 6,
-              fontSize: 13, fontWeight: 600, color: '#333',
-              backgroundColor: '#fafafa', cursor: 'pointer', outline: 'none',
+              border: `1px solid ${C.border}`, borderRadius: 6,
+              fontSize: 13, fontWeight: 600, color: C.primaryDeep,
+              backgroundColor: C.bgTint, cursor: 'pointer', outline: 'none',
             }}
           >
             {METRIC_KEYS.map((k) => (
@@ -376,7 +416,7 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
           </select>
         </Box>
       )}
-      <Divider />
+      <Divider sx={{ borderColor: C.border }} />
       {!selectedRiver && (
         <>
           <Box sx={{ px: 2.5, pt: 2, pb: 1.5 }}>
@@ -384,7 +424,7 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
               Top 10 highest values
             </Typography>
           </Box>
-          <Divider />
+          <Divider sx={{ borderColor: C.border }} />
         </>
       )}
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
@@ -393,7 +433,7 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
         ) : (
           <List disablePadding sx={{ pt: 1 }}>
             {top10.map((river, i) => (
-              <RiverListItem key={`top-${i}-${river.id}`} river={river} isSelected={selectedRiver?.id === river.id} onSelect={onSelect} />
+              <RiverListItem key={`top-${i}-${river.id}`} river={river} isSelected={selectedRiver?.id === river.id} onSelect={onSelect} metric={metric} />
             ))}
           </List>
         )}

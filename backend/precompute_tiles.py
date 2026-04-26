@@ -236,7 +236,21 @@ def load_data():
         with open(DATA_DIR / "euhydro_water_polygons.json") as f:
             for p in json.load(f):
                 polys_by_id[p["poly_id"]] = p
-    print(f"  rivers: {len(raw_rivers)}, poly_match: {len(poly_match)}, polys: {len(polys_by_id)}")
+    discharge_by_rid = {}
+    if (DATA_DIR / "efas_discharge_mapped.json").exists():
+        with open(DATA_DIR / "efas_discharge_mapped.json") as f:
+            for rid, entry in json.load(f).items():
+                discharge_by_rid[rid] = entry.get("discharge", {})
+    # Attach discharge to each segment in-place so the LOD builder picks it up
+    # without further plumbing.
+    if discharge_by_rid:
+        for r in raw_rivers:
+            d = discharge_by_rid.get(r["id"])
+            if not d:
+                continue
+            for seg in r.get("segments", []):
+                seg["discharge"] = d
+    print(f"  rivers: {len(raw_rivers)}, poly_match: {len(poly_match)}, polys: {len(polys_by_id)}, discharge: {len(discharge_by_rid)}")
     return raw_rivers, poly_match, polys_by_id
 
 
@@ -286,6 +300,7 @@ def build_lod_views(rivers, poly_match, polys_by_id):
                     "coordinates": simplify_geom(seg.get("coordinates", []), stride),
                     "indices": seg.get("indices", {}),
                     "risk": seg.get("risk", {}),
+                    "discharge": seg.get("discharge"),
                 })
             kept.append({**r, "segments": simplified_segments})
             match = poly_match.get(r["id"], {})
@@ -377,6 +392,7 @@ def write_segment_lods(views):
                 if include_metric_data:
                     row["indices"] = seg.get("indices", {})
                     row["risk"] = seg.get("risk", {})
+                    row["discharge"] = seg.get("discharge")
                 out_segments.append(row)
         path = DATA_DIR / f"segments_lod_{tier_idx}.json"
         with open(path, "w") as f:
