@@ -73,6 +73,33 @@ body {
 .popup-value { font-size: 14px; font-weight: 700; }
 .popup-hint { font-size: 10px; color: #94a3b8; margin-top: 6px; text-align: center; font-style: italic; }
 
+/* ===== BASEMAP SWITCHER — MUI Paper-like ===== */
+.basemap-picker {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1000;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.08);
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Inter', sans-serif;
+  color: #0f172a;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  cursor: pointer;
+  outline: none;
+}
+.basemap-picker:hover {
+  border-color: rgba(0,0,0,0.15);
+}
+.basemap-picker option {
+  background: #fff;
+  color: #0f172a;
+}
+
 /* ===== MAP LEGEND — MUI Paper-like ===== */
 .map-legend {
   position: absolute;

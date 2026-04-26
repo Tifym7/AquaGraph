@@ -20,8 +20,8 @@ from shapely.ops import linemerge
 GDB_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset", "EUHydro", "EU-Hydro.gdb")
 OUT_DIR  = os.path.join(os.path.dirname(__file__), "data")
 
-# Romania bounding box (rough, in EPSG:4326)
-RO_BBOX_WGS84 = (20.2, 43.5, 29.7, 48.3)
+# # Romania bounding box (rough, in EPSG:4326)
+# RO_BBOX_WGS84 = (20.2, 43.5, 29.7, 48.3)
 
 # ---------------------------------------------------------------------------
 # 1.  Read River_Net_l - only columns we need
@@ -35,43 +35,26 @@ gdf = gpd.read_file(GDB_PATH, layer="River_Net_l", columns=cols)
 print(f"       Total segments: {len(gdf)}")
 
 # ---------------------------------------------------------------------------
-# 2.  Filter for Romania (REX == 'RO')
-#     Some segments near borders might not have REX filled - we keep them
-#     if they spatially fall inside Romania after reprojection.
+# 2.  Skip filtering (Load entire dataset)
 # ---------------------------------------------------------------------------
-print("[2/6] Filtering for Romania")
-ro_mask = gdf["REX"] == "RO"
-gdf_ro = gdf[ro_mask].copy()
-print(f"       Romanian segments (by REX): {len(gdf_ro)}")
+print("[2/6] Keeping all segments (Entire Europe/Dataset)")
+gdf_all = gdf.copy()
 
-# Also grab border segments (BG, HU, etc.) that have nameText matching major
-# Romanian rivers (Danube especially spans multiple countries)
-major_rivers_border = gdf[
-    (~ro_mask) &
-    (gdf["nameText"].notna()) &
-    (gdf["STRAHLER"] >= 7)
-].copy()
-print(f"       Major cross-border segments (Strahler>=7): {len(major_rivers_border)}")
-
-gdf_ro = gpd.GeoDataFrame(
-    pd.concat([gdf_ro, major_rivers_border], ignore_index=True),
-    crs=gdf.crs,
-)
-# Drop the full dataset to save memory
+# Drop the full dataset reference to save memory if needed
 del gdf
 
 # ---------------------------------------------------------------------------
 # 3.  Reproject EPSG:3035 → EPSG:4326 and simplify
 # ---------------------------------------------------------------------------
 print("[3/6] Reprojecting to WGS84 and simplifying")
-gdf_ro = gdf_ro.to_crs(epsg=4326)
+gdf_all = gdf_all.to_crs(epsg=4326)
 
 # Douglas-Peucker simplification (tolerance in degrees ≈ 0.0005° ≈ 50m)
-gdf_ro["geometry"] = gdf_ro["geometry"].simplify(0.0005, preserve_topology=True)
+gdf_all["geometry"] = gdf_all["geometry"].simplify(0.0005, preserve_topology=True)
 
 # Drop empty/null geometries
-gdf_ro = gdf_ro[~gdf_ro.geometry.is_empty & gdf_ro.geometry.notna()].copy()
-print(f"       Segments after cleanup: {len(gdf_ro)}")
+gdf_all = gdf_all[~gdf_all.geometry.is_empty & gdf_all.geometry.notna()].copy()
+print(f"       Segments after cleanup: {len(gdf_all)}")
 
 # ---------------------------------------------------------------------------
 # 4.  Build named-river groups and per-segment data
@@ -79,13 +62,30 @@ print(f"       Segments after cleanup: {len(gdf_ro)}")
 print("[4/6] Grouping segments by river name")
 
 # Assign a display name - unnamed segments get "Tributary-{OBJECT_ID}"
-gdf_ro["display_name"] = gdf_ro["nameText"].fillna("")
-unnamed_mask = gdf_ro["display_name"].str.strip() == ""
-gdf_ro.loc[unnamed_mask, "display_name"] = "Unnamed-" + gdf_ro.loc[unnamed_mask, "OBJECT_ID"].astype(str)
+def clean_river_name(name):
+    if not name or not isinstance(name, str):
+        return ""
+    name = name.strip()
+    upper = name.upper()
+    # Normalize Danube (Dunarea) branches to a single river
+    if upper.startswith("DUNARE") or upper.startswith("DUNĂRE") or upper == "BRAT DUNAREA VECHE":
+        return "Dunărea"
+    
+    # Clean up other major rivers that are split by sectors (e.g., "MURES, CONF. CERNA - CONF. DOBRA")
+    for major in ["MURES", "OLT", "SIRET", "PRUT", "SOMES"]:
+        if upper.startswith(major + ",") or upper.startswith(major + " -") or upper.startswith(major + " ("):
+            if upper == "SOMESUL MIC" or upper == "SOMESUL MARE": continue # edge case
+            return name.split(",")[0].split(" -")[0].split(" (")[0].strip()
+            
+    return name
+
+gdf_all["display_name"] = gdf_all["nameText"].apply(clean_river_name)
+unnamed_mask = gdf_all["display_name"].str.strip() == ""
+gdf_all.loc[unnamed_mask, "display_name"] = "Unnamed-" + gdf_all.loc[unnamed_mask, "OBJECT_ID"].astype(str)
 
 # For named rivers, group segments together and merge geometries
-named = gdf_ro[~unnamed_mask].copy()
-unnamed = gdf_ro[unnamed_mask].copy()
+named = gdf_all[~unnamed_mask].copy()
+unnamed = gdf_all[unnamed_mask].copy()
 
 rivers_out = []
 river_id_counter = 0
@@ -184,7 +184,7 @@ print("[5/6] Building connectivity graph")
 seg_downstream = {}
 seg_upstream = defaultdict(list)
 
-for _, row in gdf_ro.iterrows():
+for _, row in gdf_all.iterrows():
     oid = row["OBJECT_ID"]
     down = row.get("NEXTDOWNID")
     if down and isinstance(down, str) and down.strip():
