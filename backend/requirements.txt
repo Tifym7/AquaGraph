@@ -7,7 +7,7 @@ pandas==2.2.2
 numpy==1.26.4
 xarray==2024.6.0
 cfgrib==0.9.13.0
-eccodes==2.36.0
+eccodes>=1.6
 Pillow==10.4.0
 python-dotenv==1.0.1
 PyJWT==2.9.0

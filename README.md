@@ -137,7 +137,31 @@ ESA / EU grants (early funding) · Premium analytics features.
 - 🧭 Enhance upstream-source identification
 - 🤝 Connect with public authorities and industry platforms
 
-## 🚀 Setup
+## 🐳 Docker (one-command setup)
+
+The whole stack — PostgreSQL, Flask backend, Vite frontend — is defined in a
+single `Dockerfile` + `docker-compose.yml`. Postgres auto-initializes from the
+project's existing `backend/db.sql` script on first start (no manual psql).
+
+```bash
+docker compose up --build
+```
+
+Then open <http://localhost:5173>. The backend is on
+<http://localhost:5000/api>, and Postgres is exposed on `localhost:5432`
+(user `user`, password `password`, database `aquagraph`).
+
+To wipe the database and re-run the init script, drop the volume:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+If you'd rather run things directly on the host, follow the manual setup
+below.
+
+## 🚀 Setup (manual)
 
 ### 0. System prerequisites (Debian / Ubuntu)
 
@@ -185,6 +209,21 @@ export DB_URL=postgresql://localhost:5432/aquagraph
 export DB_USER=postgres
 export DB_PASSWORD=mysecretpassword
 ```
+
+The auth + campaigns features need a PostgreSQL database. Bootstrap it from
+the project's seed script — `backend/db.sql` creates the `aquagraph`
+database (only if it isn't already there), all required tables (users,
+pending verifications, campaigns, participants), and seeds a few example
+campaigns:
+
+```bash
+sudo -u postgres psql -f backend/db.sql
+```
+
+The script is idempotent — safe to re-run on an existing install. The
+`CREATE DATABASE` step is guarded by an existence check, every `CREATE
+TABLE` uses `IF NOT EXISTS`, and the seed `INSERT` ends in `ON CONFLICT
+(campaign_name) DO NOTHING`.
 
 ### 2. Frontend (React + Vite)
 

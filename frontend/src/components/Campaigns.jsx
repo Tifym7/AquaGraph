@@ -126,7 +126,7 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
   // ── Dacă suntem pe view=add, randăm formularul ──
   if (view === 'add') {
     return (
-      <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa' }}>
+      <Box sx={{ height: '100vh', overflowY: 'auto', bgcolor: '#fafafa' }}>
         {/* AppBar cu back */}
         <AppBar position="sticky" elevation={0} sx={{
           background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)`,

@@ -32,7 +32,7 @@ export const CLICK_OVERLAY_ZOOM_THRESHOLD = 10
 /* At this zoom and above we fetch detailed water polygons for the current
    viewport and render them as actual filled vector shapes (lakes, wide
    river channels). Below this we rely on the rasterized polygon paint. */
-export const POLYGON_ZOOM_THRESHOLD = 14
+export const POLYGON_ZOOM_THRESHOLD = 12
 
 /* Shared metric metadata used by the sidebar's selector and detail labels.
    The full gradient definitions still live next to the rendering layers in
