@@ -140,6 +140,7 @@ useEffect(() => {
             onBack={() => setPage('map')}
             onGoToLogin={() => setPage('login')}
             onGoToRegister={() => setPage('register')}
+            onGoToCampaigns={() => setPage('campaigns')}
             user={user}
             onLogout={handleLogout}
         />
@@ -157,6 +158,7 @@ useEffect(() => {
         onGoToRegister={() => setPage('register')}
         onGoToNewsletter={() => setPage('newsletter')}
         onGoToAddCampaign={() => setPage('add-campaign')}
+        onGoToCampaigns={() => setPage('campaigns')}
         user={user}
         onLogout={handleLogout}
       />

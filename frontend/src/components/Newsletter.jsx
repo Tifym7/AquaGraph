@@ -10,6 +10,7 @@ import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import EmailIcon from '@mui/icons-material/Email'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import CampaignIcon from '@mui/icons-material/Campaign'
 import { fetchNews } from '../utils.js'
 
 // Paleta de culori
@@ -24,7 +25,7 @@ const C = {
   lightest: '#e0aaff',
 }
 
-export default function Newsletter({ onBack, onGoToLogin, onGoToRegister, user, onLogout }) {
+export default function Newsletter({ onBack, onGoToLogin, onGoToRegister, onGoToCampaigns, user, onLogout }) {
   const [articles, setArticles] = useState([])
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState(null)
@@ -109,6 +110,12 @@ async function fetchWaterPollutionNews() {
           >
             Newsletter
           </Button>
+          <Button startIcon={<CampaignIcon />}
+                        size="small"
+                        onClick={onGoToCampaigns}
+                        sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
+                  Campaigns
+                </Button>
           {user ? (
               <Avatar
                   onClick={onLogout}
