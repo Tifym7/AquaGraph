@@ -21,17 +21,32 @@ const BASEMAP_OPTIONS = [
 ]
 
 const METRIC_OPTIONS = [
-  { key: 'pollution', label: 'Pollution Risk',     gradient: ['#4caf50','#8bc34a','#ffeb3b','#ff9800','#f44335','#e53935'], labels: ['Clean','Moderate','Critical'] },
-  { key: 'risk',      label: 'Risk Score',          gradient: ['#4caf50','#ffeb3b','#ff9800','#f44335','#9c27b0'], labels: ['Low','Medium','Critical'] },
-  { key: 'NDVI',      label: 'NDVI (vegetation)',   gradient: ['#1e428f','#00aaff','#49d0d1','#74dc23','#ffc600','#d40746'], labels: ['Low Veg','Moderate','Dense'] },
-  { key: 'MNDWI',     label: 'MNDWI (water)',       gradient: ['#ff5252','#ffee58','#4caf50','#00897b','#1e428f'], labels: ['No Water','Moderate','High Water'] },
-  { key: 'NDCI',      label: 'NDCI (chlorophyll)',  gradient: ['#4caf50','#ffeb3b','#e53935'], labels: ['Low','Moderate','High'] },
-  { key: 'TURBIDITY', label: 'TURBIDITY (sediment)', gradient: ['#0055cc','#00aaff','#49d0d1','#74dc23','#ffc600','#e53935'], labels: ['Clear','Moderate','High Turbidity'] },
-  { key: 'water',     label: 'Water Index',         gradient: ['#0055cc','#00aaff','#49d0d1'], labels: ['No Water','Moderate','High Water'] },
-  { key: 'land',      label: 'Land Index',          gradient: ['#ff9800','#d4a76a','#653215'], labels: ['Low Land','Moderate','High Land'] },
+  { key: 'pollution', label: 'Pollution Risk', gradient: ['#4caf50', '#8bc34a', '#ffeb3b', '#ff9800', '#f44335', '#e53935'], labels: ['Clean', 'Moderate', 'Critical'] },
+  { key: 'risk', label: 'Risk Score', gradient: ['#4caf50', '#ffeb3b', '#ff9800', '#f44335', '#9c27b0'], labels: ['Low', 'Medium', 'Critical'] },
+  { key: 'NDVI', label: 'NDVI (vegetation)', gradient: ['#1e428f', '#00aaff', '#49d0d1', '#74dc23', '#ffc600', '#d40746'], labels: ['Low Veg', 'Moderate', 'Dense'] },
+  { key: 'MNDWI', label: 'MNDWI (water)', gradient: ['#ff5252', '#ffee58', '#4caf50', '#00897b', '#1e428f'], labels: ['No Water', 'Moderate', 'High Water'] },
+  { key: 'NDCI', label: 'NDCI (chlorophyll)', gradient: ['#4caf50', '#ffeb3b', '#e53935'], labels: ['Low', 'Moderate', 'High'] },
+  { key: 'TURBIDITY', label: 'TURBIDITY (sediment)', gradient: ['#0055cc', '#00aaff', '#49d0d1', '#74dc23', '#ffc600', '#e53935'], labels: ['Clear', 'Moderate', 'High Turbidity'] },
+  { key: 'water', label: 'Water Index', gradient: ['#0055cc', '#00aaff', '#49d0d1'], labels: ['No Water', 'Moderate', 'High Water'] },
+  { key: 'land', label: 'Land Index', gradient: ['#ff9800', '#d4a76a', '#653215'], labels: ['Low Land', 'Moderate', 'High Land'] },
 ]
 
 const LOD_FADE_MS = 350
+
+function InitialRegionSetter({ initialRegion }) {
+  const map = useMap()
+
+  useEffect(() => {
+    if (initialRegion) {
+      map.setView([initialRegion.lat, initialRegion.lng], initialRegion.zoom, {
+        animate: true,
+        duration: 1.5
+      })
+    }
+  }, [map, initialRegion])
+
+  return null
+}
 
 /* Centralized pane setup: create every custom pane once with the right
    z-index, BEFORE any layer tries to render into them. Doing this via
@@ -153,9 +168,9 @@ function RiverHitArea({ segment, onSegmentClick, onSegmentHover, isSelected }) {
 function bboxIntersects(segBbox, mapBounds) {
   if (!segBbox || !mapBounds) return false
   const s = mapBounds.getSouth(), n = mapBounds.getNorth()
-  const w = mapBounds.getWest(),  e = mapBounds.getEast()
+  const w = mapBounds.getWest(), e = mapBounds.getEast()
   return !(segBbox.max_lon < w || segBbox.min_lon > e ||
-           segBbox.max_lat < s || segBbox.min_lat > n)
+    segBbox.max_lat < s || segBbox.min_lat > n)
 }
 
 function gradientColor(value, gradient) {
@@ -334,7 +349,7 @@ function isPolygonWideEnough(p) {
 function bboxesOverlap(a, b) {
   if (!a || !b) return false
   return !(a.max_lon < b.min_lon || a.min_lon > b.max_lon ||
-           a.max_lat < b.min_lat || a.min_lat > b.max_lat)
+    a.max_lat < b.min_lat || a.min_lat > b.max_lat)
 }
 
 function pickPolylineInPolygon(poly, segments) {
@@ -349,7 +364,7 @@ function pickPolylineInPolygon(poly, segments) {
       for (const pt of line) {
         totalPts++
         if (pt[0] >= pb.min_lat && pt[0] <= pb.max_lat &&
-            pt[1] >= pb.min_lon && pt[1] <= pb.max_lon) inside++
+          pt[1] >= pb.min_lon && pt[1] <= pb.max_lon) inside++
       }
     }
     if (totalPts < 2) continue
@@ -620,7 +635,7 @@ function SelectedRiverOverlay({ river, metric }) {
 const ROMANIA_CENTER = [45.9432, 24.9668]
 const ROMANIA_BOUNDS = [[43.5, 20.2], [48.3, 30.0]]
 
-export default function MapView({ segmentLods, activeLod, selectedRiver, onRiverSelect, onZoomChange, metric, onMetricChange }) {
+export default function MapView({ segmentLods, activeLod, selectedRiver, onRiverSelect, onZoomChange, metric, onMetricChange, initialRegion }) {
   const [activeBaseMap, setActiveBaseMap] = useState('carto-light')
   const [hoveredSegment, setHoveredSegment] = useState(null)
   const [riverDetail, setRiverDetail] = useState(null)
@@ -719,6 +734,10 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
         <RiverFocus selectedRiver={selectedRiver} />
         <ZoomReporter onZoomChange={onZoomChange} onLocalZoomChange={setLocalZoom} />
         <ViewportReporter onBoundsChange={setMapBounds} />
+        <InitialRegionSetter initialRegion={initialRegion} />
+
+        {/* Listen to map events */}
+        {/* <MapEventHandler onMapChange={onMapChange} /> */}
 
         <LodTransitioner
           segmentLods={segmentLods}

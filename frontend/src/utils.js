@@ -189,36 +189,36 @@ export async function fetchDownstream(riverId) {
   }
 }
 
+export async function fetchNews() {
+  try {
+    const response = await axios.get(`${API_BASE}/news`)
+    return response.data.articles || []
+  } catch (error) {
+    console.error('Failed to fetch news:', error)
+    return []
+  }
+}
+
 /**
  * Get a color on the green → yellow → red gradient based on pollution level (0-1).
  */
 export function getPollutionColor(level) {
   const t = Math.max(0, Math.min(1, level))
-  let r, g, b
+  const stops = [
+    [30,  100, 255],
+    [0,   200, 255],
+    [255, 220,   0],
+    [255,  80,   0],
+    [180,   0,   0],
+  ]
 
-  if (t < 0.25) {
-    const p = t / 0.25
-    r = Math.round(16 + p * (132 - 16))
-    g = Math.round(185 + p * (204 - 185))
-    b = Math.round(129 + p * (22 - 129))
-  } else if (t < 0.5) {
-    const p = (t - 0.25) / 0.25
-    r = Math.round(132 + p * (245 - 132))
-    g = Math.round(204 + p * (158 - 204))
-    b = Math.round(22 + p * (11 - 22))
-  } else if (t < 0.75) {
-    const p = (t - 0.5) / 0.25
-    r = Math.round(245 + p * (239 - 245))
-    g = Math.round(158 + p * (68 - 158))
-    b = Math.round(11 + p * (68 - 11))
-  } else {
-    const p = (t - 0.75) / 0.25
-    r = Math.round(239 + p * (153 - 239))
-    g = Math.round(68 + p * (27 - 68))
-    b = Math.round(68 + p * (27 - 68))
-  }
+  const segment = Math.min(Math.floor(t * 4), 3)
+  const p = (t * 4) - segment
 
-  return `rgb(${r}, ${g}, ${b})`
+  const [r1, g1, b1] = stops[segment]
+  const [r2, g2, b2] = stops[segment + 1]
+
+  return `rgb(${Math.round(r1 + p * (r2 - r1))}, ${Math.round(g1 + p * (g2 - g1))}, ${Math.round(b1 + p * (b2 - b1))})`
 }
 
 /**

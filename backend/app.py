@@ -13,9 +13,19 @@ lightweight click-overlay JSONs.
 """
 
 import json
+import math
+import datetime
 import os
 from flask import Flask, jsonify, request, send_file, send_from_directory, Response
 from flask_cors import CORS
+import urllib.request
+import xml.etree.ElementTree as ET
+
+from user.services.campaign_service import CampaignService
+from user.model.campaign import Campaign
+from auth import auth_bp
+from user.persistence.campaign_db_repository import CampaignDBRepository
+
 
 from metrics import (
     METRIC_LABELS,
@@ -27,6 +37,16 @@ from metrics import (
 )
 
 app = Flask(__name__)
+app.register_blueprint(auth_bp)
+
+_campaign_repo = CampaignDBRepository(
+    url=os.getenv('DB_URL', 'postgresql://localhost:5432/aquagraph'),
+    username=os.getenv('DB_USER', 'postgres'),
+    password=os.getenv('DB_PASSWORD', 'mysecretpassword'),
+)
+
+_campaign_service = CampaignService(_campaign_repo)
+
 CORS(app)
 
 # ===== Paths =====
@@ -378,6 +398,208 @@ def _label_from(level):
     if level >= 0.5: return "High"
     if level >= 0.3: return "Moderate"
     return "Low"
+
+@app.route('/api/news')
+def get_news():
+    import re
+    import urllib.parse
+    print(">>> /api/news called")
+
+    QUERIES = [
+        'poluarea apei Romania',
+        'calitatea apei Romania rau',
+        'poluare rau Romania 2025',
+    ]
+
+    FALLBACK = [
+        {
+            'title': 'Poluarea apei în România: situația râurilor monitorizate în 2025',
+            'url': 'https://www.digi24.ro/stiri/externe/mediu',
+            'source': 'Digi24',
+            'summary': 'Autoritățile române monitorizează calitatea apei în principalele râuri, cu accent pe zonele industriale din Prahova, Mureș și Olt.'
+        },
+        {
+            'title': 'Dunărea transportă anual mii de tone de plastic spre Marea Neagră',
+            'url': 'https://www.agerpres.ro',
+            'source': 'Agerpres',
+            'summary': 'Studiile recente arată că Dunărea este unul dintre cele mai poluate fluvii din Europa de Est, cu efecte directe asupra litoralului românesc.'
+        },
+        {
+            'title': 'Râul Argeș: depășiri ale limitelor de nitriți din cauza agriculturii',
+            'url': 'https://www.digi24.ro',
+            'source': 'Digi24',
+            'summary': 'Monitorizările din 2025 indică depășiri ale limitelor admise de nitriți în bazinul Argeș, afectând apa potabilă din județele limitrofe.'
+        },
+        {
+            'title': 'Fabrici amendate pentru deversări ilegale în râul Mureș',
+            'url': 'https://www.agerpres.ro',
+            'source': 'Agerpres',
+            'summary': 'Mai multe fabrici din județul Mureș au fost amendate pentru deversări ilegale de substanțe chimice, periclitând ecosistemul local.'
+        },
+        {
+            'title': 'Microplasticele afectează fauna marină de pe litoralul românesc',
+            'url': 'https://www.digi24.ro',
+            'source': 'Digi24',
+            'summary': 'Cercetătorii de la Institutul "Grigore Antipa" au descoperit concentrații alarmante de microplastice în apele Mării Negre la litoralul românesc.'
+        },
+        {
+            'title': 'Fonduri europene de 120 mil. euro pentru râurile poluate din România',
+            'url': 'https://www.agerpres.ro',
+            'source': 'Agerpres',
+            'summary': 'România va beneficia de fonduri europene pentru reabilitarea bazinelor hidrografice afectate de poluare industrială și agricolă.'
+        },
+    ]
+
+    try:
+        articles = []
+        for query in QUERIES:
+            if len(articles) >= 6:
+                break
+            encoded = urllib.parse.quote(query)
+            rss_url = f'https://news.google.com/rss/search?q={encoded}&hl=ro&gl=RO&ceid=RO:ro'
+            try:
+                req = urllib.request.Request(
+                    rss_url,
+                    headers={'User-Agent': 'Mozilla/5.0'}
+                )
+                with urllib.request.urlopen(req, timeout=8) as resp:
+                    content = resp.read()
+
+                root = ET.fromstring(content)
+                items = root.findall('.//item')[:2]
+
+                for item in items:
+                    title = item.findtext('title') or ''
+                    link  = item.findtext('link') or ''
+                    desc  = item.findtext('description') or ''
+                    source_el = item.find('source')
+                    source = source_el.text if source_el is not None else 'Google News'
+                    desc_clean = re.sub('<[^>]+>', '', desc).strip()
+                    desc_clean = desc_clean.replace('&nbsp;', ' ').replace('&amp;', '&').replace('&lt;', '<').replace(
+                        '&gt;', '>').replace('&quot;', '"')
+                    desc_clean = ' '.join(desc_clean.split())
+                    desc_clean = desc_clean[:220] + '...'
+                    articles.append({
+                        'title': title,
+                        'url': link,
+                        'source': source,
+                        'summary': desc_clean,
+                    })
+            except Exception as feed_err:
+                print(f"Query '{query}' failed: {feed_err}")
+                continue
+
+        if articles:
+            return jsonify({'articles': articles[:6]})
+        return jsonify({'articles': FALLBACK})
+
+    except Exception as e:
+        print(f"News fetch failed: {e}")
+        return jsonify({'articles': FALLBACK})
+
+@app.route('/api/campaigns', methods=['GET'])
+def get_campaigns():
+    try:
+        campaigns = _campaign_repo.get_all_campaigns()
+        return jsonify({
+            'campaigns': [
+                {
+                    'id': c.get_campaign_id(),
+                    'campaign_name': c.get_campaign_name(),
+                    'organization_name': c.get_organization_name(),
+                    'river_name': c.get_river_name(),
+                    'coordinates': c.get_coordinates(),
+                    'start_date': str(c.get_start_date()),
+                    'end_date': str(c.get_end_date()),
+                    'likes': c.get_likes(),
+                    'participants': c.get_participants(),
+                }
+                for c in campaigns
+            ]
+        })
+    except Exception as e:
+        print(f"Error fetching campaigns: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<int:campaign_id>/participate', methods=['POST'])
+def participate_campaign(campaign_id):
+    try:
+        data = request.get_json()
+        email = data.get('email')
+        if not email:
+            return jsonify({'error': 'Email lipsă'}), 400
+        campaign = _campaign_repo.get_campaign_by_id(campaign_id)
+        if not campaign:
+            return jsonify({'error': 'Campanie negăsită'}), 404
+        _campaign_repo.add_participant(campaign_id, email)
+        return jsonify({'message': 'Înscris cu succes'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<int:campaign_id>/like', methods=['POST'])
+def like_campaign(campaign_id):
+    try:
+        campaign = _campaign_repo.get_campaign_by_id(campaign_id)
+        if not campaign:
+            return jsonify({'error': 'Campanie negăsită'}), 404
+        campaign.set_likes(campaign.get_likes() + 1)
+        _campaign_repo.update_campaign(campaign)
+        return jsonify({'likes': campaign.get_likes()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/campaigns/<int:campaign_id>/unlike', methods=['POST'])
+def unlike_campaign(campaign_id):
+    try:
+        campaign = _campaign_repo.get_campaign_by_id(campaign_id)
+        if not campaign:
+            return jsonify({'error': 'Campanie negăsită'}), 404
+        campaign.set_likes(max(0, campaign.get_likes() - 1))
+        _campaign_repo.update_campaign(campaign)
+        return jsonify({'likes': campaign.get_likes()}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/campaigns', methods=['POST'])
+def create_campaign():
+    try:
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({'error': 'JSON body lipsa'}), 400
+
+        required = ['campaignName', 'organizationName', 'riverName', 'startDate', 'endDate']
+        for field in required:
+            if not data.get(field):
+                return jsonify({'error': f'Câmpul {field} este obligatoriu'}), 400
+
+        if data['endDate'] < data['startDate']:
+            return jsonify({'error': 'endDate nu poate fi înainte de startDate'}), 400
+
+        coords = data.get('coordinates', {})
+        lat = coords.get('lat', '')
+        lng = coords.get('lng', '')
+        coordinates_str = f"{lat},{lng}" if lat and lng else "0,0"
+
+        campaign = Campaign(
+            campaign_id=None,
+            campaign_name=data['campaignName'],
+            organization_name=data['organizationName'],
+            river_name=data['riverName'],
+            coordinates=coordinates_str,
+            start_date=data['startDate'],
+            end_date=data['endDate'],
+            likes=0,
+            participants=[],
+        )
+
+        saved = _campaign_service.create_campaign(campaign)
+        return jsonify(_campaign_to_dict(saved)), 201
+
+
+    except Exception as e:
+        print(f"Error creating campaign: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == "__main__":
     print(f"Loaded {len(RIVERS_BY_ID)} rivers with graph data")
