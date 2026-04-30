@@ -1,1 +1,49 @@
 /* MUI's CssBaseline handles global resets — keep this minimal */
+
+/* Metric raster tile layer: subtle fade keeps adjacent tiles from popping
+   while their PNGs decode. Leaflet already keeps parent tiles visible while
+   children load, so combined with this fade the overall transition is smooth. */
+.metric-tile-layer .leaflet-tile {
+  transition: opacity 220ms ease-out;
+}
+
+/* The hit-area polylines have stroke-opacity 0 by default. Without this,
+   SVG's `visiblePainted` default would block pointer events on transparent
+   paths — `pointer-events: stroke` ignores opacity and triggers events
+   anywhere along the stroked path. */
+.leaflet-overlay-pane svg path.leaflet-interactive {
+  pointer-events: stroke;
+  cursor: pointer;
+}
+
+
+/* Duck markers — tiny floating critters on the rivers at z>=14.
+   The wrapper scales between 0 and 1 to pop in / fade out cutely;
+   the inner img only gets tiny dash-time scale bumps. */
+.leaflet-marker-icon.duck-icon {
+  background: transparent;
+  border: 0;
+  pointer-events: none;
+}
+.duck-wrap {
+  width: 60px;
+  height: 44px;
+  display: block;
+  position: relative;
+  transform-origin: center;
+  /* Slow ease-out pop in / out; the cubic curve overshoots gently. */
+  transition: transform 1400ms cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+.duck-wrap img {
+  width: 60px;
+  height: 44px;
+  display: block;
+  transform-origin: center;
+  /* Soft shadow gives the impression of floating on water. */
+  filter: drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.28));
+  /* Slow horizontal flip when the duck reverses direction — it visibly
+     turns around through scaleX(0) without any rotation. */
+  transition: transform 600ms cubic-bezier(0.4, 0, 0.4, 1);
+  user-select: none;
+  -webkit-user-drag: none;
+}

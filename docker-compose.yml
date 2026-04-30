@@ -1,0 +1,47 @@
+# Bring the whole stack up with: `docker compose up --build`
+#
+# - `db`  : PostgreSQL 16. On first start, runs the schema/seed script in
+#           backend/db (CREATE DATABASE line is stripped — postgres has
+#           already created the DB named in POSTGRES_DB).
+# - `app` : single image running the Flask backend (5000) + Vite dev
+#           server (5173). The frontend points at http://localhost:5000/api,
+#           so both ports are published to the host.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: aquagraph
+    volumes:
+      - aquagraph-pgdata:/var/lib/postgresql/data
+      - ./backend/db.sql:/aquagraph-db.sql:ro
+      - ./docker/init-aquagraph-db.sh:/docker-entrypoint-initdb.d/init-aquagraph-db.sh:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d aquagraph"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_URL: postgresql://db:5432/aquagraph
+      DB_USER: user
+      DB_PASSWORD: password
+      SECRET_KEY: change-me-in-production
+      TOKEN_EXPIRY_HOURS: "24"
+    ports:
+      - "5000:5000"
+      - "5173:5173"
+
+volumes:
+  aquagraph-pgdata:

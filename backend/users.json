@@ -1,0 +1,14 @@
+{
+  "admin": {
+    "password_hash": "scrypt:32768:8:1$A8oTk8CtMeTFvmmP$6afb54067e78ffdd21c9d2066951ffcecd4198d46caecce82d6627fba3c8ae1269685cf63656e237091bc140b5e690ea73925516e56b0f3e332154708b6d429c",
+    "role": "admin",
+    "name": "Administrator"
+  },
+  "adminA": {
+    "password_hash": "scrypt:32768:8:1$TjuAyNUpm2783Idd$9bb753e160b17be0f188e4c10e74430e30753b011426db3bcb061f14061e9af2fb2ff2c0e74e5ace78bf51542e0a81a7ac8e4d96834de40fb96e713c34536ea6",
+    "role": "user",
+    "name": "adminA",
+    "email": "adminA@gmail.com",
+    "region": "dolj"
+  }
+}

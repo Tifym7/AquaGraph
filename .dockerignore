@@ -1,0 +1,13 @@
+# Keep the build context small — these are huge and not needed inside the image.
+backend/venv
+backend/__pycache__
+backend/**/__pycache__
+backend/.env
+frontend/node_modules
+frontend/dist
+**/.DS_Store
+.git
+.idea
+.vscode
+*.log
+backend/backend.log
