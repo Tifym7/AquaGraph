@@ -1,6 +1,7 @@
 # AquaGraph — Satellite Water Pollution Monitor
 
-Built for the **Cassini Hackathon 2026, 11th edition — "Space for Water"**, the
+Built for the **Cassini Hackathon 2026, 11th edition — "Space
+ for Water"**, the
 EU-funded challenge to use Copernicus Earth-observation data and Galileo
 positioning to protect, monitor, and sustainably manage Europe's water
 resources.
@@ -8,7 +9,7 @@ resources.
 ## Objective
 
 Monitor pollution across Romania's full river network in near real-time using
-fSentinel-1 and Sentinel-2 imagery, making contamination visible to industry,
+Sentinel-1 and Sentinel-2 imagery, making contamination visible to industry,
 government, and citizens before it causes irreversible damage.
 
 ## What AquaGraph offers
