@@ -47,10 +47,26 @@ services:
       TOKEN_EXPIRY_HOURS: "24"
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
       GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
-    ports:
-      # Host :80 → container :5000. Cloudflare terminates TLS and proxies
-      # HTTPS down to this plain-HTTP origin.
-      - "80:5000"
+    # No host port published on purpose: the app is NOT exposed on the VM's
+    # public IP. The only ingress is the cloudflared tunnel below, which
+    # reaches this container over the private compose network at app:5000.
+    expose:
+      - "5000"
+
+  # Cloudflare Tunnel: makes an OUTBOUND connection to Cloudflare's edge and
+  # forwards aquagraph.org traffic to http://app:5000. Nothing listens on the
+  # VM's public IP, so the origin can't be hit directly, visitors can only
+  # reach the site via https://aquagraph.org. The public-hostname → app:5000
+  # mapping is configured in the Cloudflare Zero Trust dashboard (see
+  # deploy/README.md §5); this container just runs the tunnel by token.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+    depends_on:
+      - app
 
 volumes:
   aquagraph-pgdata:
