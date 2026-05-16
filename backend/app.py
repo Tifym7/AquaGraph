@@ -16,7 +16,7 @@ import json
 import math
 import datetime
 import os
-from flask import Flask, jsonify, request, send_file, send_from_directory, Response
+from flask import Flask, jsonify, request, send_file, send_from_directory, Response, abort
 from flask_cors import CORS
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -52,6 +52,12 @@ CORS(app)
 # ===== Paths =====
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 TILES_DIR = os.path.join(DATA_DIR, "tiles")
+
+# Built React app (produced by `vite build` → frontend/dist). In production
+# Flask serves it directly so the whole app is one origin / one port.
+FRONTEND_DIST = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
+)
 
 with open(os.path.join(DATA_DIR, "rivers_romania.json")) as f:
     RAW_RIVERS = json.load(f)
@@ -655,6 +661,21 @@ def create_campaign():
     except Exception as e:
         print(f"Error creating campaign: {e}")
         return jsonify({'error': str(e)}), 500
+
+# ===== Frontend (SPA) =====
+# Anything not matched by an /api/* route above is served from the built
+# frontend. Real files (JS/CSS/assets) are returned as-is; every other path
+# falls back to index.html so client-side routing works on deep links.
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
+def serve_frontend(path):
+    if path.startswith("api/"):
+        abort(404)
+    candidate = os.path.join(FRONTEND_DIST, path)
+    if path and os.path.isfile(candidate):
+        return send_from_directory(FRONTEND_DIST, path)
+    return send_from_directory(FRONTEND_DIST, "index.html")
+
 
 if __name__ == "__main__":
     print(f"Loaded {len(RIVERS_BY_ID)} rivers with graph data")
