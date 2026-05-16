@@ -448,8 +448,8 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
         className: 'duck-icon',
         // Mount at scale(0) so the CSS transition can pop the duck in.
         html: `<div class="duck-wrap" style="transform:scale(0)"><img src="${duckUrl}" alt="" /></div>`,
-        iconSize: [60, 44],
-        iconAnchor: [30, 22],
+        iconSize: [90, 66],
+        iconAnchor: [45, 33],
       })
       const m = L.marker(start, { icon, interactive: false, pane: 'ducks-pane', keyboard: false })
       m.addTo(map)
