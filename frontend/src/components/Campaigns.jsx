@@ -1,19 +1,18 @@
 import { useState, useEffect } from 'react'
 import {
-  Box, AppBar, Toolbar, Typography, Chip, Button,
+  Box, AppBar, Toolbar, Typography, Button,
   CircularProgress, Alert, Avatar, Fab, Snackbar, IconButton
 } from '@mui/material'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
-import LoginIcon from '@mui/icons-material/Login'
-import PersonAddIcon from '@mui/icons-material/PersonAdd'
+import HomeIcon from '@mui/icons-material/Home'
+import MapIcon from '@mui/icons-material/Map'
 import EmailIcon from '@mui/icons-material/Email'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import CampaignIcon from '@mui/icons-material/Campaign'
 import AddIcon from '@mui/icons-material/Add'
 import WaterIcon from '@mui/icons-material/Water'
 import GroupsIcon from '@mui/icons-material/Groups'
 import FavoriteIcon from '@mui/icons-material/Favorite'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import axios from 'axios'
 import CampaniiForm from './CampaignsForm.jsx'
 
@@ -37,10 +36,15 @@ const FALLBACK_CAMPAIGNS = [
   { id: 4, campaign_name: 'Argeșul Curat', organization_name: 'Voluntari pentru Natură', river_name: 'Argeș', coordinates: '44.9,25.1', start_date: '2025-08-01', end_date: '2025-09-01', likes: 38, participants: [] },
 ]
 
-export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToNewsletter, user, onLogout }) {
-  // 'list' | 'add'
-  const [view, setView] = useState('list')
+const NAV_BTN = {
+  color: '#fff',
+  border: '1px solid rgba(255,255,255,0.25)',
+  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
+  px: 1.5,
+}
 
+export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToNewsletter, user, onLogout }) {
+  const [view, setView] = useState('list')
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -48,11 +52,8 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
   const [participating, setParticipating] = useState({})
   const [likes, setLikes] = useState({})
   const [likedCampaigns, setLikedCampaigns] = useState({})
-  const [pendingCampaign, setPendingCampaign] = useState(null)
 
-  useEffect(() => {
-    fetchCampaigns()
-  }, [])
+  useEffect(() => { fetchCampaigns() }, [])
 
   async function fetchCampaigns() {
     setLoading(true)
@@ -76,22 +77,15 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
   }
 
   async function handleParticipate(campaign) {
-    if (!user) {
-      setPendingCampaign(campaign)
-      onGoToLogin && onGoToLogin();
-      return
-    }
+    if (!user) { onGoToLogin && onGoToLogin(); return }
     setParticipating(p => ({ ...p, [campaign.id]: true }))
     try {
-      await axios.post(
-        `${API_BASE}/campaigns/${campaign.id}/participate`,
-        { email: user.email },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('aq_token')}` } }
-      )
-      setSnackbar({ open: true, message: 'Te-ai înscris cu succes la campanie!' })
+      await axios.post(`${API_BASE}/campaigns/${campaign.id}/participate`, { email: user.email },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('aq_token')}` } })
+      setSnackbar({ open: true, message: 'Successfully joined the campaign!' })
       fetchCampaigns()
     } catch (err) {
-      setSnackbar({ open: true, message: err.response?.data?.error || 'Eroare la înscriere.' })
+      setSnackbar({ open: true, message: err.response?.data?.error || 'Error joining campaign.' })
     } finally {
       setParticipating(p => ({ ...p, [campaign.id]: false }))
     }
@@ -104,121 +98,81 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
       const res = await axios.post(`${API_BASE}/campaigns/${campaign.id}/${endpoint}`)
       setLikes(l => ({ ...l, [campaign.id]: res.data.likes }))
       setLikedCampaigns(l => ({ ...l, [campaign.id]: !alreadyLiked }))
-    } catch (err) {
-      console.error(err)
-    }
+    } catch (err) { console.error(err) }
   }
 
   async function handleFormSubmit(payload) {
-    await axios.post(`${API_BASE}/campaigns`, payload, {
-    headers: { Authorization: `Bearer ${localStorage.getItem('aq_token')}` }
-  })
+    await axios.post(`${API_BASE}/campaigns`, payload,
+      { headers: { Authorization: `Bearer ${localStorage.getItem('aq_token')}` } })
   }
 
-  const handleBackToList = () => {
-    fetchCampaigns()
-    setView('list')
+  const handleBackToList = () => { fetchCampaigns(); setView('list') }
+  const isParticipant = (campaign) => user && campaign.participants?.includes(user.email)
+
+  const handleMapClick = () => {
+    if (user) onGoToMap()
+    else onGoToLogin()
   }
 
-  const isParticipant = (campaign) =>
-    user && campaign.participants?.includes(user.email)
+  // Navbar comuna
+  const NavBar = ({ currentPage = 'campaigns', onBack: handleBack }) => (
+    <AppBar position="sticky" elevation={0} sx={{
+      background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)`,
+      boxShadow: '0 2px 12px rgba(109,40,217,0.35)',
+    }}>
+      <Toolbar sx={{ gap: 1.5, minHeight: currentPage === 'add' ? undefined : '95px !important' }}>
+        <SatelliteAltIcon sx={{ fontSize: 28 }} />
+        <Box sx={{ flexGrow: 0, mr: 2 }}>
+          <Typography variant="h6" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px', color: '#fff' }}>AquaGraph</Typography>
+          <Typography variant="caption" sx={{ opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#fff' }}>
+            Satellite Water Pollution Monitor
+          </Typography>
+        </Box>
+        <Box sx={{ flexGrow: 1 }} />
 
-  // ── Dacă suntem pe view=add, randăm formularul ──
+        {currentPage === 'add' ? (
+          <Button startIcon={<ArrowBackIcon />} size="small" onClick={handleBack} sx={NAV_BTN}>
+            Back to Campaigns
+          </Button>
+        ) : (
+          <>
+            <Button startIcon={<HomeIcon />} size="small" onClick={onGoToHome ?? onBack} sx={NAV_BTN}>Home</Button>
+            <Button startIcon={<MapIcon />} size="small" onClick={handleMapClick} sx={NAV_BTN}>Map</Button>
+            <Button startIcon={<EmailIcon />} size="small" onClick={onGoToNewsletter} sx={NAV_BTN}>Newsletter</Button>
+            <Button startIcon={<CampaignIcon />} size="small" sx={{
+              color: C.lightest, border: `1px solid ${C.light1}`,
+              bgcolor: 'rgba(199,125,255,0.15)', '&:hover': { bgcolor: 'rgba(199,125,255,0.25)' }, px: 1.5,
+            }}>
+              Campaigns
+            </Button>
+            {user && (
+              <Avatar onClick={onLogout} title="Logout"
+                sx={{ width: 34, height: 34, bgcolor: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', border: '2px solid rgba(255,255,255,0.4)', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
+                {user.username?.[0]?.toUpperCase() || 'U'}
+              </Avatar>
+            )}
+          </>
+        )}
+      </Toolbar>
+    </AppBar>
+  )
+
   if (view === 'add') {
     return (
       <Box sx={{ height: '100vh', overflowY: 'auto', bgcolor: '#fafafa' }}>
-        {/* AppBar cu back */}
-        <AppBar position="sticky" elevation={0} sx={{
-          background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)`,
-          boxShadow: '0 2px 12px rgba(109,40,217,0.35)',
-        }}>
-          <Toolbar sx={{ gap: 1.5 }}>
-            <SatelliteAltIcon sx={{ fontSize: 28 }} />
-            <Box sx={{ flexGrow: 0, mr: 2 }}>
-              <Typography variant="h6" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px', color: '#fff' }}>
-                AquaGraph
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#fff' }}>
-                Satellite Water Pollution Monitor
-              </Typography>
-            </Box>
-            <Box sx={{ flexGrow: 1 }} />
-            <Button startIcon={<ArrowBackIcon />} size="small" onClick={handleBackToList}
-              sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
-              Back to Campaigns
-            </Button>
-          </Toolbar>
-        </AppBar>
-
+        <NavBar currentPage="add" onBack={handleBackToList} />
         <Box sx={{ maxWidth: 1200, mx: 'auto', px: { xs: 2, md: 4 }, py: 4 }}>
-          <CampaniiForm
-            user={user}
-            onSubmit={handleFormSubmit}
-            onCancel={handleBackToList}
-          />
+          <CampaniiForm user={user} onSubmit={handleFormSubmit} onCancel={handleBackToList} />
         </Box>
       </Box>
     )
   }
 
-  // ── View lista campanii ──
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', overflowY: 'auto' }}>
-
-      <AppBar position="sticky" elevation={0} sx={{
-        background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)`,
-        boxShadow: '0 2px 12px rgba(109,40,217,0.35)',
-      }}>
-        <Toolbar sx={{ gap: 1.5, minHeight: '95px !important' }}>
-          <SatelliteAltIcon sx={{ fontSize: 28 }} />
-          <Box sx={{ flexGrow: 0, mr: 2 }}>
-            <Typography variant="h6" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px', color: '#fff' }}>
-              AquaGraph
-            </Typography>
-            <Typography variant="caption" sx={{ opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#fff' }}>
-              Satellite Water Pollution Monitor
-            </Typography>
-          </Box>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <Button startIcon={<ArrowBackIcon />} size="small" onClick={onBack}
-            sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
-            Map
-          </Button>
-
-          <Button startIcon={<EmailIcon />} size="small" onClick={onGoToNewsletter}
-            sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
-            Newsletter
-          </Button>
-
-          <Button startIcon={<CampaignIcon />} size="small"
-            sx={{ color: C.lightest, border: `1px solid ${C.light1}`, bgcolor: 'rgba(199,125,255,0.15)', '&:hover': { bgcolor: 'rgba(199,125,255,0.25)' }, px: 1.5 }}>
-            Campaigns
-          </Button>
-
-          {user ? (
-            <Avatar onClick={onLogout} title="Deconectare"
-              sx={{ width: 34, height: 34, bgcolor: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', border: '2px solid rgba(255,255,255,0.4)', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
-              {user.username?.[0]?.toUpperCase() || 'U'}
-            </Avatar>
-          ) : (
-            <>
-              <Button startIcon={<LoginIcon />} size="small" onClick={onGoToLogin}
-                sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
-                Login
-              </Button>
-              <Button startIcon={<PersonAddIcon />} size="small" onClick={onGoToRegister}
-                sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
-                Register
-              </Button>
-            </>
-          )}
-        </Toolbar>
-      </AppBar>
+      <NavBar currentPage="list" />
 
       <Box sx={{ flex: 1, px: { xs: 2, md: 6 }, py: 5, maxWidth: 1200, mx: 'auto', width: '100%' }}>
-
         <Box sx={{ mb: 5, textAlign: 'center' }}>
           <Typography variant="h4" sx={{ fontWeight: 800, color: C.mid2, letterSpacing: '-0.5px', mb: 1 }}>
             Water Cleanup Campaigns
@@ -236,8 +190,7 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
         )}
 
         {error && (
-          <Alert severity="error"
-            sx={{ bgcolor: `${C.dark2}cc`, color: C.lightest, border: `1px solid ${C.mid1}` }}
+          <Alert severity="error" sx={{ bgcolor: `${C.dark2}cc`, color: C.lightest, border: `1px solid ${C.mid1}` }}
             action={<Button size="small" sx={{ color: C.lightest }} onClick={fetchCampaigns}>Retry</Button>}>
             {error}
           </Alert>
@@ -253,14 +206,9 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
                 transition: 'transform 0.2s, box-shadow 0.2s',
                 '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 8px 32px rgba(157,78,221,0.3)' },
               }}>
-
                 <Box sx={{ bgcolor: C.dark2, px: 3, py: 2.5, borderBottom: `2px solid ${C.mid1}` }}>
                   <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                    <Box sx={{
-                      minWidth: 28, height: 28, borderRadius: '50%', bgcolor: C.mid2,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '0.75rem', fontWeight: 700, color: '#fff', mt: 0.2,
-                    }}>
+                    <Box sx={{ minWidth: 28, height: 28, borderRadius: '50%', bgcolor: C.mid2, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 700, color: '#fff', mt: 0.2 }}>
                       {i + 1}
                     </Box>
                     <Box sx={{ flex: 1 }}>
@@ -285,7 +233,7 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <GroupsIcon sx={{ fontSize: 16, color: C.mid1 }} />
                       <Typography sx={{ fontSize: '0.85rem', color: C.dark2 }}>
-                        {campaign.participants?.length || 0} participanți
+                        {campaign.participants?.length || 0} participants
                       </Typography>
                     </Box>
                   </Box>
@@ -298,32 +246,23 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
                     <Button
                       onClick={() => handleParticipate(campaign)}
                       disabled={participating[campaign.id] || isParticipant(campaign)}
-                      size="small"
-                      variant="contained"
+                      size="small" variant="contained"
                       startIcon={<GroupsIcon sx={{ fontSize: '0.85rem !important' }} />}
                       sx={{
                         bgcolor: isParticipant(campaign) ? '#e2e8f0' : C.dark2,
                         color: isParticipant(campaign) ? C.mid1 : '#fff',
-                        fontWeight: 600, fontSize: '0.8rem',
-                        px: 2, py: 0.8, borderRadius: 2,
+                        fontWeight: 600, fontSize: '0.8rem', px: 2, py: 0.8, borderRadius: 2,
                         textTransform: 'none', boxShadow: 'none',
                         '&:hover': { bgcolor: isParticipant(campaign) ? '#e2e8f0' : C.mid1, boxShadow: 'none' },
                         '&:disabled': { bgcolor: '#e2e8f0', color: C.mid1 },
                       }}
                     >
-                      {isParticipant(campaign) ? '✓ Înscris' : participating[campaign.id] ? 'Se procesează...' : 'Participate'}
+                      {isParticipant(campaign) ? '✓ Joined' : participating[campaign.id] ? 'Processing...' : 'Participate'}
                     </Button>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <IconButton
-                        onClick={() => handleLike(campaign)}
-                        size="small"
-                        sx={{
-                          color: likedCampaigns[campaign.id] ? '#e91e63' : C.mid2,
-                          '&:hover': { color: '#e91e63', bgcolor: 'rgba(233,30,99,0.08)' },
-                          transition: 'color 0.2s',
-                        }}
-                      >
+                      <IconButton onClick={() => handleLike(campaign)} size="small"
+                        sx={{ color: likedCampaigns[campaign.id] ? '#e91e63' : C.mid2, '&:hover': { color: '#e91e63', bgcolor: 'rgba(233,30,99,0.08)' }, transition: 'color 0.2s' }}>
                         <FavoriteIcon sx={{ fontSize: 20 }} />
                       </IconButton>
                       <Typography sx={{ fontSize: '0.85rem', color: C.mid1, fontWeight: 600 }}>
@@ -338,26 +277,12 @@ export default function Campaigns({ onBack, onGoToLogin, onGoToRegister, onGoToN
         )}
       </Box>
 
-      {/* FAB — deschide formularul de adaugare */}
-      <Fab
-        onClick={() => setView('add')}
-        sx={{
-          position: 'fixed', bottom: 32, right: 32,
-          bgcolor: C.mid2, color: '#fff',
-          '&:hover': { bgcolor: C.mid1 },
-          boxShadow: '0 4px 20px rgba(123,44,191,0.4)',
-        }}
-      >
+      <Fab onClick={() => setView('add')} sx={{ position: 'fixed', bottom: 32, right: 32, bgcolor: C.mid2, color: '#fff', '&:hover': { bgcolor: C.mid1 }, boxShadow: '0 4px 20px rgba(123,44,191,0.4)' }}>
         <AddIcon />
       </Fab>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={3000}
-        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
-        message={snackbar.message}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      />
+      <Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        message={snackbar.message} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} />
     </Box>
   )
 }
