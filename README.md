@@ -6,6 +6,8 @@ EU-funded challenge to use Copernicus Earth-observation data and Galileo
 positioning to protect, monitor, and sustainably manage Europe's water
 resources.
 
+**Live app: <https://aquagraph.org>**
+
 ## Objective
 
 Monitor pollution across Romania's full river network in near real-time using
@@ -22,6 +24,8 @@ government, and citizens before it causes irreversible damage.
 ## Demo
 
 [![AquaGraph demo video](https://img.youtube.com/vi/4jsgAE4RuHs/maxresdefault.jpg)](https://www.youtube.com/watch?v=4jsgAE4RuHs)
+
+Try it live: <https://aquagraph.org>
 
 Full walkthrough: <https://www.youtube.com/watch?v=4jsgAE4RuHs>
 
