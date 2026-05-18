@@ -659,10 +659,13 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
     const detail = await fetchRiver(segment.river_id, metric)
     if (!detail) return
     const matched = detail.segments?.find(s => s.object_id === segment.object_id)
-    /* If the clicked LOD object_id has no counterpart in the full river
-       detail (LOD-3 simplified ids, polygon clicks with no object_id),
-       select the whole river rather than an arbitrary segment. */
-    const selected = matched
+    /* A single-segment river IS the whole river — there's nothing to compare
+       a segment against, so select it as a whole river (no segment view).
+       Also: if the clicked LOD object_id has no counterpart in the full
+       river detail (LOD-3 simplified ids, polygon clicks with no
+       object_id), select the whole river rather than an arbitrary segment. */
+    const isSingleSegment = (detail.segments?.length || 0) <= 1
+    const selected = (matched && !isSingleSegment)
       ? { ...matched, bbox: segment.bbox || matched.bbox }
       : null
     onRiverSelect({ ...detail, selectedSegment: selected })

@@ -364,12 +364,15 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
   const risk = getSegmentRisk(river)
   const indices = getSegmentIndices(river)
   const percentage = Math.round(norm * 100)
-  const isSegmentView = !!river.selectedSegment
+  /* A single-segment river is the whole river — never show the segment
+     breadcrumb / "Segment #id" view for it, regardless of how
+     selectedSegment got set. */
+  const isSegmentView = !!river.selectedSegment && (river.segments?.length || 0) > 1
   const metricLabel = METRIC_LABELS[metric] || 'Metric'
 
   /* Segment vs. whole-river comparison — only meaningful when a segment is
      selected on a multi-segment river. */
-  const showCompare = isSegmentView && (river.segments?.length || 0) > 1
+  const showCompare = isSegmentView
   const riverNorm = showCompare ? getRiverNormalized(river) : 0
   const riverColor = getMetricColor(riverNorm, metric)
   const riverPct = Math.round(riverNorm * 100)
