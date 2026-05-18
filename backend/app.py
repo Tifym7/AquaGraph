@@ -59,11 +59,23 @@ FRONTEND_DIST = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "frontend", "dist")
 )
 
+# Startup loads several large JSON datasets synchronously. Without progress
+# output the gunicorn worker looks frozen for minutes during boot, so log
+# each step (flushed — gunicorn captures stdout as a pipe).
+import time as _time
+_t0 = _time.time()
+def _step(msg):
+    print(f"[startup +{_time.time() - _t0:5.1f}s] {msg}", flush=True)
+
+_step("loading rivers_romania.json ...")
 with open(os.path.join(DATA_DIR, "rivers_romania.json")) as f:
     RAW_RIVERS = json.load(f)
+_step(f"  rivers_romania.json loaded ({len(RAW_RIVERS)} rivers)")
 
+_step("loading river_graph.json ...")
 with open(os.path.join(DATA_DIR, "river_graph.json")) as f:
     RIVER_GRAPH = json.load(f)
+_step("  river_graph.json loaded")
 
 POLY_MATCH_PATH = os.path.join(DATA_DIR, "euhydro_poly_match.json")
 POLY_MATCH = {}
@@ -76,6 +88,7 @@ WATER_POLYS_BY_ID = {}
 WATER_POLY_BBOXES = {}
 WATER_POLYS_PATH = os.path.join(DATA_DIR, "euhydro_water_polygons.json")
 if os.path.exists(WATER_POLYS_PATH):
+    _step("loading euhydro_water_polygons.json (large) ...")
     with open(WATER_POLYS_PATH) as f:
         for p in json.load(f):
             pid = p["poly_id"]
@@ -89,6 +102,7 @@ if os.path.exists(WATER_POLYS_PATH):
                     "min_lat": min(lats), "max_lat": max(lats),
                     "min_lon": min(lons), "max_lon": max(lons),
                 }
+    _step(f"  water polygons loaded ({len(WATER_POLYS_BY_ID)})")
 
 # Inverse of POLY_MATCH so the polygon endpoint can route a polygon click
 # back to the river (and its metric value) it belongs to.
@@ -110,6 +124,7 @@ if os.path.exists(DISCHARGE_PATH):
 # Build rivers index used by detail endpoints + graph traversal.
 # Each segment gets the river's discharge attached so the unified metric
 # pipeline (metrics.get_raw_value) can read it like any other field.
+_step("building RIVERS_BY_ID index ...")
 RIVERS_BY_ID = {}
 for r in RAW_RIVERS:
     rid = r["id"]
@@ -131,6 +146,8 @@ for r in RAW_RIVERS:
         "bbox": {"min_lat": min(lats) if lats else 0, "max_lat": max(lats) if lats else 0,
                  "min_lon": min(lons) if lons else 0, "max_lon": max(lons) if lons else 0},
     }
+
+_step(f"RIVERS_BY_ID built ({len(RIVERS_BY_ID)} rivers) — startup data ready")
 
 # ===== API Endpoints =====
 def boxes_intersect(b1, b2):
@@ -410,7 +427,10 @@ def get_upstream(river_id):
     only shows up once (frontend keys break otherwise)."""
     metric = request.args.get("metric", "pollution")
     visited = set()
-    appended = set()
+    # Seed with the origin so a graph cycle (river_graph.json has them, e.g.
+    # river_361 MURES ⇄ river_3212) can never list the river inside its own
+    # upstream — a river is never its own tributary in real hydrology.
+    appended = {river_id}
     result = []
     def _walk(rid):
         if rid in visited or rid not in RIVER_GRAPH: return
@@ -444,6 +464,10 @@ def get_downstream(river_id):
         if not node or not node.get("flows_into"):
             break
         did = node["flows_into"]["id"]
+        # Cycle back to the origin (e.g. MURES → Tributary → MURES): the
+        # chain just loops, so there is no genuine further downstream river.
+        if did == river_id:
+            break
         rd = RIVERS_BY_ID.get(did)
         if rd and did not in appended:
             appended.add(did)

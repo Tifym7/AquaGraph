@@ -67,6 +67,53 @@ function getSegmentIndices(river) {
   return mostPolluted.indices || {}
 }
 
+/* Whole-river rollups for the segment-vs-river comparison. The metric value
+   reuses the backend average (avg_normalized); indices and risk have no
+   precomputed river figure, so we mean them across every segment client-side
+   — each key is averaged only over segments that actually report it. */
+function getRiverNormalized(river) {
+  if (river.avg_normalized != null) return river.avg_normalized
+  const segs = river.segments || []
+  if (!segs.length) return 0
+  return segs.reduce((sum, s) => sum + (s.normalized ?? 0), 0) / segs.length
+}
+
+function getRiverIndices(river) {
+  const segs = river.segments || []
+  if (!segs.length) return {}
+  const sums = {}
+  const counts = {}
+  for (const s of segs) {
+    for (const [k, v] of Object.entries(s.indices || {})) {
+      if (typeof v !== 'number' || Number.isNaN(v)) continue
+      sums[k] = (sums[k] ?? 0) + v
+      counts[k] = (counts[k] ?? 0) + 1
+    }
+  }
+  const out = {}
+  for (const k of Object.keys(sums)) out[k] = sums[k] / counts[k]
+  return out
+}
+
+function getRiverRisk(river) {
+  const segs = river.segments || []
+  if (!segs.length) return { score: 0, level: 'LOW', water: 0, land: 0, is_water: false }
+  let n = 0, score = 0, water = 0, land = 0, waterSeg = 0
+  for (const s of segs) {
+    const r = normalizeRisk(s.risk)
+    n += 1; score += r.score; water += r.water; land += r.land
+    if (r.is_water) waterSeg += 1
+  }
+  const avgScore = n ? score / n : 0
+  return {
+    score: Math.round(avgScore * 100) / 100,
+    level: avgScore > 3 ? 'HIGH' : avgScore > 1 ? 'MEDIUM' : 'LOW',
+    water: n ? water / n : 0,
+    land: n ? land / n : 0,
+    is_water: waterSeg * 2 >= n,
+  }
+}
+
 const INDEX_LABELS = {
   NDVI: 'NDVI (vegetation)',
   MNDWI: 'MNDWI (water)',
@@ -223,16 +270,39 @@ function PropagationSection({ riverId, onRiverClick, metric }) {
   )
 }
 
-function SatelliteIndices({ indices }) {
+const fmtIdx = v => typeof v === 'number' ? v.toFixed(4) : (v ?? '—')
+
+/* When `compare` is given, each index shows the selected segment's value
+   next to the whole-river average in a second column. */
+function SatelliteIndices({ indices, compare }) {
   if (!indices || Object.keys(indices).length === 0) return null
+  const keys = compare
+    ? Array.from(new Set([...Object.keys(indices), ...Object.keys(compare)]))
+    : Object.keys(indices)
   return (
     <Card variant="outlined" sx={{ borderRadius: 2, borderColor: C.border }}>
       <CardContent sx={{ p: '12px 14px !important' }}>
+        {compare && (
+          <Box sx={{ ...ROW_STACK_SPB, mb: 0.75 }}>
+            <Typography variant="caption" sx={{ color: C.textMuted, fontSize: 10, fontWeight: 700, textTransform: 'uppercase' }} />
+            <Stack direction="row" spacing={2}>
+              <Typography variant="caption" sx={{ color: C.textMuted, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', minWidth: 56, textAlign: 'right' }}>Segment</Typography>
+              <Typography variant="caption" sx={{ color: C.textMuted, fontSize: 10, fontWeight: 700, textTransform: 'uppercase', minWidth: 56, textAlign: 'right' }}>River avg</Typography>
+            </Stack>
+          </Box>
+        )}
         <Stack spacing={0.5}>
-          {Object.entries(indices).map(([key, value]) => (
+          {keys.map((key) => (
             <Box key={key} sx={ROW_STACK_SPB}>
               <Typography variant="caption" color="text.secondary" fontWeight={600}>{INDEX_LABELS[key] || key}</Typography>
-              <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>{typeof value === 'number' ? value.toFixed(4) : value}</Typography>
+              {compare ? (
+                <Stack direction="row" spacing={2}>
+                  <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace', minWidth: 56, textAlign: 'right' }}>{fmtIdx(indices[key])}</Typography>
+                  <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace', minWidth: 56, textAlign: 'right', color: C.textMuted }}>{fmtIdx(compare[key])}</Typography>
+                </Stack>
+              ) : (
+                <Typography variant="caption" fontWeight={700} sx={{ fontFamily: 'monospace' }}>{fmtIdx(indices[key])}</Typography>
+              )}
             </Box>
           ))}
         </Stack>
@@ -241,7 +311,9 @@ function SatelliteIndices({ indices }) {
   )
 }
 
-function SegmentRiskCards({ risk }) {
+/* `compare` (whole-river average risk) renders a muted "river avg" line
+   under each card's primary segment figure. */
+function SegmentRiskCards({ risk, compare }) {
   if (!risk) return null
   const scoreVal = risk.score ?? 0
   const scoreColor = scoreVal > 3 ? '#e53935' : scoreVal > 1 ? '#ff9800' : '#4caf50'
@@ -250,6 +322,11 @@ function SegmentRiskCards({ risk }) {
   const waterColor = waterVal > 0.5 ? '#1565c0' : '#999'
   const landColor = landVal > 0.5 ? '#ff9800' : '#999'
   const safe = v => typeof v === 'number' ? v.toFixed(3) : '—'
+  const RiverAvg = ({ children }) => (
+    <Typography variant="caption" fontWeight={700} sx={{ color: C.textMuted, display: 'block', fontSize: 10, mt: 0.25 }}>
+      River avg {children}
+    </Typography>
+  )
 
   return (
     <Stack direction="row" spacing={1}>
@@ -258,6 +335,7 @@ function SegmentRiskCards({ risk }) {
           <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', display: 'block', fontSize: 10 }}>Risk Score</Typography>
           <Typography variant="body1" fontWeight={800} sx={{ fontSize: 16, color: scoreColor }}>{scoreVal} / 5</Typography>
           <Typography variant="caption" fontWeight={600} sx={{ color: C.textMuted }}>{risk.level}</Typography>
+          {compare && <RiverAvg>{compare.score} / 5</RiverAvg>}
         </CardContent>
       </Card>
       <Card variant="outlined" sx={{ flex: 1, borderColor: C.border }}>
@@ -265,6 +343,7 @@ function SegmentRiskCards({ risk }) {
           <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', display: 'block', fontSize: 10 }}>Water Index</Typography>
           <Typography variant="body1" fontWeight={800} sx={{ fontSize: 16, color: waterColor }}>{safe(waterVal)}</Typography>
           <Typography variant="caption" fontWeight={600} sx={{ color: C.textMuted }}>{risk.is_water ? 'Water' : 'Land'}</Typography>
+          {compare && <RiverAvg>{safe(compare.water)}</RiverAvg>}
         </CardContent>
       </Card>
       <Card variant="outlined" sx={{ flex: 1, borderColor: C.border }}>
@@ -272,6 +351,7 @@ function SegmentRiskCards({ risk }) {
           <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ textTransform: 'uppercase', display: 'block', fontSize: 10 }}>Land Index</Typography>
           <Typography variant="body1" fontWeight={800} sx={{ fontSize: 16, color: landColor }}>{safe(landVal)}</Typography>
           <Typography variant="caption" fontWeight={600} sx={{ color: C.textMuted }}>{landVal > 0.5 ? 'High' : 'Low'}</Typography>
+          {compare && <RiverAvg>{safe(compare.land)}</RiverAvg>}
         </CardContent>
       </Card>
     </Stack>
@@ -286,6 +366,18 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
   const percentage = Math.round(norm * 100)
   const isSegmentView = !!river.selectedSegment
   const metricLabel = METRIC_LABELS[metric] || 'Metric'
+
+  /* Segment vs. whole-river comparison — only meaningful when a segment is
+     selected on a multi-segment river. */
+  const showCompare = isSegmentView && (river.segments?.length || 0) > 1
+  const riverNorm = showCompare ? getRiverNormalized(river) : 0
+  const riverColor = getMetricColor(riverNorm, metric)
+  const riverPct = Math.round(riverNorm * 100)
+  const riverIndices = showCompare ? getRiverIndices(river) : null
+  const riverRisk = showCompare ? getRiverRisk(river) : null
+  /* Clicking the river name in the breadcrumb drops back to the whole-river
+     view (reuses the flow-click path, which clears selectedSegment). */
+  const backToRiver = () => onRiverClick?.({ id: river.id, name: river.name })
 
   /* Consistent vertical rhythm — every detail section spaced the same. */
   const SECTION_MB = 3
@@ -303,7 +395,19 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
           <WaterIcon sx={{ color, fontSize: 28 }} />
           <Box>
             <Typography variant="h5" fontWeight={800} letterSpacing={-0.5}>{river.name}</Typography>
-            <Typography variant="caption" color="text.secondary">{isSegmentView ? `Segment ${river.selectedSegment.object_id}` : 'Full river overview'}</Typography>
+            {isSegmentView ? (
+              <Stack direction="row" alignItems="center" spacing={0.5} sx={{ mt: 0.25 }}>
+                <Typography
+                  variant="caption"
+                  onClick={backToRiver}
+                  sx={{ color: C.primary, fontWeight: 700, cursor: 'pointer', '&:hover': { textDecoration: 'underline' } }}
+                >‹ {river.name}</Typography>
+                <Typography variant="caption" sx={{ color: C.textMuted }}>/</Typography>
+                <Typography variant="caption" color="text.secondary" fontWeight={600}>Segment #{river.selectedSegment.object_id}</Typography>
+              </Stack>
+            ) : (
+              <Typography variant="caption" color="text.secondary">Full river overview</Typography>
+            )}
           </Box>
         </Stack>
         <Card variant="outlined" sx={{ borderRadius: 2, mb: SECTION_MB, borderColor: C.border }}>
@@ -312,12 +416,30 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
             <LinearProgress
               variant="determinate" value={percentage}
               sx={{
-                height: 10, borderRadius: 4, bgcolor: C.bgTintHover, mb: 2.5,
+                height: 10, borderRadius: 4, bgcolor: C.bgTintHover, mb: showCompare ? 1 : 2.5,
                 '& .MuiLinearProgress-bar': { borderRadius: 4, background: `linear-gradient(to right, #4caf50, ${color})` },
               }}
             />
+            {showCompare && (
+              <Box sx={{ mb: 2.5 }}>
+                <Box sx={{ ...ROW_STACK_SPB, mb: 0.5 }}>
+                  <Typography variant="caption" sx={{ color: C.textMuted, fontWeight: 600 }}>Whole river ({river.segments.length} segments)</Typography>
+                  <Typography variant="caption" sx={{ color: C.textMuted, fontWeight: 700 }}>{Math.round(riverNorm * 1000) / 10}</Typography>
+                </Box>
+                <LinearProgress
+                  variant="determinate" value={riverPct}
+                  sx={{
+                    height: 6, borderRadius: 3, bgcolor: C.bgTintHover,
+                    '& .MuiLinearProgress-bar': { borderRadius: 3, bgcolor: riverColor },
+                  }}
+                />
+              </Box>
+            )}
             <Stack sx={ROW_STACK_SPB}>
-              <Typography variant="h3" fontWeight={800} letterSpacing={-1.5} sx={{ color, lineHeight: 1 }}>{Math.round(norm * 1000) / 10}</Typography>
+              <Box>
+                <Typography variant="h3" fontWeight={800} letterSpacing={-1.5} sx={{ color, lineHeight: 1 }}>{Math.round(norm * 1000) / 10}</Typography>
+                {showCompare && <Typography variant="caption" sx={{ color: C.textMuted, fontWeight: 600 }}>This segment</Typography>}
+              </Box>
               <Chip
                 label={risk.level} size="small"
                 sx={{
@@ -331,12 +453,12 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
           </CardContent>
         </Card>
         <Box mb={SECTION_MB}>
-          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Satellite Indices</Typography>
-          <SatelliteIndices indices={indices} />
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Satellite Indices{showCompare ? ' — segment vs river' : ''}</Typography>
+          <SatelliteIndices indices={indices} compare={riverIndices} />
         </Box>
         <Box mb={SECTION_MB} sx={{ pt: '16px' }}>
-          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Risk Indicators</Typography>
-          <SegmentRiskCards risk={risk} />
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Risk Indicators{showCompare ? ' — segment vs river' : ''}</Typography>
+          <SegmentRiskCards risk={risk} compare={riverRisk} />
         </Box>
         <Box sx={{ pt: '16px' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Connected Rivers</Typography>
@@ -366,12 +488,15 @@ function RiverListItem({ river, isSelected, onSelect, metric }) {
 
 export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metric, onMetricChange }) {
   const handleFlowClick = async (clickedRiver) => {
+    /* Navigating to a connected river is a whole-river selection: clear any
+       segment selected on the previous river and fetch under the active
+       metric so the panel colours stay consistent with the connections. */
     if (rivers) {
       const fullRiver = rivers.find(r => r.id === clickedRiver.id)
-      if (fullRiver) { onSelect(fullRiver); return }
+      if (fullRiver) { onSelect({ ...fullRiver, selectedSegment: null }); return }
     }
-    const fetched = await fetchRiver(clickedRiver.id)
-    if (fetched) onSelect(fetched)
+    const fetched = await fetchRiver(clickedRiver.id, metric)
+    if (fetched) onSelect({ ...fetched, selectedSegment: null })
   }
 
   const namedRivers = (rivers || []).filter(r => !r.name.startsWith('Tributary') && !r.name.startsWith('Unnamed'))
