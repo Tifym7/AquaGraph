@@ -659,9 +659,12 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
     const detail = await fetchRiver(segment.river_id, metric)
     if (!detail) return
     const matched = detail.segments?.find(s => s.object_id === segment.object_id)
+    /* If the clicked LOD object_id has no counterpart in the full river
+       detail (LOD-3 simplified ids, polygon clicks with no object_id),
+       select the whole river rather than an arbitrary segment. */
     const selected = matched
       ? { ...matched, bbox: segment.bbox || matched.bbox }
-      : (detail.segments?.[0] || null)
+      : null
     onRiverSelect({ ...detail, selectedSegment: selected })
   }, [metric, onRiverSelect])
 
@@ -677,7 +680,11 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
     let cancelled = false
     fetchRiver(selectedRiver.id, metric).then((d) => {
       if (cancelled || !d) return
-      setRiverDetail({ ...d, selectedSegment: selectedRiver.selectedSegment })
+      /* Only carry the selected segment over if it belongs to the river we
+         just fetched — otherwise a stale segment from the previously
+         selected river bleeds onto an unrelated river's highlight. */
+      const keepSegment = d.id === selectedRiver.id ? selectedRiver.selectedSegment : null
+      setRiverDetail({ ...d, selectedSegment: keepSegment })
     })
     return () => { cancelled = true }
   }, [selectedRiver, metric])

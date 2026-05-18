@@ -12,6 +12,8 @@ from collections import defaultdict
 
 import numpy as np
 import pandas as pd
+
+from river_graph_acyclic import enforce_acyclic, invert_to_tributaries
 import pyogrio
 import geopandas as gpd
 from shapely.geometry import MultiLineString, LineString
@@ -200,8 +202,22 @@ for seg_id, down_seg_id in seg_downstream.items():
     src_river = segment_to_river.get(seg_id)
     dst_river = segment_to_river.get(down_seg_id)
     if src_river and dst_river and src_river != dst_river:
-        river_tributaries[dst_river].add(src_river)
         river_flows_into[src_river] = dst_river
+
+# The per-segment lift above is single-valued and order-dependent, so when
+# EU-Hydro splits one channel into a "named" + "Tributary (RL…)" reach whose
+# segments cross back and forth, it produces X→Y and Y→X cycles. Break them
+# deterministically (drop the basin outlet's out-edge) and rebuild
+# tributaries as the exact inverse so both relations stay consistent and the
+# tributary graph is itself acyclic.
+_strahler = {r["id"]: r.get("strahler", 1) for r in rivers_out}
+_length = {r["id"]: r.get("length_m", 0) for r in rivers_out}
+river_flows_into, _broken = enforce_acyclic(
+    river_flows_into,
+    priority=lambda rid: (_strahler.get(rid, 1), _length.get(rid, 0), rid),
+)
+river_tributaries = invert_to_tributaries(river_flows_into)
+print(f"       Cycles broken in connectivity graph: {len(_broken)}")
 
 # Build the graph JSON
 river_id_to_name = {r["id"]: r["name"] for r in rivers_out}
