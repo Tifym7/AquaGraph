@@ -221,7 +221,7 @@ export default function App() {
 
             <Box sx={{ flexGrow: 1 }} />
 
-            {/* Home — duce la landing page */}
+            {/* Home - duce la landing page */}
             <Button startIcon={<HomeIcon />} size="small" onClick={() => setPage('landing')} sx={NAV_BTN_SX}>
               Home
             </Button>
@@ -234,7 +234,7 @@ export default function App() {
               Campaigns
             </Button>
 
-            {/* Avatar cu meniu — logout */}
+            {/* Avatar cu meniu - logout */}
             <Avatar
               onClick={(e) => setAnchorEl(e.currentTarget)}
               sx={{

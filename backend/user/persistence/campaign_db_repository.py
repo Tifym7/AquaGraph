@@ -29,7 +29,7 @@ class CampaignDBRepository(CampaignRepository):
 
     def __get_connection(self):
         # Every public operation goes through here, so this is where the
-        # one-time schema bootstrap happens — on first real use, not import.
+        # one-time schema bootstrap happens - on first real use, not import.
         self.__ensure_schema()
         return self.__raw_connection()
 

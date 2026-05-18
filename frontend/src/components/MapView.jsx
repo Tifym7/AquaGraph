@@ -12,11 +12,11 @@ import {
 import duckUrl from '../assets/duck.svg'
 
 const BASEMAP_OPTIONS = [
-  { id: 'carto-light', label: 'Light', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> — © OSM contributors' },
-  { id: 'carto-dark', label: 'Dark', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> — © OSM contributors' },
+  { id: 'carto-light', label: 'Light', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> - © OSM contributors' },
+  { id: 'carto-dark', label: 'Dark', url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> - © OSM contributors' },
   { id: 'osm-standard', label: 'Standard', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' },
-  { id: 'opentopo', label: 'Topo', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> — © OSM contributors' },
-  { id: 'carto-voyager', label: 'Voyager', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> — © OSM contributors' },
+  { id: 'opentopo', label: 'Topo', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', attribution: '&copy; <a href="https://opentopomap.org">OpenTopoMap</a> - © OSM contributors' },
+  { id: 'carto-voyager', label: 'Voyager', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> - © OSM contributors' },
   { id: 'esri-satellite', label: 'Satellite', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' },
   { id: 'esri-natgeo', label: 'NatGeo', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}' },
 ]
@@ -67,7 +67,7 @@ function MapPanes() {
     // other vector content (the segments inside use a higher z because their
     // pane is set explicitly).
     setup('selected-river', 620, { pointerEvents: 'none' })
-    // Ducks float on top of every vector line — including the highlighted
+    // Ducks float on top of every vector line - including the highlighted
     // selected-river segments. Sits just under tooltipPane (650).
     setup('ducks-pane', 640, { pointerEvents: 'none' })
   }, [map])
@@ -80,7 +80,7 @@ function FitBounds({ bounds }) {
   return null
 }
 
-/* Fly to the selected river — but ONLY when the selection came from the
+/* Fly to the selected river - but ONLY when the selection came from the
    sidebar (top-10 list, upstream / downstream flow links). Map clicks pass
    through `setSelectedRiver` directly without `_flyOnFocus`, so the camera
    stays put. The `selectedRiver._flyOnFocus` flag is the signal. */
@@ -99,7 +99,7 @@ function RiverFocus({ selectedRiver }) {
   return null
 }
 
-/* Fires once on mount and whenever the user finishes a zoom — pan does NOT
+/* Fires once on mount and whenever the user finishes a zoom - pan does NOT
    trigger anything because the visual layer is now a tile pyramid. */
 function ZoomReporter({ onZoomChange, onLocalZoomChange }) {
   const map = useMapEvents({
@@ -131,7 +131,7 @@ function ViewportReporter({ onBoundsChange }) {
   return null
 }
 
-/* Transparent hit-area polyline — the visible color comes from the raster
+/* Transparent hit-area polyline - the visible color comes from the raster
    tile underneath; this only exists for click + hover routing. */
 function RiverHitArea({ segment, onSegmentClick, onSegmentHover, isSelected }) {
   return (
@@ -188,7 +188,7 @@ function HighZoomVectorLayer({ segments, mapBounds, metric, isActive, onSegmentC
   /* Render directly into Leaflet's default overlayPane. Polygons live in
      a pane with lower zIndex (380), so the colored centerline naturally
      stacks on top of the water-body fill. No custom <Pane> wrapper needed
-     here — that was where react-leaflet's style propagation flaked. */
+     here - that was where react-leaflet's style propagation flaked. */
   return (
     <>
       {visible.map((seg) => {
@@ -226,7 +226,7 @@ function HighZoomVectorLayer({ segments, mapBounds, metric, isActive, onSegmentC
 }
 
 /* At very high zoom (z >= POLYGON_ZOOM_THRESHOLD) we paint the actual
-   detailed water-body shapes — the raster tiles encode polygons at coarse
+   detailed water-body shapes - the raster tiles encode polygons at coarse
    resolution, but here we draw the true outlines as filled vectors so the
    user can see the precise shape of lakes / wide river channels.
 
@@ -325,13 +325,13 @@ function WaterPolygonLayer({ isActive, mapBounds, polys, segments, onSegmentClic
    the per-frame setLatLng doesn't churn React. */
 function isPolygonWideEnough(p) {
   if (!p?.bbox) return false
-  // ~0.0005° ≈ 55 m at Romania's latitude — comfortable for a duck.
+  // ~0.0005° ≈ 55 m at Romania's latitude - comfortable for a duck.
   const w = p.bbox.max_lon - p.bbox.min_lon
   const h = p.bbox.max_lat - p.bbox.min_lat
   return Math.min(w, h) > 0.0005
 }
 
-/* Plain-bbox overlap (NOT a Leaflet bounds — bboxIntersects above expects
+/* Plain-bbox overlap (NOT a Leaflet bounds - bboxIntersects above expects
    .getSouth() / .getNorth() etc. and would throw on plain objects). */
 function bboxesOverlap(a, b) {
   if (!a || !b) return false
@@ -431,7 +431,7 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
           line,
           t: Math.random(),
           dir: Math.random() < 0.5 ? 1 : -1,
-          // ~3x slower than before — calm, lazy drift along the river.
+          // ~3x slower than before - calm, lazy drift along the river.
           baseSpeed: 0.000007 + Math.random() * 0.0000001,
           bobPhase: Math.random() * Math.PI * 2,
           bobFreq: 0.0018 + Math.random() * 0.001,
@@ -472,7 +472,7 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
       const dt = Math.min(64, now - last)
       last = now
       ducksRef.current.forEach((d, i) => {
-        // Occasional gentle dash — 2.5x speed (was 4x), longer cooldown.
+        // Occasional gentle dash - 2.5x speed (was 4x), longer cooldown.
         if (now > d.nextDashAt && d.dashUntil < now) {
           d.dashUntil = now + 700 + Math.random() * 800
           d.nextDashAt = d.dashUntil + 6000 + Math.random() * 12000
@@ -491,7 +491,7 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
         m.setLatLng([pos[0] + bob, pos[1]])
 
         // Horizontal flip based on the duck's actual east/west motion
-        // (no rotation — duck stays upright). Sample the line segment the
+        // (no rotation - duck stays upright). Sample the line segment the
         // duck is currently on and check the longitude delta.
         const total = d.line.length - 1
         const segIdx = Math.min(Math.floor(d.t * total), total - 1)
@@ -524,7 +524,7 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
 }
 
 /* Renders one LOD tier's click overlay inside its own pane. Only segments
-   whose bbox intersects the current viewport are mounted as DOM nodes —
+   whose bbox intersects the current viewport are mounted as DOM nodes -
    without this, an 18k-segment LOD would create 18k SVG paths and event
    listeners on every load (multi-GB RAM, frame drops on every mousemove). */
 function LodOverlay({ tier, segments, mapBounds, isActive, onSegmentClick, onSegmentHover }) {
@@ -533,7 +533,7 @@ function LodOverlay({ tier, segments, mapBounds, isActive, onSegmentClick, onSeg
   const visible = mapBounds ? segments.filter(s => bboxIntersects(s.bbox, mapBounds)) : []
 
   /* Click hit areas live in the default overlayPane along with the colored
-     polylines — they're transparent so they don't visually conflict, and
+     polylines - they're transparent so they don't visually conflict, and
      pointer-events: stroke (in CSS) makes them clickable anyway. */
   return (
     <>
@@ -549,7 +549,7 @@ function LodOverlay({ tier, segments, mapBounds, isActive, onSegmentClick, onSeg
   )
 }
 
-/* Below CLICK_OVERLAY_ZOOM_THRESHOLD we don't render any LOD panes — there
+/* Below CLICK_OVERLAY_ZOOM_THRESHOLD we don't render any LOD panes - there
    is nothing in the DOM at all. Above the threshold, only the active tier
    mounts viewport-filtered segments. */
 function LodTransitioner({ segmentLods, activeLod, mapBounds, mountThresholdReached, onSegmentClick, onSegmentHover }) {
@@ -573,7 +573,7 @@ function SelectedRiverOverlay({ river, metric }) {
   const accent = colors?.gradient?.[Math.min(3, (colors.gradient.length - 1))] || '#1565c0'
 
   const polygons = river.water_polygons || []
-  /* When a specific segment is selected, only highlight that one — the
+  /* When a specific segment is selected, only highlight that one - the
      rest of the river stays visually represented by the underlying tile
      pyramid / vector layer, but the focus is on the clicked segment. */
   const allSegments = river.segments || []
@@ -634,7 +634,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
   const clickOverlayActive = localZoom >= CLICK_OVERLAY_ZOOM_THRESHOLD && !inVectorMode
   const polygonLayerActive = localZoom >= POLYGON_ZOOM_THRESHOLD
 
-  /* Polygon set (water-body shapes) — shared between WaterPolygonLayer
+  /* Polygon set (water-body shapes) - shared between WaterPolygonLayer
      (renders) and DucksLayer (places little quackers on wide rivers). */
   const [polys, setPolys] = useState([])
   const polyReqIdRef = useRef(0)
@@ -659,7 +659,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
     const detail = await fetchRiver(segment.river_id, metric)
     if (!detail) return
     const matched = detail.segments?.find(s => s.object_id === segment.object_id)
-    /* A single-segment river IS the whole river — there's nothing to compare
+    /* A single-segment river IS the whole river - there's nothing to compare
        a segment against, so select it as a whole river (no segment view).
        Also: if the clicked LOD object_id has no counterpart in the full
        river detail (LOD-3 simplified ids, polygon clicks with no
@@ -684,7 +684,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
     fetchRiver(selectedRiver.id, metric).then((d) => {
       if (cancelled || !d) return
       /* Only carry the selected segment over if it belongs to the river we
-         just fetched — otherwise a stale segment from the previously
+         just fetched - otherwise a stale segment from the previously
          selected river bleeds onto an unrelated river's highlight. */
       const keepSegment = d.id === selectedRiver.id ? selectedRiver.selectedSegment : null
       setRiverDetail({ ...d, selectedSegment: keepSegment })
@@ -708,7 +708,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
       >
         <TileLayer url={current.url} />
 
-        {/* Precomputed metric tiles — the visual layer for z &lt; 12. Hidden
+        {/* Precomputed metric tiles - the visual layer for z &lt; 12. Hidden
             when in vector mode so we don't show blurry upscaled rasters
             alongside the crisp vector polylines. */}
         <TileLayer
@@ -773,7 +773,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
         <SelectedRiverOverlay river={riverDetail} metric={metric} />
       </MapContainer>
 
-      {/* Hover tooltip (DOM, not a Leaflet popup — avoids tile-layer flicker) */}
+      {/* Hover tooltip (DOM, not a Leaflet popup - avoids tile-layer flicker) */}
       {hoveredSegment && !selectedRiver && (
         <div style={{
           position: 'absolute', bottom: 18, right: 18, zIndex: 1100,

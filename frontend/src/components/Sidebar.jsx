@@ -11,15 +11,15 @@ import { fetchUpstream, fetchDownstream, getMetricColor, fetchRiver, METRIC_LABE
 
 const SIDEBAR_WIDTH = 360
 
-/* Purple/aubergine palette — kept consistent with the App-level theme
+/* Purple/aubergine palette - kept consistent with the App-level theme
    (primary #6d28d9) and the AppBar gradient (#10002b → #3c096c → #5a189a). */
 const C = {
-  bgPaper:   '#ffffff',
-  bgTint:    '#f5f3ff',
+  bgPaper: '#ffffff',
+  bgTint: '#f5f3ff',
   bgTintHover: '#ede9fe',
-  border:    '#ddd6fe',
+  border: '#ddd6fe',
   borderStrong: '#c4b5fd',
-  primary:   '#6d28d9',
+  primary: '#6d28d9',
   primaryDeep: '#5a189a',
   textMuted: '#5a189a',
   selectedBg: 'rgba(109, 40, 217, 0.08)',
@@ -27,7 +27,7 @@ const C = {
 
 function getSegmentNormalized(river) {
   if (river.selectedSegment?.normalized != null) return river.selectedSegment.normalized
-  /* Prefer the backend-computed average — it skips segments that have no
+  /* Prefer the backend-computed average - it skips segments that have no
      data for the active metric, matching the ranking on /api/rivers. The
      naive client-side average dilutes a high-signal river with zero-padded
      no-data segments and the sidebar ends up reporting 0% for top-10 rivers. */
@@ -70,7 +70,7 @@ function getSegmentIndices(river) {
 /* Whole-river rollups for the segment-vs-river comparison. The metric value
    reuses the backend average (avg_normalized); indices and risk have no
    precomputed river figure, so we mean them across every segment client-side
-   — each key is averaged only over segments that actually report it. */
+   - each key is averaged only over segments that actually report it. */
 function getRiverNormalized(river) {
   if (river.avg_normalized != null) return river.avg_normalized
   const segs = river.segments || []
@@ -202,7 +202,7 @@ function PropagationSection({ riverId, onRiverClick, metric }) {
   useEffect(() => {
     if (!riverId) return
     setLoading(true)
-    /* Defensive dedupe by id — backend should already dedupe but a single
+    /* Defensive dedupe by id - backend should already dedupe but a single
      * stray duplicate breaks React's keyed reconciliation. */
     const dedupe = (arr) => {
       const seen = new Set()
@@ -227,7 +227,7 @@ function PropagationSection({ riverId, onRiverClick, metric }) {
     return <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>No connected rivers.</Typography>
 
   const filterName = n => !n.startsWith('Tributary') && !n.startsWith('Unnamed')
-  /* Render-time dedupe — final safety net so even a stray duplicate id
+  /* Render-time dedupe - final safety net so even a stray duplicate id
      from any source (state ordering, race condition, malformed cache)
      can't trigger React's duplicate-key warning. */
   const uniq = (arr) => {
@@ -270,7 +270,7 @@ function PropagationSection({ riverId, onRiverClick, metric }) {
   )
 }
 
-const fmtIdx = v => typeof v === 'number' ? v.toFixed(4) : (v ?? '—')
+const fmtIdx = v => typeof v === 'number' ? v.toFixed(4) : (v ?? '-')
 
 /* When `compare` is given, each index shows the selected segment's value
    next to the whole-river average in a second column. */
@@ -321,7 +321,7 @@ function SegmentRiskCards({ risk, compare }) {
   const landVal = risk.land ?? 0
   const waterColor = waterVal > 0.5 ? '#1565c0' : '#999'
   const landColor = landVal > 0.5 ? '#ff9800' : '#999'
-  const safe = v => typeof v === 'number' ? v.toFixed(3) : '—'
+  const safe = v => typeof v === 'number' ? v.toFixed(3) : '-'
   const RiverAvg = ({ children }) => (
     <Typography variant="caption" fontWeight={700} sx={{ color: C.textMuted, display: 'block', fontSize: 10, mt: 0.25 }}>
       River avg {children}
@@ -364,13 +364,13 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
   const risk = getSegmentRisk(river)
   const indices = getSegmentIndices(river)
   const percentage = Math.round(norm * 100)
-  /* A single-segment river is the whole river — never show the segment
+  /* A single-segment river is the whole river - never show the segment
      breadcrumb / "Segment #id" view for it, regardless of how
      selectedSegment got set. */
   const isSegmentView = !!river.selectedSegment && (river.segments?.length || 0) > 1
   const metricLabel = METRIC_LABELS[metric] || 'Metric'
 
-  /* Segment vs. whole-river comparison — only meaningful when a segment is
+  /* Segment vs. whole-river comparison - only meaningful when a segment is
      selected on a multi-segment river. */
   const showCompare = isSegmentView
   const riverNorm = showCompare ? getRiverNormalized(river) : 0
@@ -382,7 +382,7 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
      view (reuses the flow-click path, which clears selectedSegment). */
   const backToRiver = () => onRiverClick?.({ id: river.id, name: river.name })
 
-  /* Consistent vertical rhythm — every detail section spaced the same. */
+  /* Consistent vertical rhythm - every detail section spaced the same. */
   const SECTION_MB = 3
 
   return (
@@ -456,11 +456,11 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
           </CardContent>
         </Card>
         <Box mb={SECTION_MB}>
-          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Satellite Indices{showCompare ? ' — segment vs river' : ''}</Typography>
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Satellite Indices{showCompare ? ' - segment vs river' : ''}</Typography>
           <SatelliteIndices indices={indices} compare={riverIndices} />
         </Box>
         <Box mb={SECTION_MB} sx={{ pt: '16px' }}>
-          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Risk Indicators{showCompare ? ' — segment vs river' : ''}</Typography>
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Risk Indicators{showCompare ? ' - segment vs river' : ''}</Typography>
           <SegmentRiskCards risk={risk} compare={riverRisk} />
         </Box>
         <Box sx={{ pt: '16px' }}>
@@ -503,7 +503,7 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
   }
 
   const namedRivers = (rivers || []).filter(r => !r.name.startsWith('Tributary') && !r.name.startsWith('Unnamed'))
-  /* Dedupe top-10 too — same defensive pattern as PropagationSection. */
+  /* Dedupe top-10 too - same defensive pattern as PropagationSection. */
   const seenTop = new Set()
   const uniqueRivers = namedRivers.filter(r => {
     if (seenTop.has(r.id)) return false
@@ -519,7 +519,7 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
       borderRight: '1px solid', borderColor: C.border,
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
     }}>
-      {/* Metric selector — moved here from the map. */}
+      {/* Metric selector - moved here from the map. */}
       {onMetricChange && (
         <Box sx={{ px: 2.5, pt: 2, pb: 2 }}>
           <Typography

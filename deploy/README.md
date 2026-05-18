@@ -1,4 +1,4 @@
-# AquaGraph — Cloud Deploy Guide
+# AquaGraph - Cloud Deploy Guide
 
 This sets up **continuous deployment** of AquaGraph to a single small Azure
 VM, with the site served at **https://aquagraph.org** via Cloudflare.
@@ -19,9 +19,9 @@ VM, with the site served at **https://aquagraph.org** via Cloudflare.
 ```
 
 **Why this shape:** the ~420 MB of precomputed tiles are committed to git and
-baked into the image, so the app is fully self-contained — one VM, no blob
+baked into the image, so the app is fully self-contained - one VM, no blob
 storage, no managed DB. TLS is handled by Cloudflare so there's no certbot to
-maintain. **The VM exposes no public web port at all** — `cloudflared` dials
+maintain. **The VM exposes no public web port at all** - `cloudflared` dials
 *out* to Cloudflare, so the origin can't be reached directly by IP; the only
 way in is `https://aquagraph.org`. Only SSH (22) is open on the VM.
 
@@ -38,7 +38,7 @@ branch auto-ships.
   ```
   `~/.ssh/aquagraph_vm` (private) goes into a GitHub secret later;
   `~/.ssh/aquagraph_vm.pub` goes on the VM.
-- Azure CLI logged in (`az login`) — or use the Azure Portal equivalents.
+- Azure CLI logged in (`az login`) - or use the Azure Portal equivalents.
 - Admin on the GitHub repo (to add secrets) and on the Cloudflare zone
   `aquagraph.org`.
 
@@ -67,7 +67,7 @@ az vm create \
   --os-disk-size-gb 30 \
   --storage-sku StandardSSD_LRS
 
-# Open ONLY SSH (22). No web port is opened — ingress is the Cloudflare
+# Open ONLY SSH (22). No web port is opened - ingress is the Cloudflare
 # tunnel (outbound), so the origin has no public HTTP/HTTPS port to hit.
 az vm open-port -g $RG -n $VM --port 22 --priority 1000
 
@@ -77,7 +77,7 @@ az vm show -d -g $RG -n $VM --query publicIps -o tsv
 
 > **Cheaper still:** with the tunnel, the site no longer depends on the VM's
 > IP at all (Cloudflare reaches it via the outbound tunnel). So you can drop
-> `--public-ip-sku Standard` for a dynamic IP (saves ~$3.6/mo) — the only
+> `--public-ip-sku Standard` for a dynamic IP (saves ~$3.6/mo) - the only
 > cost is having to look up the new IP for your own SSH after a VM
 > stop/deallocate. The site stays up regardless.
 
@@ -133,7 +133,7 @@ it per-deploy with the exact commit SHA. You'll come back and paste
 
 > The repo on the VM stays on the `deploy` branch. CI runs
 > `git reset --hard origin/deploy` on every deploy, so **don't make local
-> commits in `~/AquaGraph` on the VM** — they'll be discarded.
+> commits in `~/AquaGraph` on the VM** - they'll be discarded.
 
 ---
 
@@ -151,9 +151,9 @@ Token scoped to read packages.
    scope is unavailable for the org, fall back to a *classic* token with the
    single `read:packages` scope.)
 4. Set an **expiry** (e.g. 90 days) and put a calendar reminder to rotate it.
-5. Copy the token — you'll paste it into a GitHub secret (`GHCR_PAT`) next.
+5. Copy the token - you'll paste it into a GitHub secret (`GHCR_PAT`) next.
 
-> The CI **build/push** side does *not* use this token — it uses the
+> The CI **build/push** side does *not* use this token - it uses the
 > built-in `GITHUB_TOKEN`. `GHCR_PAT` is only for the VM's `docker pull`.
 
 ---
@@ -179,15 +179,15 @@ That's all the workflow ([`.github/workflows/deploy.yml`](../.github/workflows/d
 
 The tunnel is what makes the site reachable. The `cloudflared` container
 opens an **outbound** connection to Cloudflare and forwards traffic to the
-`app` container — there is no public web port on the VM, so the origin can't
+`app` container - there is no public web port on the VM, so the origin can't
 be hit by IP. (No A records, no origin certificate, no `Full`/`Flexible`
-setting — the tunnel replaces all of that.)
+setting - the tunnel replaces all of that.)
 
 1. Go to **Cloudflare dashboard → Zero Trust → Networks → Tunnels →
    Create a tunnel**.
 2. Connector type: **Cloudflared**. Name it e.g. `aquagraph`.
 3. On the "Install connector" screen, **copy the tunnel token** (the long
-   string in the `--token …` command — you only need the token itself, not
+   string in the `--token …` command - you only need the token itself, not
    the install commands). Cloudflare keeps the token; you can re-copy it
    later from the tunnel's **Configure** page.
 4. Put it in the VM's `.env`:
@@ -200,14 +200,14 @@ setting — the tunnel replaces all of that.)
    - **Service:** `HTTP`  →  `app:5000`
    - Add a second public hostname for **Subdomain:** `www`, same service, if
      you want `www.aquagraph.org` too.
-6. Cloudflare auto-creates the DNS (a proxied `CNAME` to the tunnel) — you
+6. Cloudflare auto-creates the DNS (a proxied `CNAME` to the tunnel) - you
    don't touch the DNS tab manually.
 
 `app:5000` works because `cloudflared` and `app` share the private compose
 network; the service name `app` resolves there. HTTPS is terminated at
 Cloudflare's edge as before.
 
-> Keep `CF_TUNNEL_TOKEN` secret — anyone with it can run a connector for
+> Keep `CF_TUNNEL_TOKEN` secret - anyone with it can run a connector for
 > your tunnel. Rotate it from the tunnel's Configure page if leaked.
 
 ---
@@ -257,7 +257,7 @@ echo 'IMAGE=ghcr.io/tifym7/aquagraph:<good-sha>' >> .env   # or edit the line
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
 ```
-(The next pipeline run will reset `.env`'s `IMAGE`? No — CI exports `IMAGE`
+(The next pipeline run will reset `.env`'s `IMAGE`? No - CI exports `IMAGE`
 inline for its own `up`, it does not rewrite `.env`. To make a rollback
 stick, also revert the code on the `deploy` branch.)
 
@@ -304,10 +304,10 @@ and bump `GUNICORN_WORKERS=2` in `.env`.
 | Symptom | Likely cause / fix |
 |---|---|
 | Actions deploy step fails at `docker login` | `GHCR_PAT` expired or `VM_GHCR_USER` wrong / token lacks `read:packages` |
-| `denied` / `manifest unknown` on `docker compose pull` | Image is private and the VM isn't logged in — re-run step 3/4; `docker login ghcr.io` manually to test |
-| Site shows Cloudflare "tunnel is down" / 1033 | `cloudflared` container not running or `CF_TUNNEL_TOKEN` wrong — `docker compose -f docker-compose.prod.yml logs -f cloudflared`; re-copy the token from the tunnel's Configure page |
+| `denied` / `manifest unknown` on `docker compose pull` | Image is private and the VM isn't logged in - re-run step 3/4; `docker login ghcr.io` manually to test |
+| Site shows Cloudflare "tunnel is down" / 1033 | `cloudflared` container not running or `CF_TUNNEL_TOKEN` wrong - `docker compose -f docker-compose.prod.yml logs -f cloudflared`; re-copy the token from the tunnel's Configure page |
 | Tunnel connected but 502/error reaching app | Public Hostname service must be `http://app:5000` (not `localhost`); check `logs app` is up |
 | Site loads but API 5xx | check `logs app`; usually DB env (`DB_USER`/`DB_PASSWORD` in `.env`) mismatched between `db` and `app` |
-| Can't SSH after VM restart (dynamic IP) | look up the new IP: `az vm show -d -g aquagraph-rg -n aquagraph-vm --query publicIps -o tsv` (site is unaffected — it's on the tunnel) |
-| `502` right after deploy | gunicorn still booting / waiting on Postgres healthcheck — give it ~30 s |
+| Can't SSH after VM restart (dynamic IP) | look up the new IP: `az vm show -d -g aquagraph-rg -n aquagraph-vm --query publicIps -o tsv` (site is unaffected - it's on the tunnel) |
+| `502` right after deploy | gunicorn still booting / waiting on Postgres healthcheck - give it ~30 s |
 | Out of disk on the VM | `docker image prune -af` (CI prunes dangling images each deploy, but old tagged SHAs accumulate) |

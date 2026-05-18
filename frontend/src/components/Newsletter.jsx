@@ -12,13 +12,13 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { fetchNews } from '../utils.js'
 
 const C = {
-  darkest:  '#10002b',
-  dark1:    '#240046',
-  dark2:    '#3c096c',
-  mid1:     '#5a189a',
-  mid2:     '#7b2cbf',
-  mid3:     '#9d4edd',
-  light1:   '#c77dff',
+  darkest: '#10002b',
+  dark1: '#240046',
+  dark2: '#3c096c',
+  mid1: '#5a189a',
+  mid2: '#7b2cbf',
+  mid3: '#9d4edd',
+  light1: '#c77dff',
   lightest: '#e0aaff',
 }
 
@@ -78,7 +78,7 @@ export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin,
           <Button startIcon={<MapIcon />} size="small" onClick={handleMapClick} sx={NAV_BTN}>Map</Button>
           <Button startIcon={<CampaignIcon />} size="small" onClick={onGoToCampaigns} sx={NAV_BTN}>Campaigns</Button>
 
-          {/* Newsletter — evidențiat ca pagina curentă */}
+          {/* Newsletter - evidențiat ca pagina curentă */}
           <Button startIcon={<EmailIcon />} size="small" sx={{
             color: C.lightest, border: `1px solid ${C.light1}`,
             bgcolor: 'rgba(199,125,255,0.15)',

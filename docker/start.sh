@@ -5,12 +5,12 @@
 # process on :5000 is the whole web tier.
 #
 # Tunables (env):
-#   GUNICORN_WORKERS  worker processes (default 1 — sized for a 1 GB VM;
+#   GUNICORN_WORKERS  worker processes (default 1 - sized for a 1 GB VM;
 #                     each worker loads the river JSON into memory, so more
 #                     workers cost real RAM)
-#   GUNICORN_THREADS  threads per worker (default 4 — handles concurrent
+#   GUNICORN_THREADS  threads per worker (default 4 - handles concurrent
 #                     tile/segment requests without extra memory)
-#   GUNICORN_TIMEOUT  worker boot/request timeout (default 300 — importing
+#   GUNICORN_TIMEOUT  worker boot/request timeout (default 300 - importing
 #                     app.py loads several large JSON datasets and can take
 #                     >120s on a small VM; too low here = the arbiter SIGKILLs
 #                     the still-booting worker and respawns it forever)

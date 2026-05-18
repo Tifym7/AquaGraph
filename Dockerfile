@@ -3,7 +3,7 @@
 # own service via docker-compose.
 #
 # Stage 1 builds the frontend with Node; Stage 2 is a slim Python runtime
-# that copies only the built static files in — no Node, no node_modules, no
+# that copies only the built static files in - no Node, no node_modules, no
 # Vite dev server in the final image.
 
 # ----- Stage 1: build the frontend -----------------------------------------
@@ -48,7 +48,7 @@ RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 # the image is fully self-contained (no external data store needed).
 COPY backend /app/backend
 
-# Built frontend from stage 1 — Flask serves this from /app/frontend/dist.
+# Built frontend from stage 1 - Flask serves this from /app/frontend/dist.
 COPY --from=frontend /app/frontend/dist /app/frontend/dist
 
 ENV HOST=0.0.0.0

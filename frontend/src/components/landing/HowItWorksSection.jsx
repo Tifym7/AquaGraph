@@ -14,24 +14,24 @@ import PublicIcon from '@mui/icons-material/Public'
 
 const C = {
   dark1: '#240046',
-  mid1:  '#5a189a',
-  mid2:  '#7b2cbf',
-  mid3:  '#9d4edd',
+  mid1: '#5a189a',
+  mid2: '#7b2cbf',
+  mid3: '#9d4edd',
 }
 
 const TOOLS = [
-  { Icon: SatelliteAltIcon,  label: 'Sentinel-1/2 satellite data' },
-  { Icon: BubbleChartIcon,   label: 'Spectral indices (NDWI, NDCI, turbidity)' },
-  { Icon: MapIcon,           label: 'Interactive map with LOD rendering' },
-  { Icon: LayersIcon,        label: 'Pregenerated raster tiles zoom 5–11' },
-  { Icon: WarningAmberIcon,  label: 'Automatic pollution alert' },
-  { Icon: PublicIcon,        label: 'Upstream/downstream propagation' },
-  { Icon: WaterIcon,         label: 'National coverage — all major basins' },
-  { Icon: PeopleIcon,        label: 'Community cleanup campaigns' },
-  { Icon: EmailIcon,         label: 'Water quality news newsletter' },
+  { Icon: SatelliteAltIcon, label: 'Sentinel-1/2 satellite data' },
+  { Icon: BubbleChartIcon, label: 'Spectral indices (NDWI, NDCI, turbidity)' },
+  { Icon: MapIcon, label: 'Interactive map with LOD rendering' },
+  { Icon: LayersIcon, label: 'Pregenerated raster tiles zoom 5–11' },
+  { Icon: WarningAmberIcon, label: 'Automatic pollution alert' },
+  { Icon: PublicIcon, label: 'Upstream/downstream propagation' },
+  { Icon: WaterIcon, label: 'National coverage - all major basins' },
+  { Icon: PeopleIcon, label: 'Community cleanup campaigns' },
+  { Icon: EmailIcon, label: 'Water quality news newsletter' },
   { Icon: NotificationsIcon, label: 'Local incident reporting' },
-  { Icon: DownloadIcon,      label: 'Raw data export for researchers' },
-  { Icon: CampaignIcon,      label: 'Community Hub integrated in platform' },
+  { Icon: DownloadIcon, label: 'Raw data export for researchers' },
+  { Icon: CampaignIcon, label: 'Community Hub integrated in platform' },
 ]
 
 export default function HowItWorksSection() {

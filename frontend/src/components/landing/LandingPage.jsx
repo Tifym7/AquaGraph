@@ -6,7 +6,7 @@ import StatsBar from './StatsBar'
 import FeaturesSection from './FeaturesSection'
 import DataPreviewSection from './DataPreviewSection'
 import HowItWorksSection from './HowItWorksSection'
-import CTASection from './CTASection'
+import CTASection from './CtaSection'
 import LandingFooter from './LandingFooter'
 
 export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToCampaigns, user, onLogout }) {

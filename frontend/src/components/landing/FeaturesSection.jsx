@@ -2,9 +2,9 @@ import { Box, Typography } from '@mui/material'
 
 const C = {
   dark1: '#240046',
-  mid1:  '#5a189a',
-  mid2:  '#7b2cbf',
-  mid3:  '#9d4edd',
+  mid1: '#5a189a',
+  mid2: '#7b2cbf',
+  mid3: '#9d4edd',
 }
 
 const FEATURES = [
@@ -16,7 +16,7 @@ const FEATURES = [
   {
     icon: '📊',
     title: 'Multi-Metric Analysis',
-    text: 'Switch between 7 satellite metrics — pollution risk, NDVI, MNDWI, NDCI, turbidity, oil leakage and discharge.'
+    text: 'Switch between 7 satellite metrics - pollution risk, NDVI, MNDWI, NDCI, turbidity, oil leakage and discharge.'
   },
   {
     icon: '🗺️',
@@ -26,12 +26,12 @@ const FEATURES = [
   {
     icon: '💾',
     title: 'Report Export',
-    text: 'Subscribed organizations can download Excel and PDF reports with our computed spectral indices — ready for analysis, audits or regulatory submissions.'
+    text: 'Subscribed organizations can download Excel and PDF reports with our computed spectral indices - ready for analysis, audits or regulatory submissions.'
   },
   {
     icon: '🌐',
     title: 'National Coverage',
-    text: 'We monitor Romania\'s entire river network — from the Danube to the smallest mountain tributaries.'
+    text: 'We monitor Romania\'s entire river network - from the Danube to the smallest mountain tributaries.'
   },
   {
     icon: '⚠️',
@@ -51,7 +51,7 @@ const FEATURES = [
   {
     icon: '🦆',
     title: 'Ducks Layer',
-    text: 'At high zoom, animated ducks float along rivers — a fun touch that makes environmental monitoring a little more joyful.'
+    text: 'At high zoom, animated ducks float along rivers - a fun touch that makes environmental monitoring a little more joyful.'
   },
 ]
 

@@ -141,7 +141,7 @@ def stroke_width_for_zoom(z, strahler):
 
 
 def build_tile_drawlist(z, tile_x, tile_y, rivers, polygons_by_river_id):
-    """Project everything intersecting this tile *once* — the same draw list
+    """Project everything intersecting this tile *once* - the same draw list
     is reusable for every metric (only the line colors differ). Returns
     None if the tile has nothing to render."""
     tile_bbox = tile_bounds_lonlat(tile_x, tile_y, z)
@@ -211,7 +211,7 @@ def render_drawlist(drawlist, metric):
 def _segment_in_canvas(pts, size):
     """True if the polyline's pixel bbox overlaps the tile canvas. The previous
     'any vertex inside' check dropped long segments whose endpoints both fell
-    outside the tile but whose line crossed *through* it — producing visible
+    outside the tile but whose line crossed *through* it - producing visible
     gaps at tile boundaries."""
     if not pts:
         return False
@@ -282,7 +282,7 @@ def index_rivers(raw_rivers):
 def build_lod_views(rivers, poly_match, polys_by_id):
     """Return {tier_index: {rivers: [...], polys_by_rid: {...}}} pre-simplified.
 
-    NOTE: every LOD includes *every* river — only the geometry is simplified
+    NOTE: every LOD includes *every* river - only the geometry is simplified
     (stride) per tier. Strahler/length filtering was used previously, but
     that hid small tributaries from low-zoom tiles even though they reappeared
     in the high-zoom vector layer (visually inconsistent). We rely on the
@@ -365,7 +365,7 @@ def precompute_tiles(views, metrics):
 def write_segment_lods(views):
     print("\nWriting segment LOD JSON files...")
     for tier_idx, view in views.items():
-        # LOD 5 is the close-up vector tier — frontend renders these as
+        # LOD 5 is the close-up vector tier - frontend renders these as
         # visible polylines instead of relying on (blurry) upscaled tiles,
         # so it needs the per-segment indices + risk to compute colors.
         include_metric_data = tier_idx == 5

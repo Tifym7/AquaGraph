@@ -61,7 +61,7 @@ FRONTEND_DIST = os.path.abspath(
 
 # Startup loads several large JSON datasets synchronously. Without progress
 # output the gunicorn worker looks frozen for minutes during boot, so log
-# each step (flushed — gunicorn captures stdout as a pipe).
+# each step (flushed - gunicorn captures stdout as a pipe).
 import time as _time
 _t0 = _time.time()
 def _step(msg):
@@ -111,7 +111,7 @@ for _rid, _m in POLY_MATCH.items():
     for _pid in _m.get("polygon_ids", []) or []:
         POLYGON_TO_RIVER.setdefault(_pid, _rid)
 
-# EFAS-derived discharge (m³/s) per river — used as a metric and later for
+# EFAS-derived discharge (m³/s) per river - used as a metric and later for
 # downstream pollution-impact propagation.
 DISCHARGE_BY_RIVER = {}
 DISCHARGE_PATH = os.path.join(DATA_DIR, "efas_discharge_mapped.json")
@@ -147,7 +147,7 @@ for r in RAW_RIVERS:
                  "min_lon": min(lons) if lons else 0, "max_lon": max(lons) if lons else 0},
     }
 
-_step(f"RIVERS_BY_ID built ({len(RIVERS_BY_ID)} rivers) — startup data ready")
+_step(f"RIVERS_BY_ID built ({len(RIVERS_BY_ID)} rivers) - startup data ready")
 
 # ===== API Endpoints =====
 def boxes_intersect(b1, b2):
@@ -190,7 +190,7 @@ def serve_tile(metric, z, x, y):
     rel = os.path.join(metric, str(z), str(x), f"{y}.png")
     full = os.path.join(TILES_DIR, rel)
     if not os.path.exists(full):
-        # Empty/no-data tile — Leaflet treats this as a missing tile.
+        # Empty/no-data tile - Leaflet treats this as a missing tile.
         resp = Response(status=204)
         resp.headers["Cache-Control"] = "public, max-age=86400"
         return resp
@@ -209,7 +209,7 @@ def serve_segments():
     lod = max(1, min(5, lod))
     path = os.path.join(DATA_DIR, f"segments_lod_{lod}.json")
     if not os.path.exists(path):
-        return jsonify({"error": f"segments_lod_{lod}.json not found — run precompute_tiles.py"}), 503
+        return jsonify({"error": f"segments_lod_{lod}.json not found - run precompute_tiles.py"}), 503
     resp = send_file(path, mimetype="application/json")
     resp.headers["Cache-Control"] = "public, max-age=259200, immutable"
     return resp
@@ -260,7 +260,7 @@ def get_polygons_in_bbox():
 # ----- Legacy multi-river endpoint (kept for compatibility / fallback) -----
 @app.route("/api/rivers", methods=["GET"])
 def get_rivers():
-    """DEPRECATED for visual rendering — frontend now uses /api/tiles/* +
+    """DEPRECATED for visual rendering - frontend now uses /api/tiles/* +
     /api/segments. Still useful for the sidebar list (top-N rivers) and as
     a graceful fallback if precomputation hasn't been run yet."""
     zoom = request.args.get("zoom", 7, type=int)
@@ -344,7 +344,7 @@ def get_rivers():
 
 @app.route("/api/top-rivers", methods=["GET"])
 def get_top_rivers():
-    """Lightweight ranked list for the sidebar's "Top N" view — returns
+    """Lightweight ranked list for the sidebar's "Top N" view - returns
     river metadata + the metric average only (no segments, no polygons),
     so it's cheap to fetch and recompute on every metric change."""
     metric = request.args.get("metric", "pollution")
@@ -376,7 +376,7 @@ def get_top_rivers():
 
 @app.route("/api/rivers/<river_id>", methods=["GET"])
 def get_river(river_id):
-    """Full detail for a single river — always includes water polygons at
+    """Full detail for a single river - always includes water polygons at
     full fidelity (this powers the focused detail view after a click)."""
     river = RIVERS_BY_ID.get(river_id)
     if not river:
@@ -398,7 +398,7 @@ def get_river(river_id):
             "color": color,
         })
 
-    # Detailed water polygons — bug fix: previously omitted from this endpoint.
+    # Detailed water polygons - bug fix: previously omitted from this endpoint.
     match = POLY_MATCH.get(river_id, {})
     wpolys = []
     for pid in match.get("polygon_ids", []) or []:
@@ -429,7 +429,7 @@ def get_upstream(river_id):
     visited = set()
     # Seed with the origin so a graph cycle (river_graph.json has them, e.g.
     # river_361 MURES ⇄ river_3212) can never list the river inside its own
-    # upstream — a river is never its own tributary in real hydrology.
+    # upstream - a river is never its own tributary in real hydrology.
     appended = {river_id}
     result = []
     def _walk(rid):

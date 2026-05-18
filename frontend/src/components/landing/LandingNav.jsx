@@ -43,7 +43,7 @@ export default function LandingNav({ onGoToMap, onGoToLogin, onGoToRegister, onG
         <Box sx={{ width: '1px', height: 28, bgcolor: 'rgba(255,255,255,0.2)', mx: 0.5 }} />
 
         {user ? (
-          /* Logat — arata avatar in loc de Login/Register */
+          /* Logat - arata avatar in loc de Login/Register */
           <Avatar
             onClick={onLogout}
             title="Logout"
@@ -59,7 +59,7 @@ export default function LandingNav({ onGoToMap, onGoToLogin, onGoToRegister, onG
             {user.username?.[0]?.toUpperCase() || 'U'}
           </Avatar>
         ) : (
-          /* Nelogat — arata Login si Register */
+          /* Nelogat - arata Login si Register */
           <>
             <Button startIcon={<LoginIcon />} size="small" onClick={onGoToLogin} sx={AUTH_BTN}>Login</Button>
             <Button startIcon={<PersonAddIcon />} size="small" onClick={onGoToRegister} sx={AUTH_BTN}>Register</Button>
