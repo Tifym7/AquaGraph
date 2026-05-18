@@ -1,13 +1,23 @@
 #!/bin/sh
-# Container entrypoint: wait for postgres, start Flask in the background,
-# then keep the Vite dev server in the foreground so the container's lifetime
-# tracks the frontend (and we still get Flask logs interleaved on stdout).
+# Container entrypoint: wait for postgres, then run the Flask app under
+# gunicorn in the foreground. Gunicorn serves BOTH the JSON API and the
+# built React frontend (see backend/app.py:serve_frontend), so this single
+# process on :5000 is the whole web tier.
+#
+# Tunables (env):
+#   GUNICORN_WORKERS  worker processes (default 1 — sized for a 1 GB VM;
+#                     each worker loads the river JSON into memory, so more
+#                     workers cost real RAM)
+#   GUNICORN_THREADS  threads per worker (default 4 — handles concurrent
+#                     tile/segment requests without extra memory)
 
 set -e
 
 DB_HOST="${DB_HOST:-db}"
 DB_PORT="${DB_PORT:-5432}"
 DB_USER="${DB_USER:-user}"
+GUNICORN_WORKERS="${GUNICORN_WORKERS:-1}"
+GUNICORN_THREADS="${GUNICORN_THREADS:-4}"
 
 echo "[start.sh] Waiting for postgres at ${DB_HOST}:${DB_PORT}..."
 until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U "$DB_USER" >/dev/null 2>&1; do
@@ -16,13 +26,12 @@ done
 echo "[start.sh] Postgres ready."
 
 cd /app/backend
-echo "[start.sh] Starting Flask backend on 0.0.0.0:5000..."
-python3 -c "import app; app.app.run(host='0.0.0.0', port=5000, debug=False)" &
-backend_pid=$!
-
-# If Flask dies, take the container down with it.
-trap 'kill -TERM "$backend_pid" 2>/dev/null || true' INT TERM
-
-cd /app/frontend
-echo "[start.sh] Starting Vite dev server on :5173..."
-exec npm run dev -- --host 0.0.0.0 --port 5173
+echo "[start.sh] Starting gunicorn on 0.0.0.0:5000 (${GUNICORN_WORKERS}w/${GUNICORN_THREADS}t)..."
+exec gunicorn \
+  --bind 0.0.0.0:5000 \
+  --workers "$GUNICORN_WORKERS" \
+  --threads "$GUNICORN_THREADS" \
+  --timeout 120 \
+  --access-logfile - \
+  --error-logfile - \
+  app:app

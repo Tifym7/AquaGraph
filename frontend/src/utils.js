@@ -1,6 +1,9 @@
 import axios from 'axios'
 
-export const API_BASE = 'http://localhost:5000/api'
+/* In production the Flask backend serves the built frontend, so the API is
+   same-origin at `/api`. In dev, Vite proxies `/api` → localhost:5000 (see
+   vite.config.js). Override with VITE_API_BASE if the API lives elsewhere. */
+export const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 /**
  * LOD ladder — must mirror backend/metrics.py:LOD_TIERS so the frontend
