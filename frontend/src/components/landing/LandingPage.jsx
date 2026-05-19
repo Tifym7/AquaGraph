@@ -21,10 +21,8 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
     }
   }, [])
 
-  const handleMapClick = () => {
-    if (user) onGoToMap()
-    else onGoToLogin()
-  }
+  // Demo: the map is public — exploring it never requires authentication.
+  const handleMapClick = () => onGoToMap()
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
