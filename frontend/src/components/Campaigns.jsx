@@ -14,6 +14,7 @@ import GroupsIcon from '@mui/icons-material/Groups'
 import FavoriteIcon from '@mui/icons-material/Favorite'
 import axios from 'axios'
 import CampaniiForm from './CampaignsForm.jsx'
+import { API_BASE } from '../utils'
 
 const C = {
   darkest:  '#10002b',
@@ -26,7 +27,6 @@ const C = {
   lightest: '#e0aaff',
 }
 
-const API_BASE = 'http://127.0.0.1:5000/api'
 
 const FALLBACK_CAMPAIGNS = [
   { id: 1, campaign_name: 'Curățăm Dunărea 2025', organization_name: 'EcoRomania NGO', river_name: 'Dunărea', coordinates: '45.6,29.6', start_date: '2025-06-01', end_date: '2025-06-30', likes: 142, participants: [] },

@@ -15,6 +15,7 @@ import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { ROMANIA_REGIONS } from '../constants/Regions'
+import { API_BASE } from '../utils'
 
 const theme = createTheme({
   palette: {
@@ -68,7 +69,7 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
     }
     setLoading(true)
     try {
-      const { data } = await axios.post('http://127.0.0.1:5000/api/register', {
+      const { data } = await axios.post(`${API_BASE}/register`, {
         username: form.username.trim(), email: form.email.trim(), password: form.password, region: form.region,
       })
       localStorage.setItem('aq_token', data.token)

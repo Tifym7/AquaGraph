@@ -8,6 +8,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { API_BASE } from '../utils'
 
 const theme = createTheme({
   palette: {
@@ -53,7 +54,7 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
     if (!username.trim() || !password) { setError('Please fill in all fields.'); return }
     setLoading(true)
     try {
-      const { data } = await axios.post('http://127.0.0.1:5000/api/login', { username: username.trim(), password })
+      const { data } = await axios.post(`${API_BASE}/login`, { username: username.trim(), password })
       axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
       onLogin && onLogin(data.user)
     } catch (err) {
