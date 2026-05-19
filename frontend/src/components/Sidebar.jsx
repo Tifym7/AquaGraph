@@ -515,9 +515,10 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
 
   return (
     <Box sx={{
-      width: SIDEBAR_WIDTH, flexShrink: 0, bgcolor: C.bgPaper,
+      width: { xs: '100%', md: SIDEBAR_WIDTH }, flexShrink: 0, bgcolor: C.bgPaper,
       borderRight: '1px solid', borderColor: C.border,
       display: 'flex', flexDirection: 'column', overflow: 'hidden',
+      height: '100%',
     }}>
       {/* Metric selector - moved here from the map. */}
       {onMetricChange && (

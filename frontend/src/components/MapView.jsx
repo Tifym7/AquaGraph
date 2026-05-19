@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react'
-import { MapContainer, TileLayer, Polyline, Polygon as LeafletPolygon, Pane, useMap, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Polyline, Polygon as LeafletPolygon, Pane, ZoomControl, useMap, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
@@ -10,6 +10,7 @@ import {
   METRIC_GRADIENTS, gradientColor,
 } from '../utils'
 import duckUrl from '../assets/duck.svg'
+import useIsMobile from '../hooks/useIsMobile'
 
 const BASEMAP_OPTIONS = [
   { id: 'carto-light', label: 'Light', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> - © OSM contributors' },
@@ -623,6 +624,7 @@ const ROMANIA_CENTER = [45.9432, 24.9668]
 const ROMANIA_BOUNDS = [[43.5, 20.2], [48.3, 30.0]]
 
 export default function MapView({ segmentLods, activeLod, selectedRiver, onRiverSelect, onZoomChange, metric, onMetricChange, initialRegion }) {
+  const isMobile = useIsMobile()
   const [activeBaseMap, setActiveBaseMap] = useState('carto-light')
   const [hoveredSegment, setHoveredSegment] = useState(null)
   const [riverDetail, setRiverDetail] = useState(null)
@@ -698,7 +700,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
         center={ROMANIA_CENTER}
         zoom={8}
         style={{ width: '100%', height: '100%', minHeight: 0 }}
-        zoomControl={true}
+        zoomControl={false}
         minZoom={ZOOM_MIN}
         maxZoom={ZOOM_MAX}
         zoomSnap={ZOOM_SNAP}
@@ -706,6 +708,10 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
         wheelPxPerZoomLevel={120}
         preferCanvas={false}
       >
+        {/* On phones the +/- sits bottom-right so it clears the top-left
+            "Rivers/Details" FAB; desktop keeps the usual top-left spot. */}
+        <ZoomControl position={isMobile ? 'bottomright' : 'topleft'} />
+
         <TileLayer url={current.url} />
 
         {/* Precomputed metric tiles - the visual layer for z &lt; 12. Hidden
@@ -773,8 +779,10 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
         <SelectedRiverOverlay river={riverDetail} metric={metric} />
       </MapContainer>
 
-      {/* Hover tooltip (DOM, not a Leaflet popup - avoids tile-layer flicker) */}
-      {hoveredSegment && !selectedRiver && (
+      {/* Hover tooltip (DOM, not a Leaflet popup - avoids tile-layer flicker).
+          Hidden on touch screens - there's no hover, and it would just sit
+          on top of the legend. */}
+      {hoveredSegment && !selectedRiver && !isMobile && (
         <div style={{
           position: 'absolute', bottom: 18, right: 18, zIndex: 1100,
           backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8,
@@ -789,19 +797,19 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
         </div>
       )}
 
-      {/* Metric Legend */}
-      <div style={{ position: 'absolute', bottom: 20, left: 12, zIndex: 1000, backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8, padding: '12px 16px', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', minWidth: 200 }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#333', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.6 }}>{selected.label}</div>
-        <div style={{ height: 10, borderRadius: 5, background: `linear-gradient(to right, ${selected.gradient.join(', ')})`, marginBottom: 8 }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#666' }}>
+      {/* Metric Legend - compact on phones so it doesn't eat the map */}
+      <div style={{ position: 'absolute', bottom: isMobile ? 10 : 20, left: isMobile ? 8 : 12, zIndex: 1000, backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8, padding: isMobile ? '7px 10px' : '12px 16px', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', minWidth: isMobile ? 130 : 200 }}>
+        <div style={{ fontSize: isMobile ? 10 : 12, fontWeight: 700, color: '#333', marginBottom: isMobile ? 5 : 8, textTransform: 'uppercase', letterSpacing: 0.6 }}>{selected.label}</div>
+        <div style={{ height: isMobile ? 7 : 10, borderRadius: 5, background: `linear-gradient(to right, ${selected.gradient.join(', ')})`, marginBottom: isMobile ? 5 : 8 }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: isMobile ? 9 : 11, color: '#666' }}>
           <span>Low</span><span>Moderate</span><span>High</span>
         </div>
       </div>
 
       {/* Basemap Selector */}
-      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8, padding: '10px 14px', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}>
-        <label style={{ fontSize: 11, fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 6 }}>Basemap</label>
-        <select value={activeBaseMap} onChange={(e) => setActiveBaseMap(e.target.value)} style={{ width: '100%', padding: '8px 10px', border: '1px solid #e0e0e0', borderRadius: 6, fontSize: 13, fontWeight: 600, color: '#333', backgroundColor: '#fafafa', cursor: 'pointer', outline: 'none' }}>
+      <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8, padding: isMobile ? '6px 8px' : '10px 14px', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}>
+        {!isMobile && <label style={{ fontSize: 11, fontWeight: 700, color: '#666', textTransform: 'uppercase', letterSpacing: 0.8, display: 'block', marginBottom: 6 }}>Basemap</label>}
+        <select value={activeBaseMap} onChange={(e) => setActiveBaseMap(e.target.value)} aria-label="Basemap" style={{ width: '100%', padding: isMobile ? '6px 8px' : '8px 10px', border: '1px solid #e0e0e0', borderRadius: 6, fontSize: isMobile ? 12 : 13, fontWeight: 600, color: '#333', backgroundColor: '#fafafa', cursor: 'pointer', outline: 'none' }}>
           {BASEMAP_OPTIONS.map(opt => <option key={opt.id} value={opt.id}>{opt.label}</option>)}
         </select>
       </div>

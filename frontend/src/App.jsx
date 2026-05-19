@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import { fetchRivers, fetchSegments, lodForZoom, CLICK_OVERLAY_ZOOM_THRESHOLD } from './utils'
-import {
-  Box, AppBar, Toolbar, Typography,
-  Button, Avatar, Menu, MenuItem, Divider, ListItemIcon,
-} from '@mui/material'
+import { Box, Drawer, Fab } from '@mui/material'
 import HomeIcon from '@mui/icons-material/Home'
-import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
-import LogoutIcon from '@mui/icons-material/Logout'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
+import AppNavBar from './components/AppNavBar'
+import useIsMobile from './hooks/useIsMobile'
 import MapView from './components/MapView'
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
@@ -45,13 +43,6 @@ const theme = createTheme({
   },
 })
 
-const NAV_BTN_SX = {
-  color: '#fff',
-  border: '1px solid rgba(255,255,255,0.25)',
-  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-  px: 1.5,
-}
-
 export default function App() {
   const [page, setPage] = useState('landing')
   const [user, setUser] = useState(null)
@@ -62,9 +53,19 @@ export default function App() {
   const [segmentLods, setSegmentLods] = useState({})
   const [activeMetric, setActiveMetric] = useState('pollution')
   const [rivers, setRivers] = useState([])
-  const [anchorEl, setAnchorEl] = useState(null)
-  const menuOpen = Boolean(anchorEl)
   const cancelledRef = useRef(false)
+  const isMobile = useIsMobile()
+  const [riverDrawerOpen, setRiverDrawerOpen] = useState(false)
+
+  /* On phones the sidebar is a slide-over Drawer. A river picked from the
+     map (no _flyOnFocus) opens the drawer to reveal its detail; a river
+     picked from the list/flow links carries _flyOnFocus, so we close the
+     drawer instead and let the map's fly-to animation play in full view. */
+  useEffect(() => {
+    if (!isMobile) return
+    if (!selectedRiver) return
+    setRiverDrawerOpen(!selectedRiver._flyOnFocus)
+  }, [selectedRiver, isMobile])
 
   const ensureLodLoaded = useCallback((lod) => {
     setSegmentLods((prev) => {
@@ -123,7 +124,6 @@ export default function App() {
 
   const handleLogout = () => {
     setUser(null)
-    setAnchorEl(null)
     setInitialRegion(null)
     setPage('landing')
   }
@@ -203,83 +203,36 @@ export default function App() {
   }
 
   // MAP (pagina principala dupa login)
+  const sidebar = (
+    <Sidebar
+      rivers={topRivers}
+      selectedRiver={selectedRiver}
+      metric={activeMetric}
+      onMetricChange={setActiveMetric}
+      onClose={() => setSelectedRiver(null)}
+      onSelect={(r) => setSelectedRiver(r ? { ...r, _flyOnFocus: true } : null)}
+    />
+  )
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppBar position="sticky" elevation={0}>
-          <Toolbar sx={{ gap: 1.5, minHeight: '95px !important' }}>
-            <SatelliteAltIcon sx={{ fontSize: 28 }} />
-            <Box sx={{ flexGrow: 0, mr: 1 }}>
-              <Typography variant="h6" component="div" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px' }}>
-                AquaGraph
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.75, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                Satellite Water Pollution Monitor
-              </Typography>
-            </Box>
+        <AppNavBar
+          links={[
+            { label: 'Home', icon: <HomeIcon />, onClick: () => setPage('landing') },
+            { label: 'Newsletter', icon: <EmailIcon />, onClick: () => setPage('newsletter') },
+            { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => setPage('campaigns') },
+          ]}
+          user={user}
+          onLogout={handleLogout}
+          userMenuDetail
+        />
 
-            <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+          {/* Desktop: sidebar docked next to the map */}
+          {!isMobile && sidebar}
 
-            {/* Home - duce la landing page */}
-            <Button startIcon={<HomeIcon />} size="small" onClick={() => setPage('landing')} sx={NAV_BTN_SX}>
-              Home
-            </Button>
-
-            <Button startIcon={<EmailIcon />} size="small" onClick={() => setPage('newsletter')} sx={NAV_BTN_SX}>
-              Newsletter
-            </Button>
-
-            <Button startIcon={<CampaignIcon />} size="small" onClick={() => setPage('campaigns')} sx={NAV_BTN_SX}>
-              Campaigns
-            </Button>
-
-            {/* Avatar cu meniu - logout */}
-            <Avatar
-              onClick={(e) => setAnchorEl(e.currentTarget)}
-              sx={{
-                width: 34, height: 34,
-                bgcolor: 'rgba(255,255,255,0.25)',
-                color: '#fff', fontSize: 14, fontWeight: 700,
-                cursor: 'pointer',
-                border: '2px solid rgba(255,255,255,0.4)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
-              }}
-            >
-              {user?.username?.[0]?.toUpperCase() || 'U'}
-            </Avatar>
-            <Menu
-              anchorEl={anchorEl}
-              open={menuOpen}
-              onClose={() => setAnchorEl(null)}
-              transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-              anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-              slotProps={{ paper: { sx: { mt: 1, minWidth: 180, borderRadius: 2 } } }}
-            >
-              <Box sx={{ px: 2, py: 1 }}>
-                <Typography variant="body2" fontWeight={700}>{user?.username}</Typography>
-                {user?.email && (
-                  <Typography variant="caption" color="text.secondary">{user.email}</Typography>
-                )}
-              </Box>
-              <Divider />
-              <MenuItem onClick={handleLogout}>
-                <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
-                Logout
-              </MenuItem>
-            </Menu>
-          </Toolbar>
-        </AppBar>
-
-        <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          <Sidebar
-            rivers={topRivers}
-            selectedRiver={selectedRiver}
-            metric={activeMetric}
-            onMetricChange={setActiveMetric}
-            onClose={() => setSelectedRiver(null)}
-            onSelect={(r) => setSelectedRiver(r ? { ...r, _flyOnFocus: true } : null)}
-          />
           <MapView
             segmentLods={segmentLods}
             activeLod={activeLod}
@@ -290,6 +243,36 @@ export default function App() {
             onMetricChange={setActiveMetric}
             initialRegion={initialRegion}
           />
+
+          {/* Phone: sidebar slides over the map; FAB toggles it */}
+          {isMobile && (
+            <>
+              {!riverDrawerOpen && (
+                <Fab
+                  variant="extended"
+                  size="medium"
+                  onClick={() => setRiverDrawerOpen(true)}
+                  sx={{
+                    position: 'absolute', top: 12, left: 12, zIndex: 1200,
+                    bgcolor: '#fff', color: '#5a189a', fontWeight: 700,
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                    '&:hover': { bgcolor: '#f5f3ff' },
+                  }}
+                >
+                  <FormatListBulletedIcon sx={{ mr: 1, fontSize: 20 }} />
+                  {selectedRiver ? 'Details' : 'Rivers'}
+                </Fab>
+              )}
+              <Drawer
+                anchor="left"
+                open={riverDrawerOpen}
+                onClose={() => setRiverDrawerOpen(false)}
+                slotProps={{ paper: { sx: { width: '88vw', maxWidth: 380 } } }}
+              >
+                {sidebar}
+              </Drawer>
+            </>
+          )}
         </Box>
       </Box>
     </ThemeProvider>

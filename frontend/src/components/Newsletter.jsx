@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import {
-  Box, AppBar, Toolbar, Typography, Button,
-  CircularProgress, Alert, Avatar
+  Box, Typography, Button,
+  CircularProgress, Alert
 } from '@mui/material'
-import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import HomeIcon from '@mui/icons-material/Home'
 import MapIcon from '@mui/icons-material/Map'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import AppNavBar from './AppNavBar'
 import { fetchNews } from '../utils.js'
 
 const C = {
@@ -20,13 +20,6 @@ const C = {
   mid3: '#9d4edd',
   light1: '#c77dff',
   lightest: '#e0aaff',
-}
-
-const NAV_BTN = {
-  color: '#fff',
-  border: '1px solid rgba(255,255,255,0.25)',
-  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-  px: 1.5,
 }
 
 export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToCampaigns, user, onLogout }) {
@@ -59,42 +52,17 @@ export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin,
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', overflowY: 'auto' }}>
 
-      <AppBar position="sticky" elevation={0} sx={{
-        background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)`,
-        boxShadow: '0 2px 12px rgba(109,40,217,0.35)',
-      }}>
-        <Toolbar sx={{ gap: 1.5, minHeight: '95px !important' }}>
-          <SatelliteAltIcon sx={{ fontSize: 28 }} />
-          <Box sx={{ flexGrow: 0, mr: 2 }}>
-            <Typography variant="h6" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px', color: '#fff' }}>AquaGraph</Typography>
-            <Typography variant="caption" sx={{ opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#fff' }}>
-              Satellite Water Pollution Monitor
-            </Typography>
-          </Box>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <Button startIcon={<HomeIcon />} size="small" onClick={onGoToHome ?? onBack} sx={NAV_BTN}>Home</Button>
-          <Button startIcon={<MapIcon />} size="small" onClick={handleMapClick} sx={NAV_BTN}>Map</Button>
-          <Button startIcon={<CampaignIcon />} size="small" onClick={onGoToCampaigns} sx={NAV_BTN}>Campaigns</Button>
-
-          {/* Newsletter - evidențiat ca pagina curentă */}
-          <Button startIcon={<EmailIcon />} size="small" sx={{
-            color: C.lightest, border: `1px solid ${C.light1}`,
-            bgcolor: 'rgba(199,125,255,0.15)',
-            '&:hover': { bgcolor: 'rgba(199,125,255,0.25)' }, px: 1.5,
-          }}>
-            Newsletter
-          </Button>
-
-          {user && (
-            <Avatar onClick={onLogout} title="Logout"
-              sx={{ width: 34, height: 34, bgcolor: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', border: '2px solid rgba(255,255,255,0.4)', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
-              {user.username?.[0]?.toUpperCase() || 'U'}
-            </Avatar>
-          )}
-        </Toolbar>
-      </AppBar>
+      <AppNavBar
+        sx={{ background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)` }}
+        links={[
+          { label: 'Home', icon: <HomeIcon />, onClick: onGoToHome ?? onBack },
+          { label: 'Map', icon: <MapIcon />, onClick: handleMapClick },
+          { label: 'Campaigns', icon: <CampaignIcon />, onClick: onGoToCampaigns },
+          { label: 'Newsletter', icon: <EmailIcon />, onClick: () => {}, active: true },
+        ]}
+        user={user}
+        onLogout={onLogout}
+      />
 
       <Box sx={{ flex: 1, px: { xs: 2, md: 6 }, py: 5, maxWidth: 1200, mx: 'auto', width: '100%' }}>
         <Box sx={{ mb: 5, textAlign: 'center' }}>

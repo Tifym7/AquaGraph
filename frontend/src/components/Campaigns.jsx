@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import {
-  Box, AppBar, Toolbar, Typography, Button,
-  CircularProgress, Alert, Avatar, Fab, Snackbar, IconButton
+  Box, Typography, Button,
+  CircularProgress, Alert, Fab, Snackbar, IconButton
 } from '@mui/material'
-import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
+import AppNavBar from './AppNavBar'
 import HomeIcon from '@mui/icons-material/Home'
 import MapIcon from '@mui/icons-material/Map'
 import EmailIcon from '@mui/icons-material/Email'
@@ -12,7 +12,6 @@ import AddIcon from '@mui/icons-material/Add'
 import WaterIcon from '@mui/icons-material/Water'
 import GroupsIcon from '@mui/icons-material/Groups'
 import FavoriteIcon from '@mui/icons-material/Favorite'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import axios from 'axios'
 import CampaniiForm from './CampaignsForm.jsx'
 
@@ -35,13 +34,6 @@ const FALLBACK_CAMPAIGNS = [
   { id: 3, campaign_name: 'Protejăm Oltul', organization_name: 'AquaClean', river_name: 'Olt', coordinates: '45.3,24.5', start_date: '2025-05-20', end_date: '2025-06-20', likes: 63, participants: [] },
   { id: 4, campaign_name: 'Argeșul Curat', organization_name: 'Voluntari pentru Natură', river_name: 'Argeș', coordinates: '44.9,25.1', start_date: '2025-08-01', end_date: '2025-09-01', likes: 38, participants: [] },
 ]
-
-const NAV_BTN = {
-  color: '#fff',
-  border: '1px solid rgba(255,255,255,0.25)',
-  '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-  px: 1.5,
-}
 
 export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToNewsletter, user, onLogout }) {
   const [view, setView] = useState('list')
@@ -115,46 +107,23 @@ export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, 
   }
 
   // Navbar comuna
+  const navSx = { background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)` }
   const NavBar = ({ currentPage = 'campaigns', onBack: handleBack }) => (
-    <AppBar position="sticky" elevation={0} sx={{
-      background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)`,
-      boxShadow: '0 2px 12px rgba(109,40,217,0.35)',
-    }}>
-      <Toolbar sx={{ gap: 1.5, minHeight: currentPage === 'add' ? undefined : '95px !important' }}>
-        <SatelliteAltIcon sx={{ fontSize: 28 }} />
-        <Box sx={{ flexGrow: 0, mr: 2 }}>
-          <Typography variant="h6" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px', color: '#fff' }}>AquaGraph</Typography>
-          <Typography variant="caption" sx={{ opacity: 0.7, letterSpacing: '0.5px', textTransform: 'uppercase', color: '#fff' }}>
-            Satellite Water Pollution Monitor
-          </Typography>
-        </Box>
-        <Box sx={{ flexGrow: 1 }} />
-
-        {currentPage === 'add' ? (
-          <Button startIcon={<ArrowBackIcon />} size="small" onClick={handleBack} sx={NAV_BTN}>
-            Back to Campaigns
-          </Button>
-        ) : (
-          <>
-            <Button startIcon={<HomeIcon />} size="small" onClick={onGoToHome ?? onBack} sx={NAV_BTN}>Home</Button>
-            <Button startIcon={<MapIcon />} size="small" onClick={handleMapClick} sx={NAV_BTN}>Map</Button>
-            <Button startIcon={<EmailIcon />} size="small" onClick={onGoToNewsletter} sx={NAV_BTN}>Newsletter</Button>
-            <Button startIcon={<CampaignIcon />} size="small" sx={{
-              color: C.lightest, border: `1px solid ${C.light1}`,
-              bgcolor: 'rgba(199,125,255,0.15)', '&:hover': { bgcolor: 'rgba(199,125,255,0.25)' }, px: 1.5,
-            }}>
-              Campaigns
-            </Button>
-            {user && (
-              <Avatar onClick={onLogout} title="Logout"
-                sx={{ width: 34, height: 34, bgcolor: 'rgba(255,255,255,0.25)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', border: '2px solid rgba(255,255,255,0.4)', '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' } }}>
-                {user.username?.[0]?.toUpperCase() || 'U'}
-              </Avatar>
-            )}
-          </>
-        )}
-      </Toolbar>
-    </AppBar>
+    currentPage === 'add' ? (
+      <AppNavBar sx={navSx} backAction={{ label: 'Back to Campaigns', onClick: handleBack }} />
+    ) : (
+      <AppNavBar
+        sx={navSx}
+        links={[
+          { label: 'Home', icon: <HomeIcon />, onClick: onGoToHome ?? onBack },
+          { label: 'Map', icon: <MapIcon />, onClick: handleMapClick },
+          { label: 'Newsletter', icon: <EmailIcon />, onClick: onGoToNewsletter },
+          { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => {}, active: true },
+        ]}
+        user={user}
+        onLogout={onLogout}
+      />
+    )
   )
 
   if (view === 'add') {

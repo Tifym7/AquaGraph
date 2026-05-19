@@ -211,8 +211,8 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
       {/* Header */}
       <Box sx={{
         background: `linear-gradient(135deg, ${C.dark2} 0%, ${C.mid2} 100%)`,
-        px: 4, py: 3, display: 'flex', alignItems: 'center', gap: 2,
-        borderRadius: '12px 12px 0 0',
+        px: { xs: 2.5, md: 4 }, py: 3, display: 'flex', alignItems: 'center', gap: 2,
+        borderRadius: '12px 12px 0 0', flexWrap: 'wrap',
       }}>
         <CampaignOutlinedIcon sx={{ fontSize: 32, color: C.lightest }} />
         <Box>
@@ -230,7 +230,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
 
         {/* ── Coloana stânga ── */}
-        <Box sx={{ px: 4, py: 4, borderRight: { lg: `1px solid ${C.mid1}22` } }}>
+        <Box sx={{ px: { xs: 2.5, md: 4 }, py: 4, borderRight: { lg: `1px solid ${C.mid1}22` } }}>
 
           {/* Campaign & Organization */}
           <SectionLabel>Campaign Info</SectionLabel>
@@ -387,7 +387,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
 
         {/* ── Coloana dreapta - hartă ── */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ px: 4, pt: 4, pb: 1.5 }}>
+          <Box sx={{ px: { xs: 2.5, md: 4 }, pt: 4, pb: 1.5 }}>
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: C.mid1, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
               Map Location
             </Typography>
@@ -402,7 +402,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
 
           <Box sx={{
             flex: 1, minHeight: { xs: 320, lg: 0 }, height: { lg: '100%' },
-            mx: 3, mb: 3, borderRadius: 3, overflow: 'hidden',
+            mx: { xs: 2.5, md: 3 }, mb: 3, borderRadius: 3, overflow: 'hidden',
             border: `2px solid ${markerPos ? C.mid2 : C.mid1 + '33'}`,
             boxShadow: markerPos ? `0 0 0 4px ${C.mid1}18` : 'none',
             transition: 'border-color 0.3s, box-shadow 0.3s',
