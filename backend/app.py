@@ -24,6 +24,7 @@ import xml.etree.ElementTree as ET
 from user.services.campaign_service import CampaignService
 from user.model.campaign import Campaign
 from auth import auth_bp
+from history_api import history_bp
 from user.persistence.campaign_db_repository import CampaignDBRepository
 
 
@@ -38,6 +39,7 @@ from metrics import (
 
 app = Flask(__name__)
 app.register_blueprint(auth_bp)
+app.register_blueprint(history_bp)
 
 _campaign_repo = CampaignDBRepository(
     url=os.getenv('DB_URL', 'postgresql://localhost:5432/aquagraph'),
@@ -148,6 +150,10 @@ for r in RAW_RIVERS:
     }
 
 _step(f"RIVERS_BY_ID built ({len(RIVERS_BY_ID)} rivers) - startup data ready")
+
+# Expose the river lookup to the history/report blueprint (river names in PDFs
+# and history responses) without creating an import cycle.
+app.config["RIVERS_BY_ID"] = RIVERS_BY_ID
 
 # ===== API Endpoints =====
 def boxes_intersect(b1, b2):

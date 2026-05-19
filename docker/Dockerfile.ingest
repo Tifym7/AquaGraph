@@ -1,0 +1,40 @@
+# AquaGraph satellite-ingestion worker image.
+#
+# Separate from the app image on purpose: this carries the Earth Engine /
+# scheduler stack (requirements-ingest.txt) and runs the long-lived
+# backend/ingest scheduler - it never serves HTTP. Kept lean-ish; the same
+# system libs as the app are installed so requirements.txt (pulled in via
+# requirements-ingest.txt) builds cleanly.
+
+FROM python:3.12-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Same native prerequisites as the app image (geopandas/pyogrio/cfgrib in
+# requirements.txt need these; harmless if a given run doesn't use them).
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential \
+        libeccodes-dev libeccodes-tools \
+        gdal-bin libgdal-dev \
+        libpq-dev postgresql-client \
+        ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Deps first for layer caching. requirements-ingest.txt does `-r
+# requirements.txt` then adds earthengine-api / requests / APScheduler.
+COPY backend/requirements.txt /app/backend/requirements.txt
+COPY backend/requirements-ingest.txt /app/backend/requirements-ingest.txt
+RUN pip install --no-cache-dir -r /app/backend/requirements-ingest.txt
+
+COPY backend /app/backend
+
+# Run as the ingest package from the backend dir (snapshot.py uses paths
+# relative to the module, so cwd only needs to make `ingest` importable).
+WORKDIR /app/backend
+
+# Block until Postgres answers, then start the blocking scheduler.
+CMD ["sh", "-c", "until pg_isready -d \"$DB_URL\" >/dev/null 2>&1; do echo '[ingest] waiting for postgres...'; sleep 2; done; exec python -m ingest.scheduler"]
