@@ -1,4 +1,4 @@
-# Keep the build context small — these are huge and not needed inside the image.
+# Keep the build context small - these are huge and not needed inside the image.
 backend/venv
 backend/__pycache__
 backend/**/__pycache__

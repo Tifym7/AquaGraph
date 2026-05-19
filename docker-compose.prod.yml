@@ -23,7 +23,7 @@ services:
       - aquagraph-pgdata:/var/lib/postgresql/data
       - ./backend/db.sql:/aquagraph-db.sql:ro
       - ./docker/init-aquagraph-db.sh:/docker-entrypoint-initdb.d/init-aquagraph-db.sh:ro
-    # Not published to the host — only the app container reaches it over the
+    # Not published to the host - only the app container reaches it over the
     # compose network. Keeps Postgres off the public internet.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d aquagraph"]

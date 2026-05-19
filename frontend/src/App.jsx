@@ -1,23 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import { fetchRivers, fetchSegments, lodForZoom, CLICK_OVERLAY_ZOOM_THRESHOLD } from './utils'
-import {
-  Box, AppBar, Toolbar, Typography, Chip,
-  Button, Avatar, Menu, MenuItem, Divider, ListItemIcon,
-} from '@mui/material'
-import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
-import LoginIcon from '@mui/icons-material/Login'
-import PersonAddIcon from '@mui/icons-material/PersonAdd'
-import LogoutIcon from '@mui/icons-material/Logout'
+import { Box, Drawer, Fab } from '@mui/material'
+import HomeIcon from '@mui/icons-material/Home'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
+import AppNavBar from './components/AppNavBar'
+import useIsMobile from './hooks/useIsMobile'
 import MapView from './components/MapView'
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
 import Register from './components/Register'
 import Newsletter from './components/Newsletter'
 import Campaigns from './components/Campaigns'
+import LandingPage from './components/landing/LandingPage'
 import { ROMANIA_REGIONS } from './constants/Regions'
 
 const theme = createTheme({
@@ -41,37 +38,38 @@ const theme = createTheme({
         },
       },
     },
-    MuiChip: {
-      styleOverrides: {
-        root: { fontWeight: 600, borderRadius: 4 },
-      },
-    },
-    MuiButton: {
-      styleOverrides: {
-        root: { borderRadius: 4, textTransform: 'none', fontWeight: 600 },
-      },
-    },
+    MuiChip: { styleOverrides: { root: { fontWeight: 600, borderRadius: 4 } } },
+    MuiButton: { styleOverrides: { root: { borderRadius: 4, textTransform: 'none', fontWeight: 600 } } },
   },
 })
 
 export default function App() {
-  const [page, setPage] = useState('map')
+  const [page, setPage] = useState('landing')
   const [user, setUser] = useState(null)
   const [initialRegion, setInitialRegion] = useState(null)
   const [selectedRiver, setSelectedRiver] = useState(null)
-  // Sidebar's "top 10" list — fetched once per metric change at low zoom.
   const [topRivers, setTopRivers] = useState([])
-  // LOD-tier-aware click overlay for the map.
   const [activeLod, setActiveLod] = useState(2)
-  const [segmentLods, setSegmentLods] = useState({}) // { 1: [...], 2: [...], ... }
+  const [segmentLods, setSegmentLods] = useState({})
   const [activeMetric, setActiveMetric] = useState('pollution')
+  const [rivers, setRivers] = useState([])
   const cancelledRef = useRef(false)
+  const isMobile = useIsMobile()
+  const [riverDrawerOpen, setRiverDrawerOpen] = useState(false)
 
-  /* Load click-overlay segments for a LOD tier (cached after first load). */
+  /* On phones the sidebar is a slide-over Drawer. A river picked from the
+     map (no _flyOnFocus) opens the drawer to reveal its detail; a river
+     picked from the list/flow links carries _flyOnFocus, so we close the
+     drawer instead and let the map's fly-to animation play in full view. */
+  useEffect(() => {
+    if (!isMobile) return
+    if (!selectedRiver) return
+    setRiverDrawerOpen(!selectedRiver._flyOnFocus)
+  }, [selectedRiver, isMobile])
+
   const ensureLodLoaded = useCallback((lod) => {
     setSegmentLods((prev) => {
       if (prev[lod]) return prev
-      // mark as loading to prevent duplicate fetches
       const next = { ...prev, [lod]: [] }
       fetchSegments(lod).then((segs) => {
         if (cancelledRef.current) return
@@ -81,35 +79,11 @@ export default function App() {
     })
   }, [])
 
-  /* React to map zoom changes — only fetch a LOD JSON when the user is
-     zoomed in enough to actually use the click overlay. Below the
-     threshold we don't load any segment data (saves RAM + per-frame work). */
   const handleZoomChange = useCallback((zoom) => {
     const lod = lodForZoom(zoom)
     setActiveLod((prev) => (prev === lod ? prev : lod))
-    if (zoom >= CLICK_OVERLAY_ZOOM_THRESHOLD) {
-      ensureLodLoaded(lod)
-    }
+    if (zoom >= CLICK_OVERLAY_ZOOM_THRESHOLD) ensureLodLoaded(lod)
   }, [ensureLodLoaded])
-
-  /* Preload the LOD tiers the user is likely to need within ~1s — the
-     country-wide click overlay (LOD 3) and the close-up vector layer
-     (LOD 5). Fetching these eagerly avoids the "blank canvas" gap where
-     the user zooms past the threshold but the segment JSON hasn't arrived
-     yet, which leaves the metric tile layer hidden (z>=12 vector mode)
-     while the vector layer has nothing to render. */
-  const [rivers, setRivers] = useState([])
-  const [anchorEl, setAnchorEl] = useState(null)
-  const menuOpen = Boolean(anchorEl)
-  // const timeoutRef = useRef(null)
-
-
-  // const handleMapChange = useCallback((bounds, zoom) => {
-  // if (timeoutRef.current) clearTimeout(timeoutRef.current)
-  // timeoutRef.current = setTimeout(() => {
-  //   fetchRivers(zoom, null).then(setRivers).catch(console.error) // ← null, fără bbox
-  // }, 250)
-  // }, [])
 
   useEffect(() => {
     cancelledRef.current = false
@@ -118,19 +92,17 @@ export default function App() {
     return () => { cancelledRef.current = true }
   }, [ensureLodLoaded])
 
-  /* Sidebar list — refresh on metric change. Uses /api/rivers at low zoom for
-     a stable, ranked, country-wide top-N. The map visuals are unaffected. */
   useEffect(() => {
     fetchRivers(7, null, activeMetric).then((data) => {
       setTopRivers(data.rivers || data || [])
     }).catch(console.error)
   }, [activeMetric])
 
-useEffect(() => {
-  if (initialRegion) {
-    fetchRivers(initialRegion.zoom || 9, null).then(setRivers).catch(console.error)
-  }
-}, [initialRegion])
+  useEffect(() => {
+    if (initialRegion) {
+      fetchRivers(initialRegion.zoom || 9, null).then(setRivers).catch(console.error)
+    }
+  }, [initialRegion])
 
   const handleLogin = (userData) => {
     setUser(userData)
@@ -152,8 +124,24 @@ useEffect(() => {
 
   const handleLogout = () => {
     setUser(null)
-    setAnchorEl(null)
     setInitialRegion(null)
+    setPage('landing')
+  }
+
+  if (page === 'landing') {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LandingPage
+          user={user}
+          onGoToMap={() => setPage('map')}
+          onGoToLogin={() => setPage('login')}
+          onGoToRegister={() => setPage('register')}
+          onGoToNewsletter={() => setPage('newsletter')}
+          onGoToCampaigns={() => setPage('campaigns')} onLogout={handleLogout}
+        />
+      </ThemeProvider>
+    )
   }
 
   if (page === 'login') {
@@ -163,7 +151,7 @@ useEffect(() => {
         <Login
           onLogin={handleLogin}
           onGoToRegister={() => setPage('register')}
-          onBack={() => setPage('map')}
+          onBack={() => setPage('landing')}
         />
       </ThemeProvider>
     )
@@ -176,7 +164,7 @@ useEffect(() => {
         <Register
           onRegister={handleRegister}
           onGoToLogin={() => setPage('login')}
-          onBack={() => setPage('map')}
+          onBack={() => setPage('landing')}
         />
       </ThemeProvider>
     )
@@ -186,163 +174,65 @@ useEffect(() => {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Newsletter
-            onBack={() => setPage('map')}
-            onGoToLogin={() => setPage('login')}
-            onGoToRegister={() => setPage('register')}
-            user={user}
-            onLogout={handleLogout}
+        <Newsletter onGoToHome={() => setPage('landing')} onGoToMap={() => setPage('map')} onGoToCampaigns={() => setPage('campaigns')} onLogout={handleLogout}
+          onBack={() => setPage('map')}
+          onGoToLogin={() => setPage('login')}
+          onGoToRegister={() => setPage('register')}
+          user={user}
+          onLogout={handleLogout}
         />
       </ThemeProvider>
     )
   }
 
   if (page === 'campaigns') {
-  return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Campaigns
-        onBack={() => setPage('map')}
-        onGoToLogin={() => setPage('login')}
-        onGoToRegister={() => setPage('register')}
-        onGoToNewsletter={() => setPage('newsletter')}
-        onGoToAddCampaign={() => setPage('add-campaign')}
-        user={user}
-        onLogout={handleLogout}
-      />
-    </ThemeProvider>
-  )
-}
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Campaigns onGoToHome={() => setPage('landing')} onGoToMap={() => setPage('map')}
+          onBack={() => setPage('map')}
+          onGoToLogin={() => setPage('login')}
+          onGoToRegister={() => setPage('register')}
+          onGoToNewsletter={() => setPage('newsletter')}
+          onGoToAddCampaign={() => setPage('add-campaign')}
+          user={user}
+          onLogout={handleLogout}
+        />
+      </ThemeProvider>
+    )
+  }
 
-  const regionLabel = user?.region
-    ? ROMANIA_REGIONS.find(r => r.value === user.region)?.label
-    : null
+  // MAP (pagina principala dupa login)
+  const sidebar = (
+    <Sidebar
+      rivers={topRivers}
+      selectedRiver={selectedRiver}
+      metric={activeMetric}
+      onMetricChange={setActiveMetric}
+      onClose={() => setSelectedRiver(null)}
+      onSelect={(r) => setSelectedRiver(r ? { ...r, _flyOnFocus: true } : null)}
+    />
+  )
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppBar position="sticky" elevation={0}>
-          <Toolbar sx={{ gap: 1.5, minHeight: '95px !important' }}>
-            <SatelliteAltIcon sx={{ fontSize: 28 }} />
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="h6" component="div" sx={{ lineHeight: 1.2, letterSpacing: '-0.3px' }}>
-                AquaGraph
-              </Typography>
-              <Typography variant="caption" sx={{ opacity: 0.75, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                Satellite Water Pollution Monitor
-              </Typography>
-            </Box>
+        <AppNavBar
+          links={[
+            { label: 'Home', icon: <HomeIcon />, onClick: () => setPage('landing') },
+            { label: 'Newsletter', icon: <EmailIcon />, onClick: () => setPage('newsletter') },
+            { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => setPage('campaigns') },
+          ]}
+          user={user}
+          onLogout={handleLogout}
+          userMenuDetail
+        />
 
-            <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
+          {/* Desktop: sidebar docked next to the map */}
+          {!isMobile && sidebar}
 
-            {/* Newsletter */}
-            <Button
-              startIcon={<EmailIcon />}
-              size="small"
-              onClick={() => setPage('newsletter')}
-              sx={{
-                color: '#fff',
-                border: '1px solid rgba(255,255,255,0.25)',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                px: 1.5,
-              }}
-            >
-              Newsletter
-
-            </Button>
-
-            <Button startIcon={<CampaignIcon />}
-                        size="small"
-                        onClick={() => setPage('campaigns')}
-                        sx={{ color: '#fff', border: '1px solid rgba(255,255,255,0.25)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' }, px: 1.5 }}>
-                  Campaigns
-                </Button>
-
-            {/* Login / Avatar */}
-            {user ? (
-              <>
-                <Avatar
-                  onClick={(e) => setAnchorEl(e.currentTarget)}
-                  sx={{
-                    width: 34, height: 34,
-                    bgcolor: 'rgba(255,255,255,0.25)',
-                    color: '#fff',
-                    fontSize: 14, fontWeight: 700,
-                    cursor: 'pointer',
-                    border: '2px solid rgba(255,255,255,0.4)',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.35)' },
-                  }}
-                >
-                  {user.username?.[0]?.toUpperCase() || 'U'}
-                </Avatar>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={menuOpen}
-                  onClose={() => setAnchorEl(null)}
-                  transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                  anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-                  slotProps={{ paper: { sx: { mt: 1, minWidth: 180, borderRadius: 2 } } }}
-                >
-                  <Box sx={{ px: 2, py: 1 }}>
-                    <Typography variant="body2" fontWeight={700}>{user.username}</Typography>
-                    {user.email && (
-                      <Typography variant="caption" color="text.secondary">{user.email}</Typography>
-                    )}
-                  </Box>
-                  <Divider />
-                  <MenuItem onClick={handleLogout}>
-                    <ListItemIcon><LogoutIcon fontSize="small" /></ListItemIcon>
-                    Deconectare
-                  </MenuItem>
-                </Menu>
-              </>
-            ) : (
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  size="small"
-                  startIcon={<LoginIcon />}
-                  onClick={() => setPage('login')}
-                  sx={{
-                    color: '#fff',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                    px: 1.5,
-                  }}
-                >
-                  Login
-                </Button>
-                <Button
-                  size="small"
-                  startIcon={<PersonAddIcon />}
-                  onClick={() => setPage('register')}
-                  sx={{
-                    color: '#fff',
-                    border: '1px solid rgba(255,255,255,0.25)',
-                    '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' },
-                    px: 1.5,
-                  }}
-                >
-                  Register
-                </Button>
-              </Box>
-            )}
-          </Toolbar>
-        </AppBar>
-
-        <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          <Sidebar
-            rivers={topRivers}
-            selectedRiver={selectedRiver}
-            metric={activeMetric}
-            onMetricChange={setActiveMetric}
-            onClose={() => setSelectedRiver(null)}
-            /* Sidebar selections (top-10 list, upstream / downstream flow links)
-               want the map to fly to the river. Tag the river object so
-               RiverFocus knows to animate. Map clicks bypass this and call
-               setSelectedRiver directly, leaving the camera in place. */
-            onSelect={(r) => setSelectedRiver(r ? { ...r, _flyOnFocus: true } : null)}
-          />
           <MapView
             segmentLods={segmentLods}
             activeLod={activeLod}
@@ -353,6 +243,36 @@ useEffect(() => {
             onMetricChange={setActiveMetric}
             initialRegion={initialRegion}
           />
+
+          {/* Phone: sidebar slides over the map; FAB toggles it */}
+          {isMobile && (
+            <>
+              {!riverDrawerOpen && (
+                <Fab
+                  variant="extended"
+                  size="medium"
+                  onClick={() => setRiverDrawerOpen(true)}
+                  sx={{
+                    position: 'absolute', top: 12, left: 12, zIndex: 1200,
+                    bgcolor: '#fff', color: '#5a189a', fontWeight: 700,
+                    boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
+                    '&:hover': { bgcolor: '#f5f3ff' },
+                  }}
+                >
+                  <FormatListBulletedIcon sx={{ mr: 1, fontSize: 20 }} />
+                  {selectedRiver ? 'Details' : 'Rivers'}
+                </Fab>
+              )}
+              <Drawer
+                anchor="left"
+                open={riverDrawerOpen}
+                onClose={() => setRiverDrawerOpen(false)}
+                slotProps={{ paper: { sx: { width: '88vw', maxWidth: 380 } } }}
+              >
+                {sidebar}
+              </Drawer>
+            </>
+          )}
         </Box>
       </Box>
     </ThemeProvider>

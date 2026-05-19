@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import axios from 'axios'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
-import { Box, Typography, TextField, Button, InputAdornment, IconButton, Divider, Link, Chip } from '@mui/material'
+import { Box, Typography, TextField, Button, InputAdornment, IconButton, Divider, Link } from '@mui/material'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import PersonOutlineIcon from '@mui/icons-material/AccountCircleOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { API_BASE } from '../utils'
 
 const theme = createTheme({
   palette: {
@@ -51,14 +51,14 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
 
   const handleSubmit = async () => {
     setError('')
-    if (!username.trim() || !password) { setError('Completează toate câmpurile.'); return }
+    if (!username.trim() || !password) { setError('Please fill in all fields.'); return }
     setLoading(true)
     try {
-      const { data } = await axios.post('http://127.0.0.1:5000/api/login', { username: username.trim(), password })
+      const { data } = await axios.post(`${API_BASE}/login`, { username: username.trim(), password })
       axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
       onLogin && onLogin(data.user)
     } catch (err) {
-      setError(err.response?.data?.error || 'Eroare de conexiune. Încearcă din nou.')
+      setError(err.response?.data?.error || 'Connection error. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -88,12 +88,11 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
                 Satellite Water Pollution Monitor
               </Typography>
             </Box>
-            {/* Buton Back */}
             {onBack && (
               <IconButton
                 onClick={onBack}
                 size="small"
-                title="Înapoi la hartă"
+                title="Back to Home"
                 sx={{
                   color: 'rgba(255,255,255,0.7)',
                   bgcolor: 'rgba(255,255,255,0.1)',
@@ -110,10 +109,10 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
           {/* Body */}
           <Box sx={{ px: 3, pt: 3, pb: 4 }}>
             <Typography sx={{ fontSize: 16, fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
-              Bun venit înapoi
+              Welcome back
             </Typography>
             <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3 }}>
-              Introdu credențialele pentru acces
+              Enter your credentials to access the platform
             </Typography>
 
             <TextField
@@ -124,7 +123,7 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
             />
 
             <TextField
-              fullWidth label="Parolă" variant="outlined" size="small"
+              fullWidth label="Password" variant="outlined" size="small"
               type={showPassword ? 'text' : 'password'}
               value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown}
               sx={{ mb: 1 }}
@@ -144,7 +143,7 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
               <Link href="#" underline="hover" sx={{ fontSize: 12, color: '#7b2cbf', fontWeight: 600 }}>
-                Ai uitat parola?
+                Forgot password?
               </Link>
             </Box>
 
@@ -163,16 +162,16 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
                 '&:hover': { background: 'linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%)', boxShadow: '0 6px 20px rgba(90, 24, 154, 0.4)' },
               }}
             >
-              {loading ? 'Se autentifică...' : 'Autentificare'}
+              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
 
-            <Divider sx={{ my: 3, fontSize: 12, color: '#9d4edd', opacity: 0.5 }}>sau</Divider>
+            <Divider sx={{ my: 3, fontSize: 12, color: '#9d4edd', opacity: 0.5 }}>or</Divider>
 
             <Typography sx={{ textAlign: 'center', fontSize: 13, color: 'text.secondary' }}>
-              Nu ai cont?{' '}
+              Don't have an account?{' '}
               <Link component="button" onClick={onGoToRegister} underline="hover"
                 sx={{ color: '#5a189a', fontWeight: 700, fontSize: 13, background: 'none', border: 'none', cursor: 'pointer' }}>
-                Înregistrează-te
+                Sign up
               </Link>
             </Typography>
 
@@ -181,7 +180,7 @@ export default function Login({ onLogin, onGoToRegister, onBack }) {
                 fullWidth variant="text" onClick={onBack} startIcon={<ArrowBackIcon />}
                 sx={{ mt: 1.5, color: '#9d4edd', fontSize: 13, '&:hover': { bgcolor: 'rgba(90,24,154,0.05)' } }}
               >
-                Înapoi la hartă
+                Back to Home
               </Button>
             )}
           </Box>

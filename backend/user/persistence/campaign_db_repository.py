@@ -11,17 +11,32 @@ class CampaignDBRepository(CampaignRepository):
         self.__url = url
         self.__username = username
         self.__password = password
-        self.__ensure_schema()
+        # Schema is ensured lazily on first DB use, NOT here: this object is
+        # constructed at `import app` time (under gunicorn). Connecting during
+        # import would make a slow/unreachable DB hang the whole worker boot.
+        self.__schema_ready = False
 
-    def __get_connection(self):
+    def __raw_connection(self):
+        # connect_timeout caps how long a single connect attempt blocks, so a
+        # missing/unreachable DB fails fast and visibly instead of hanging
+        # forever (pg_isready in start.sh only proves the socket is open).
         return psycopg2.connect(
             self.__url,
             user=self.__username or None,
             password=self.__password or None,
+            connect_timeout=10,
         )
 
+    def __get_connection(self):
+        # Every public operation goes through here, so this is where the
+        # one-time schema bootstrap happens - on first real use, not import.
+        self.__ensure_schema()
+        return self.__raw_connection()
+
     def __ensure_schema(self):
-        with self.__get_connection() as connection:
+        if self.__schema_ready:
+            return
+        with self.__raw_connection() as connection:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
@@ -48,6 +63,7 @@ class CampaignDBRepository(CampaignRepository):
                     )
                     """
                 )
+        self.__schema_ready = True
 
     @staticmethod
     def __row_to_campaign(row):

@@ -3,7 +3,7 @@ import axios from 'axios'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import {
   Box, Typography, TextField, Button, InputAdornment,
-  IconButton, Divider, Link, Chip, MenuItem, Select,
+  IconButton, Divider, Link, MenuItem, Select,
   FormControl, InputLabel, OutlinedInput,
 } from '@mui/material'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
@@ -13,9 +13,9 @@ import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
 import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
-import FiberManualRecordIcon from '@mui/icons-material/FiberManualRecord'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { ROMANIA_REGIONS } from '../constants/Regions'
+import { API_BASE } from '../utils'
 
 const theme = createTheme({
   palette: {
@@ -55,21 +55,28 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
 
   const handleSubmit = async () => {
     setError('')
-    if (!form.username.trim() || !form.email.trim() || !form.password || !form.region) { setError('Completează toate câmpurile obligatorii.'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError('Adresa de email nu este validă.'); return }
-    if (form.password.length < 8) { setError('Parola trebuie să aibă cel puțin 8 caractere.'); return }
-    if (form.password !== form.confirmPassword) { setError('Parolele nu coincid.'); return }
-
+    if (!form.username.trim() || !form.email.trim() || !form.password || !form.region) {
+      setError('Please fill in all required fields.'); return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError('Please enter a valid email address.'); return
+    }
+    if (form.password.length < 8) {
+      setError('Password must be at least 8 characters.'); return
+    }
+    if (form.password !== form.confirmPassword) {
+      setError('Passwords do not match.'); return
+    }
     setLoading(true)
     try {
-      const { data } = await axios.post('http://127.0.0.1:5000/api/register', {
+      const { data } = await axios.post(`${API_BASE}/register`, {
         username: form.username.trim(), email: form.email.trim(), password: form.password, region: form.region,
       })
       localStorage.setItem('aq_token', data.token)
       axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
       onRegister && onRegister(data.user)
     } catch (err) {
-      setError(err.response?.data?.error || 'Eroare de conexiune. Încearcă din nou.')
+      setError(err.response?.data?.error || 'Connection error. Please try again.')
     } finally {
       setLoading(false)
     }
@@ -99,12 +106,11 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
                 Satellite Water Pollution Monitor
               </Typography>
             </Box>
-            {/* Buton Back */}
             {onBack && (
               <IconButton
                 onClick={onBack}
                 size="small"
-                title="Înapoi la hartă"
+                title="Back to Home"
                 sx={{
                   color: 'rgba(255,255,255,0.7)',
                   bgcolor: 'rgba(255,255,255,0.1)',
@@ -121,10 +127,10 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
           {/* Body */}
           <Box sx={{ px: 3, pt: 3, pb: 4 }}>
             <Typography sx={{ fontSize: 16, fontWeight: 700, color: 'text.primary', mb: 0.5 }}>
-              Creează cont
+              Create an account
             </Typography>
             <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 3 }}>
-              Înregistrează-te pentru acces la monitorizare
+              Sign up to access the monitoring platform
             </Typography>
 
             <TextField fullWidth label="Username" variant="outlined" size="small"
@@ -138,8 +144,8 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
             />
 
             <FormControl fullWidth size="small" sx={{ mb: 2 }}>
-              <InputLabel sx={{ color: '#5a189a' }}>Regiunea de interes</InputLabel>
-              <Select value={form.region} onChange={set('region')} input={<OutlinedInput label="Regiunea de interes" />}
+              <InputLabel sx={{ color: '#5a189a' }}>Region of interest</InputLabel>
+              <Select value={form.region} onChange={set('region')} input={<OutlinedInput label="Region of interest" />}
                 startAdornment={<InputAdornment position="start"><LocationOnOutlinedIcon sx={{ fontSize: 20, color: '#9d4edd', ml: 0.5 }} /></InputAdornment>}
               >
                 {ROMANIA_REGIONS.map(r => (
@@ -148,7 +154,7 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
               </Select>
             </FormControl>
 
-            <TextField fullWidth label="Parolă" variant="outlined" size="small"
+            <TextField fullWidth label="Password" variant="outlined" size="small"
               type={showPassword ? 'text' : 'password'} value={form.password} onChange={set('password')} onKeyDown={handleKeyDown} sx={{ mb: 2 }}
               slotProps={{
                 input: {
@@ -158,7 +164,7 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
               }}
             />
 
-            <TextField fullWidth label="Confirmă parola" variant="outlined" size="small"
+            <TextField fullWidth label="Confirm password" variant="outlined" size="small"
               type={showConfirm ? 'text' : 'password'} value={form.confirmPassword} onChange={set('confirmPassword')} onKeyDown={handleKeyDown} sx={{ mb: 3 }}
               slotProps={{
                 input: {
@@ -182,16 +188,16 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
                 '&:hover': { background: 'linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%)', boxShadow: '0 6px 20px rgba(90, 24, 154, 0.4)' },
               }}
             >
-              {loading ? 'Se creează contul...' : 'Creează cont'}
+              {loading ? 'Creating account...' : 'Create account'}
             </Button>
 
-            <Divider sx={{ my: 3, fontSize: 12, color: '#9d4edd', opacity: 0.5 }}>sau</Divider>
+            <Divider sx={{ my: 3, fontSize: 12, color: '#9d4edd', opacity: 0.5 }}>or</Divider>
 
             <Typography sx={{ textAlign: 'center', fontSize: 13, color: 'text.secondary' }}>
-              Ai deja cont?{' '}
+              Already have an account?{' '}
               <Link component="button" onClick={onGoToLogin} underline="hover"
                 sx={{ color: '#5a189a', fontWeight: 700, fontSize: 13, background: 'none', border: 'none', cursor: 'pointer' }}>
-                Autentifică-te
+                Sign in
               </Link>
             </Typography>
 
@@ -199,7 +205,7 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
               <Button fullWidth variant="text" onClick={onBack} startIcon={<ArrowBackIcon />}
                 sx={{ mt: 1.5, color: '#9d4edd', fontSize: 13, '&:hover': { bgcolor: 'rgba(90,24,154,0.05)' } }}
               >
-                Înapoi la hartă
+                Back to Home
               </Button>
             )}
           </Box>

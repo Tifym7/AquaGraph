@@ -6,7 +6,7 @@ import axios from 'axios'
 export const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 
 /**
- * LOD ladder — must mirror backend/metrics.py:LOD_TIERS so the frontend
+ * LOD ladder - must mirror backend/metrics.py:LOD_TIERS so the frontend
  * fetches the same simplified geometry that was painted into the tiles.
  */
 export function lodForZoom(zoom) {
@@ -26,7 +26,7 @@ export const ZOOM_MIN = 6
 export const ZOOM_MAX = 18 // basemap supports it, vector polylines scale crisp
 export const VECTOR_ZOOM_THRESHOLD = 12 // at >= this zoom we render LOD 5 as crisp vectors
 
-/* Below this zoom we don't fetch / mount the click overlay at all — at the
+/* Below this zoom we don't fetch / mount the click overlay at all - at the
    country-wide view (z=6, 8) the user is browsing the precomputed visual,
    not clicking individual segments, so paying for 18k transparent polylines
    in the DOM (multi-GB RAM, lag on every mousemove) is wasteful. */
@@ -107,7 +107,7 @@ export function normalizeMetric(raw, metric) {
 
 /**
  * Fetch the precomputed click-overlay segment list for a given LOD tier.
- * One HTTP call per LOD crossing — far cheaper than a per-pan refetch.
+ * One HTTP call per LOD crossing - far cheaper than a per-pan refetch.
  */
 export async function fetchSegments(lod = 3) {
   try {
@@ -141,7 +141,7 @@ export async function fetchMetrics() {
  */
 /**
  * Lightweight: ranked top-N rivers for the sidebar list. Returns river
- * metadata + avg_normalized only — no segments — so it's fast to refetch
+ * metadata + avg_normalized only - no segments - so it's fast to refetch
  * on every metric change.
  */
 export async function fetchTopRivers(metric = 'pollution', limit = 10) {
@@ -163,7 +163,7 @@ export async function fetchRivers(currentZoom = 7, mapBounds = null, metric = 'p
     params.metric = metric
     const response = await axios.get(`${API_BASE}/rivers`, { params })
     const data = response.data  // returns { rivers, metric, metric_label, total }
-    /* Cap silently — this endpoint now only powers the sidebar's top-N list,
+    /* Cap silently - this endpoint now only powers the sidebar's top-N list,
        so trimming long responses isn't worth a console warning every reload. */
     const MAX_RIVERS = currentZoom < 8 ? 250 : currentZoom < 10 ? 400 : currentZoom < 12 ? 600 : 800
     if (data.rivers && data.rivers.length > MAX_RIVERS) {
@@ -227,18 +227,18 @@ export async function fetchNews() {
 }
 
 /**
- * Per-metric color gradients — single source of truth shared by the map and sidebar.
+ * Per-metric color gradients - single source of truth shared by the map and sidebar.
  * Order = low → high values. Metric keys must match METRIC_KEYS / backend metric ids.
  */
 export const METRIC_GRADIENTS = {
   pollution: ['#4caf50', '#8bc34a', '#ffeb3b', '#ff9800', '#f44335', '#e53935'],
-  risk:      ['#4caf50', '#ffeb3b', '#ff9800', '#f44335', '#9c27b0'],
-  NDVI:      ['#1e428f', '#00aaff', '#49d0d1', '#74dc23', '#ffc600', '#d40746'],
-  MNDWI:     ['#ff5252', '#ffee58', '#4caf50', '#00897b', '#1e428f'],
-  NDCI:      ['#4caf50', '#ffeb3b', '#e53935'],
+  risk: ['#4caf50', '#ffeb3b', '#ff9800', '#f44335', '#9c27b0'],
+  NDVI: ['#1e428f', '#00aaff', '#49d0d1', '#74dc23', '#ffc600', '#d40746'],
+  MNDWI: ['#ff5252', '#ffee58', '#4caf50', '#00897b', '#1e428f'],
+  NDCI: ['#4caf50', '#ffeb3b', '#e53935'],
   TURBIDITY: ['#0055cc', '#00aaff', '#49d0d1', '#74dc23', '#ffc600', '#e53935'],
-  water:     ['#0055cc', '#00aaff', '#49d0d1'],
-  land:      ['#ff9800', '#d4a76a', '#653215'],
+  water: ['#0055cc', '#00aaff', '#49d0d1'],
+  land: ['#ff9800', '#d4a76a', '#653215'],
   // Trickle → torrent palette: pale cyan for tributaries, deep blue/purple for the Danube.
   discharge: ['#e0f7fa', '#4dd0e1', '#00838f', '#1565c0', '#311b92'],
 }
@@ -261,7 +261,7 @@ export function gradientColor(value, gradient) {
 }
 
 /**
- * Color for a normalized (0-1) value on the given metric — matches the map.
+ * Color for a normalized (0-1) value on the given metric - matches the map.
  */
 export function getMetricColor(value, metric = 'pollution') {
   const grad = METRIC_GRADIENTS[metric] || METRIC_GRADIENTS.pollution

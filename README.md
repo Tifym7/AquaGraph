@@ -1,6 +1,6 @@
-# AquaGraph — Satellite Water Pollution Monitor
+# AquaGraph - Satellite Water Pollution Monitor
 
-Built for the **Cassini Hackathon 2026, 11th edition — "Space
+Built for the **Cassini Hackathon 2026, 11th edition - "Space
  for Water"**, the
 EU-funded challenge to use Copernicus Earth-observation data and Galileo
 positioning to protect, monitor, and sustainably manage Europe's water
@@ -84,7 +84,7 @@ and an auth + campaigns layer backed by PostgreSQL via `psycopg2`.
 
 ## Docker (one-command setup)
 
-The full stack — PostgreSQL, Flask backend, Vite frontend — is defined in a
+The full stack - PostgreSQL, Flask backend, Vite frontend - is defined in a
 single `Dockerfile` and `docker-compose.yml`. Postgres auto-initializes from
 `backend/db.sql` on first start; no manual `psql` required.
 
@@ -157,7 +157,7 @@ export DB_USER=postgres
 export DB_PASSWORD=mysecretpassword
 ```
 
-Bootstrap the database with the project's seed script — `backend/db.sql`
+Bootstrap the database with the project's seed script - `backend/db.sql`
 creates the `aquagraph` database (only if it doesn't already exist), all
 required tables (users, pending verifications, campaigns, participants),
 and seeds a few example campaigns:

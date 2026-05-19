@@ -29,13 +29,13 @@ L.Icon.Default.mergeOptions({
 
 const C = {
   darkest: '#10002b',
-  dark1:   '#240046',
-  dark2:   '#3c096c',
-  mid1:    '#5a189a',
-  mid2:    '#7b2cbf',
-  mid3:    '#9d4edd',
-  light1:  '#c77dff',
-  lightest:'#e0aaff',
+  dark1: '#240046',
+  dark2: '#3c096c',
+  mid1: '#5a189a',
+  mid2: '#7b2cbf',
+  mid3: '#9d4edd',
+  light1: '#c77dff',
+  lightest: '#e0aaff',
 }
 
 // Zboară harta la coordonate
@@ -65,25 +65,25 @@ const NOW_DISPLAY = new Date().toLocaleString('ro-RO', {
 
 export default function CampaniiForm({ user, onSubmit, onCancel }) {
   const [form, setForm] = useState({
-    campaignName:     '',
+    campaignName: '',
     organizationName: '',
-    riverName:        '',
-    judet:            '',
-    localitate:       '',
-    coordLat:         '',
-    coordLng:         '',
-    startDate:        '',
-    endDate:          '',
+    riverName: '',
+    judet: '',
+    localitate: '',
+    coordLat: '',
+    coordLng: '',
+    startDate: '',
+    endDate: '',
   })
   const createdAt = NOW_DISPLAY
 
   const [localitatiDisponibile, setLocalitatiDisponibile] = useState([])
   const [mapCenter, setMapCenter] = useState({ lat: 45.9432, lng: 24.9668 })
-  const [mapZoom, setMapZoom]     = useState(7)
+  const [mapZoom, setMapZoom] = useState(7)
   const [markerPos, setMarkerPos] = useState(null)
   const [submitted, setSubmitted] = useState(false)
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
 
@@ -142,30 +142,30 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
 
   const handleSubmit = async () => {
     setError('')
-    if (!form.campaignName.trim())     { setError('Campaign name este obligatoriu.'); return }
+    if (!form.campaignName.trim()) { setError('Campaign name este obligatoriu.'); return }
     if (!form.organizationName.trim()) { setError('Organization name este obligatoriu.'); return }
-    if (!form.riverName.trim())        { setError('River name este obligatoriu.'); return }
-    if (!form.judet)                   { setError('Selectează un județ.'); return }
-    if (!form.localitate)              { setError('Selectează o localitate.'); return }
-    if (!form.startDate)               { setError('Start date este obligatoriu.'); return }
-    if (!form.endDate)                 { setError('End date este obligatoriu.'); return }
+    if (!form.riverName.trim()) { setError('River name este obligatoriu.'); return }
+    if (!form.judet) { setError('Selectează un județ.'); return }
+    if (!form.localitate) { setError('Selectează o localitate.'); return }
+    if (!form.startDate) { setError('Start date este obligatoriu.'); return }
+    if (!form.endDate) { setError('End date este obligatoriu.'); return }
     if (form.endDate < form.startDate) { setError('End date nu poate fi înainte de start date.'); return }
 
     setLoading(true)
     try {
       const payload = {
-        campaignName:     form.campaignName.trim(),
+        campaignName: form.campaignName.trim(),
         organizationName: form.organizationName.trim(),
-        riverName:        form.riverName.trim(),
-        judet:            form.judet,
-        localitate:       form.localitate,
+        riverName: form.riverName.trim(),
+        judet: form.judet,
+        localitate: form.localitate,
         coordinates: {
           lat: parseFloat(form.coordLat) || markerPos?.lat || null,
           lng: parseFloat(form.coordLng) || markerPos?.lng || null,
         },
-        startDate:  form.startDate,
-        endDate:    form.endDate,
-        createdAt:  new Date().toISOString(),
+        startDate: form.startDate,
+        endDate: form.endDate,
+        createdAt: new Date().toISOString(),
       }
 
       if (onSubmit) {
@@ -191,11 +191,11 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
         <CheckCircleOutlineIcon sx={{ fontSize: 64, color: C.mid2 }} />
         <Typography variant="h5" sx={{ fontWeight: 800, color: C.dark2 }}>Campaign added!</Typography>
         <Typography sx={{ color: C.mid3, textAlign: 'center', maxWidth: 360 }}>
-          <strong>{form.campaignName}</strong> on river <strong>{form.riverName}</strong> — {form.localitate}, {form.judet}
+          <strong>{form.campaignName}</strong> on river <strong>{form.riverName}</strong> - {form.localitate}, {form.judet}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
           <Chip label={`Start: ${form.startDate}`} size="small" sx={{ bgcolor: `${C.mid1}18`, color: C.mid2, fontWeight: 600 }} />
-          <Chip label={`End: ${form.endDate}`}     size="small" sx={{ bgcolor: `${C.mid1}18`, color: C.mid2, fontWeight: 600 }} />
+          <Chip label={`End: ${form.endDate}`} size="small" sx={{ bgcolor: `${C.mid1}18`, color: C.mid2, fontWeight: 600 }} />
         </Box>
         <Button onClick={onCancel} sx={{ mt: 2, bgcolor: C.mid2, color: '#fff', px: 4, borderRadius: 3, '&:hover': { bgcolor: C.mid1 } }}>
           Back to campaigns
@@ -211,8 +211,8 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
       {/* Header */}
       <Box sx={{
         background: `linear-gradient(135deg, ${C.dark2} 0%, ${C.mid2} 100%)`,
-        px: 4, py: 3, display: 'flex', alignItems: 'center', gap: 2,
-        borderRadius: '12px 12px 0 0',
+        px: { xs: 2.5, md: 4 }, py: 3, display: 'flex', alignItems: 'center', gap: 2,
+        borderRadius: '12px 12px 0 0', flexWrap: 'wrap',
       }}>
         <CampaignOutlinedIcon sx={{ fontSize: 32, color: C.lightest }} />
         <Box>
@@ -230,7 +230,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
 
         {/* ── Coloana stânga ── */}
-        <Box sx={{ px: 4, py: 4, borderRight: { lg: `1px solid ${C.mid1}22` } }}>
+        <Box sx={{ px: { xs: 2.5, md: 4 }, py: 4, borderRight: { lg: `1px solid ${C.mid1}22` } }}>
 
           {/* Campaign & Organization */}
           <SectionLabel>Campaign Info</SectionLabel>
@@ -294,7 +294,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
 
           {/* Coordonate */}
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 2 }}>
-            <Tooltip title="Latitude — or click on the map" placement="top">
+            <Tooltip title="Latitude - or click on the map" placement="top">
               <TextField
                 label="Latitude" variant="outlined" size="small"
                 value={form.coordLat} onChange={set('coordLat')} onBlur={handleCoordBlur}
@@ -303,7 +303,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
                 slotProps={{ input: { startAdornment: <Adornment><MyLocationIcon sx={{ fontSize: '17px !important' }} /></Adornment> } }}
               />
             </Tooltip>
-            <Tooltip title="Longitude — or click on the map" placement="top">
+            <Tooltip title="Longitude - or click on the map" placement="top">
               <TextField
                 label="Longitude" variant="outlined" size="small"
                 value={form.coordLng} onChange={set('coordLng')} onBlur={handleCoordBlur}
@@ -353,7 +353,7 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
             />
           </Box>
 
-          {/* Created at — readonly */}
+          {/* Created at - readonly */}
           <TextField
             fullWidth label="Created At" variant="outlined" size="small"
             value={createdAt}
@@ -385,9 +385,9 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
           </Box>
         </Box>
 
-        {/* ── Coloana dreapta — hartă ── */}
+        {/* ── Coloana dreapta - hartă ── */}
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ px: 4, pt: 4, pb: 1.5 }}>
+          <Box sx={{ px: { xs: 2.5, md: 4 }, pt: 4, pb: 1.5 }}>
             <Typography sx={{ fontSize: 13, fontWeight: 700, color: C.mid1, textTransform: 'uppercase', letterSpacing: '0.8px' }}>
               Map Location
             </Typography>
@@ -395,14 +395,14 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
               {markerPos
                 ? `Pinned: ${markerPos.lat.toFixed(4)}, ${markerPos.lng.toFixed(4)}`
                 : form.judet
-                  ? `County: ${form.judet} — select a city or click the map`
+                  ? `County: ${form.judet} - select a city or click the map`
                   : 'Select a county or click the map to pin a location'}
             </Typography>
           </Box>
 
           <Box sx={{
             flex: 1, minHeight: { xs: 320, lg: 0 }, height: { lg: '100%' },
-            mx: 3, mb: 3, borderRadius: 3, overflow: 'hidden',
+            mx: { xs: 2.5, md: 3 }, mb: 3, borderRadius: 3, overflow: 'hidden',
             border: `2px solid ${markerPos ? C.mid2 : C.mid1 + '33'}`,
             boxShadow: markerPos ? `0 0 0 4px ${C.mid1}18` : 'none',
             transition: 'border-color 0.3s, box-shadow 0.3s',
