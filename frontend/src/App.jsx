@@ -252,12 +252,16 @@ export default function App() {
                   variant="extended"
                   size="medium"
                   onClick={() => setRiverDrawerOpen(true)}
-                  sx={{
-                    position: 'absolute', top: 12, left: 12, zIndex: 1200,
+                  sx={(theme) => ({
+                    position: 'absolute', top: 12, left: 12,
+                    /* Below the sticky banner (appBar = 1100) so iOS Safari's
+                       dynamic toolbar can't make the FAB bleed over it, but
+                       still above the map overlays (zIndex 1000). */
+                    zIndex: theme.zIndex.appBar - 1,
                     bgcolor: '#fff', color: '#5a189a', fontWeight: 700,
                     boxShadow: '0 2px 12px rgba(0,0,0,0.2)',
                     '&:hover': { bgcolor: '#f5f3ff' },
-                  }}
+                  })}
                 >
                   <FormatListBulletedIcon sx={{ mr: 1, fontSize: 20 }} />
                   {selectedRiver ? 'Details' : 'Rivers'}
