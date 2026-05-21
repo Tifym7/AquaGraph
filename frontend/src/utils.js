@@ -287,3 +287,66 @@ export function getPollutionStatusStyle(level) {
   }
 }
 
+/* ---- River evolution history (satellite time-series) ---- */
+
+/* Metrics that have stored history (mirrors backend/history_api.py), each
+   tagged with the sensor that produces it (S2 = Sentinel-2 indices,
+   S1 = Sentinel-1 oil detection). Kept separate from METRIC_KEYS, which
+   drives the map's metric switcher. */
+export const HISTORY_METRICS = {
+  POLLUTION: { label: 'Pollution risk (score)', sensor: 'S2' },
+  WATER_RISK: { label: 'Water-quality risk', sensor: 'S2' },
+  LAND_RISK: { label: 'Land / bare-soil risk', sensor: 'S2' },
+  NDTI: { label: 'Turbidity index (NDTI)', sensor: 'S2' },
+  NDCI: { label: 'Chlorophyll (NDCI)', sensor: 'S2' },
+  TURBIDITY: { label: 'Turbidity (sediment)', sensor: 'S2' },
+  NDVI: { label: 'Vegetation (NDVI)', sensor: 'S2' },
+  MNDWI: { label: 'Water extent (MNDWI)', sensor: 'S2' },
+  OIL_PROBABILITY: { label: 'Oil-slick probability (Sentinel-1)', sensor: 'S1' },
+  VV_DARKENING_DB: { label: 'SAR darkening dB (Sentinel-1)', sensor: 'S1' },
+}
+
+/* Time series of one metric for a river. Returns
+   { river_name, metric, sensor, points:[{date,avg,min,max,segment_count}] }.
+   Resolves to null on failure so the UI can show an empty state. */
+export async function fetchRiverHistory(riverId, metric = 'NDTI', sensor = 'S2', from, to) {
+  if (!riverId) return null
+  try {
+    const params = { metric, sensor }
+    if (from) params.from = from
+    if (to) params.to = to
+    const res = await axios.get(`${API_BASE}/river/${riverId}/history`, { params })
+    return res.data
+  } catch (error) {
+    console.error('Failed to fetch river history:', error)
+    return null
+  }
+}
+
+/* Per-segment value per date for one river, powering the map timeline
+   scrubber. Returns { dates:[...], values:{ object_id:[v,...] }, ... } or
+   null. `metric` is a map metric key; sensor defaults server-side (S1 for
+   'land'/oil, S2 otherwise). */
+export async function fetchRiverSegmentsHistory(riverId, metric = 'pollution', sensor) {
+  if (!riverId) return null
+  try {
+    const params = { metric }
+    if (sensor) params.sensor = sensor
+    const res = await axios.get(`${API_BASE}/river/${riverId}/segments-history`, { params })
+    return res.data
+  } catch (error) {
+    console.error('Failed to fetch river segments history:', error)
+    return null
+  }
+}
+
+/* Direct URL for the server-rendered PDF report (opened in a new tab so the
+   browser handles the download). */
+export function riverReportUrl(riverId, { metrics, sensor = 'S2', from, to } = {}) {
+  const q = new URLSearchParams({ sensor })
+  if (metrics?.length) q.set('metrics', metrics.join(','))
+  if (from) q.set('from', from)
+  if (to) q.set('to', to)
+  return `${API_BASE}/river/${riverId}/report.pdf?${q.toString()}`
+}
+

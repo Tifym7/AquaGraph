@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Polyline, Polygon as LeafletPolygon, Pane, Zoo
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import {
-  API_BASE, fetchRiver, fetchPolygonsInBounds,
+  API_BASE, fetchRiver, fetchPolygonsInBounds, fetchRiverSegmentsHistory,
   getRawMetricValue, normalizeMetric,
   ZOOM_SNAP, ZOOM_DELTA, ZOOM_MIN, ZOOM_MAX, VECTOR_ZOOM_THRESHOLD,
   CLICK_OVERLAY_ZOOM_THRESHOLD, POLYGON_ZOOM_THRESHOLD,
@@ -568,10 +568,23 @@ function LodTransitioner({ segmentLods, activeLod, mapBounds, mountThresholdReac
   )
 }
 
-function SelectedRiverOverlay({ river, metric }) {
+function SelectedRiverOverlay({ river, metric, dateValues }) {
   if (!river) return null
   const colors = METRIC_OPTIONS.find(m => m.key === metric)
+  const gradient = colors?.gradient || METRIC_OPTIONS[0].gradient
   const accent = colors?.gradient?.[Math.min(3, (colors.gradient.length - 1))] || '#1565c0'
+
+  /* When the timeline is active, recolor each segment by its value at the
+     scrubbed date - same normalize+gradient path as the live vector layer,
+     so a scrubbed date looks identical to the live map. Segments with no
+     observation on that date keep their snapshot colour. */
+  const colorFor = (seg) => {
+    if (dateValues) {
+      const raw = dateValues[seg.object_id]
+      if (raw != null) return gradientColor(normalizeMetric(raw, metric), gradient)
+    }
+    return seg.color || accent
+  }
 
   const polygons = river.water_polygons || []
   /* When a specific segment is selected, only highlight that one - the
@@ -607,7 +620,7 @@ function SelectedRiverOverlay({ river, metric }) {
           positions={seg.coordinates || []}
           interactive={false}
           pathOptions={{
-            color: seg.color || accent,
+            color: colorFor(seg),
             weight: 6,
             opacity: 1,
             lineCap: 'round',
@@ -694,8 +707,72 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
     return () => { cancelled = true }
   }, [selectedRiver, metric])
 
+  /* ---- River-scoped pollution timeline (Option C) ----
+     One small fetch per selected river + metric; recolours that river's
+     overlay as the user scrubs. No extra tiles, no client-perf risk. */
+  const [tl, setTl] = useState(null)          // { dates, values, metric }
+  const [tlIdx, setTlIdx] = useState(0)
+  const [tlPlaying, setTlPlaying] = useState(false)
+  const [tlExpanded, setTlExpanded] = useState(false)  // mobile collapse
+  const tlRiverId = riverDetail?.id || null
+
+  useEffect(() => {
+    setTlPlaying(false)
+    setTlExpanded(false)            // start collapsed on each new river
+    if (!tlRiverId) { setTl(null); return }
+    let cancelled = false
+    fetchRiverSegmentsHistory(tlRiverId, metric).then((d) => {
+      if (cancelled) return
+      if (!d || !Array.isArray(d.dates) || d.dates.length < 2) { setTl(null); return }
+      setTl(d)
+      setTlIdx(d.dates.length - 1)            // start at the latest date
+    })
+    return () => { cancelled = true }
+  }, [tlRiverId, metric])
+
+  useEffect(() => {
+    if (!tlPlaying || !tl) return
+    const id = setInterval(() => {
+      setTlIdx(i => (i >= tl.dates.length - 1 ? 0 : i + 1))
+    }, 1100)
+    return () => clearInterval(id)
+  }, [tlPlaying, tl])
+
+  const tlDateValues = useMemo(() => {
+    if (!tl) return null
+    const out = {}
+    for (const oid in tl.values) {
+      const v = tl.values[oid][tlIdx]
+      if (v != null) out[oid] = v
+    }
+    return out
+  }, [tl, tlIdx])
+
+  /* Track the map panel width so we can tell whether the expanded timeline
+     bar would actually overlap the (bottom-left) legend, and hide the legend
+     only then. */
+  const mapWrapRef = useRef(null)
+  const [mapW, setMapW] = useState(0)
+  useEffect(() => {
+    const el = mapWrapRef.current
+    if (!el) return
+    const update = () => setMapW(el.clientWidth)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const tlActive = !!(tl && tl.dates.length > 1)
+  const legendW = isMobile ? 150 : 232          // ~ legend box incl. padding
+  const legendLeft = isMobile ? 8 : 12
+  const barW = isMobile ? mapW - 24 : Math.min(560, mapW * 0.56)
+  const barLeft = mapW > 0 ? (mapW - barW) / 2 : Infinity
+  const legendWouldOverlap = barLeft < legendLeft + legendW + 8
+  const hideLegend = tlActive && tlExpanded && legendWouldOverlap
+
   return (
-    <div className="map-container" style={{ flex: 1, position: 'relative', minWidth: 0 }}>
+    <div ref={mapWrapRef} className="map-container" style={{ flex: 1, position: 'relative', minWidth: 0 }}>
       <MapContainer
         center={ROMANIA_CENTER}
         zoom={8}
@@ -776,8 +853,95 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
           onSegmentHover={setHoveredSegment}
         />
 
-        <SelectedRiverOverlay river={riverDetail} metric={metric} />
+        <SelectedRiverOverlay river={riverDetail} metric={metric} dateValues={tlDateValues} />
       </MapContainer>
+
+      {/* River pollution timeline - collapsed to a themed pill in EVERY view;
+          clicking expands the scrubber. The legend is hidden only when the
+          expanded bar would actually overlap it (see hideLegend). */}
+      {tlActive && !tlExpanded && (
+        <button
+          onClick={() => setTlExpanded(true)}
+          aria-label="Open pollution timeline"
+          style={{
+            position: 'absolute', zIndex: 1100,
+            // Mobile: stacked directly above the bottom-left legend.
+            // Desktop: bottom-center, level with the legend.
+            ...(isMobile
+              ? { bottom: 78, left: 8 }
+              : { bottom: 20, left: '50%', transform: 'translateX(-50%)' }),
+            display: 'flex', alignItems: 'center', gap: 6,
+            border: 'none', cursor: 'pointer', color: '#fff',
+            padding: '8px 14px', borderRadius: 999,
+            fontFamily: 'Inter, sans-serif', fontWeight: 700, fontSize: 12.5,
+            background: 'linear-gradient(135deg,#3c096c 0%,#5a189a 55%,#7b2cbf 100%)',
+            boxShadow: '0 4px 14px rgba(90,24,154,0.4)',
+          }}
+        >
+          <span style={{ fontSize: 14 }}>🕘</span> Timeline · {tl.dates.length} dates
+        </button>
+      )}
+
+      {tlActive && tlExpanded && (
+        <div style={{
+          position: 'absolute', zIndex: 1100,
+          bottom: isMobile ? 12 : 20, left: '50%', transform: 'translateX(-50%)',
+          width: isMobile ? 'calc(100% - 24px)' : 'min(560px, 56%)',
+          maxWidth: isMobile ? 460 : 560,
+          backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 10,
+          padding: isMobile ? '8px 10px' : '10px 16px',
+          boxShadow: '0 2px 14px rgba(0,0,0,0.18)',
+          fontFamily: 'Inter, sans-serif',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12 }}>
+            <button
+              onClick={() => setTlPlaying(p => !p)}
+              aria-label={tlPlaying ? 'Pause timeline' : 'Play timeline'}
+              style={{
+                flexShrink: 0, width: isMobile ? 34 : 36, height: isMobile ? 34 : 36,
+                borderRadius: '50%', border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg,#5a189a 0%,#7b2cbf 100%)',
+                color: '#fff', fontSize: 14, lineHeight: 1, display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+              }}
+            >{tlPlaying ? '❚❚' : '▶'}</button>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                display: 'flex', justifyContent: 'space-between',
+                fontSize: isMobile ? 10 : 11, color: '#666', marginBottom: 2,
+              }}>
+                <span style={{ fontWeight: 700, color: '#333' }}>
+                  {tl.dates[tlIdx]}
+                </span>
+                <span>{tlIdx + 1}/{tl.dates.length}</span>
+              </div>
+              <input
+                type="range" min={0} max={tl.dates.length - 1} step={1}
+                value={tlIdx}
+                onChange={(e) => { setTlPlaying(false); setTlIdx(Number(e.target.value)) }}
+                aria-label="Pollution date"
+                style={{ width: '100%', accentColor: '#6d28d9', height: 22, cursor: 'pointer' }}
+              />
+            </div>
+            <button
+              onClick={() => { setTlPlaying(false); setTlExpanded(false) }}
+              aria-label="Close timeline"
+              style={{
+                flexShrink: 0, width: 30, height: 30, borderRadius: '50%',
+                border: '1px solid #ddd6fe', cursor: 'pointer',
+                background: '#f5f3ff', color: '#5a189a', fontSize: 15,
+                lineHeight: 1, display: 'flex', alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >×</button>
+          </div>
+          {!isMobile && (
+            <div style={{ fontSize: 10, color: '#888', marginTop: 4, textAlign: 'center' }}>
+              {tl.river_name} - {selected.label} over time (Sentinel{tl.sensor === 'S1' ? '-1' : '-2'})
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Hover tooltip (DOM, not a Leaflet popup - avoids tile-layer flicker).
           Hidden on touch screens - there's no hover, and it would just sit
@@ -797,14 +961,17 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
         </div>
       )}
 
-      {/* Metric Legend - compact on phones so it doesn't eat the map */}
-      <div style={{ position: 'absolute', bottom: isMobile ? 10 : 20, left: isMobile ? 8 : 12, zIndex: 1000, backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8, padding: isMobile ? '7px 10px' : '12px 16px', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', minWidth: isMobile ? 130 : 200 }}>
-        <div style={{ fontSize: isMobile ? 10 : 12, fontWeight: 700, color: '#333', marginBottom: isMobile ? 5 : 8, textTransform: 'uppercase', letterSpacing: 0.6 }}>{selected.label}</div>
-        <div style={{ height: isMobile ? 7 : 10, borderRadius: 5, background: `linear-gradient(to right, ${selected.gradient.join(', ')})`, marginBottom: isMobile ? 5 : 8 }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: isMobile ? 9 : 11, color: '#666' }}>
-          <span>Low</span><span>Moderate</span><span>High</span>
+      {/* Metric Legend - compact on phones. Hidden only when the expanded
+          timeline bar would actually overlap it (any screen size). */}
+      {!hideLegend && (
+        <div style={{ position: 'absolute', bottom: isMobile ? 10 : 20, left: isMobile ? 8 : 12, zIndex: 1000, backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8, padding: isMobile ? '7px 10px' : '12px 16px', boxShadow: '0 2px 12px rgba(0,0,0,0.12)', minWidth: isMobile ? 130 : 200 }}>
+          <div style={{ fontSize: isMobile ? 10 : 12, fontWeight: 700, color: '#333', marginBottom: isMobile ? 5 : 8, textTransform: 'uppercase', letterSpacing: 0.6 }}>{selected.label}</div>
+          <div style={{ height: isMobile ? 7 : 10, borderRadius: 5, background: `linear-gradient(to right, ${selected.gradient.join(', ')})`, marginBottom: isMobile ? 5 : 8 }} />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: isMobile ? 9 : 11, color: '#666' }}>
+            <span>Low</span><span>Moderate</span><span>High</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Basemap Selector */}
       <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, backgroundColor: 'rgba(255,255,255,0.97)', borderRadius: 8, padding: isMobile ? '6px 8px' : '10px 14px', boxShadow: '0 2px 12px rgba(0,0,0,0.12)' }}>

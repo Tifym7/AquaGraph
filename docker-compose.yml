@@ -6,6 +6,9 @@
 # - `app` : single image running the Flask backend (5000) + Vite dev
 #           server (5173). The frontend points at http://localhost:5000/api,
 #           so both ports are published to the host.
+# - `ingest` : (profile "ingest") the satellite-pass scheduler. Start it with
+#           GEE_KEY_FILE=/abs/path/to/aquagraph-gee-key.json \
+#             docker compose --profile ingest up -d --build ingest
 
 services:
   db:
@@ -42,6 +45,36 @@ services:
     ports:
       - "5000:5000"
       - "5173:5173"
+
+  # Satellite-pass ingestion scheduler. Opt-in (profile) so `docker compose
+  # up` for app dev does NOT start it. Writes history to the same Postgres
+  # the app reads; the DB-backed timeline/charts/PDF update live.
+  ingest:
+    profiles: ["ingest"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ingest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Worker connects with credentials embedded in the URL (ingest/db.py
+      # uses psycopg2.connect(DB_URL) directly).
+      DB_URL: postgresql://user:password@db:5432/aquagraph
+      GEE_SERVICE_ACCOUNT_KEY: /secrets/gee-key.json
+      GEE_PROJECT: ${GEE_PROJECT:-cassini2026}
+      GEE_ASSET_RIVERS: ${GEE_ASSET_RIVERS:-projects/cassini2026/assets/eu-hydro}
+      INGEST_SENSORS: ${INGEST_SENSORS:-S2,S1}
+      INGEST_SCHEDULE_CRON: ${INGEST_SCHEDULE_CRON:-0 3 * * *}
+      INGEST_FETCH_CHUNK: ${INGEST_FETCH_CHUNK:-250}
+      INGEST_S1_BASELINE_START: ${INGEST_S1_BASELINE_START:-2023-06-01}
+      INGEST_S1_BASELINE_END: ${INGEST_S1_BASELINE_END:-2023-08-31}
+      INGEST_REBUILD_SNAPSHOT: ${INGEST_REBUILD_SNAPSHOT:-0}
+    volumes:
+      # Service-account key, mounted read-only. Set GEE_KEY_FILE to its
+      # absolute host path (never commit the key).
+      - ${GEE_KEY_FILE:-./aquagraph-gee-key.json}:/secrets/gee-key.json:ro
 
 volumes:
   aquagraph-pgdata:

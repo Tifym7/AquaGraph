@@ -8,6 +8,7 @@ import WaterIcon from '@mui/icons-material/Water'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
 import { fetchUpstream, fetchDownstream, getMetricColor, fetchRiver, METRIC_LABELS, METRIC_KEYS } from '../utils'
+import RiverEvolution from './RiverEvolution'
 
 const SIDEBAR_WIDTH = 360
 
@@ -462,6 +463,10 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
         <Box mb={SECTION_MB} sx={{ pt: '16px' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Risk Indicators{showCompare ? ' - segment vs river' : ''}</Typography>
           <SegmentRiskCards risk={risk} compare={riverRisk} />
+        </Box>
+        <Box mb={SECTION_MB} sx={{ pt: '16px' }}>
+          <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Evolution Over Time</Typography>
+          <RiverEvolution riverId={river.id} riverName={river.name} />
         </Box>
         <Box sx={{ pt: '16px' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Connected Rivers</Typography>

@@ -68,5 +68,38 @@ services:
     depends_on:
       - app
 
+  # Satellite-pass ingestion scheduler. Opt-in via the "ingest" profile so it
+  # does NOT start by default - run it on a worker host:
+  #   GEE_KEY_FILE=/abs/path/aquagraph-gee-key.json \
+  #     docker compose -f docker-compose.prod.yml --profile ingest up -d --build ingest
+  # Writes history to the same Postgres the app reads (DB-backed timeline /
+  # charts / PDF update live; base-map tiles refresh on app restart).
+  ingest:
+    profiles: ["ingest"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ingest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/aquagraph
+      GEE_SERVICE_ACCOUNT_KEY: /secrets/gee-key.json
+      GEE_PROJECT: ${GEE_PROJECT:-cassini2026}
+      GEE_ASSET_RIVERS: ${GEE_ASSET_RIVERS:-projects/cassini2026/assets/eu-hydro}
+      INGEST_SENSORS: ${INGEST_SENSORS:-S2,S1}
+      INGEST_SCHEDULE_CRON: ${INGEST_SCHEDULE_CRON:-0 3 * * *}
+      INGEST_FETCH_CHUNK: ${INGEST_FETCH_CHUNK:-250}
+      INGEST_S1_BASELINE_START: ${INGEST_S1_BASELINE_START:-2023-06-01}
+      INGEST_S1_BASELINE_END: ${INGEST_S1_BASELINE_END:-2023-08-31}
+      INGEST_REBUILD_SNAPSHOT: ${INGEST_REBUILD_SNAPSHOT:-0}
+    volumes:
+      # Set GEE_KEY_FILE to the absolute SA key path when enabling --profile
+      # ingest. The default keeps the normal (no-profile) VM deploy working;
+      # if you enable the profile without setting it, the missing file makes
+      # the failure obvious at `up` time.
+      - ${GEE_KEY_FILE:-./aquagraph-gee-key.json}:/secrets/gee-key.json:ro
+
 volumes:
   aquagraph-pgdata:

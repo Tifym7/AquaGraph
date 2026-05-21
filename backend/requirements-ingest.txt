@@ -1,0 +1,10 @@
+# Worker-host-only deps for the satellite ingestion pipeline (backend/ingest).
+# Kept separate from requirements.txt so the 1 GB app VM image stays lean.
+# Install on the dedicated worker host:  pip install -r requirements-ingest.txt
+-r requirements.txt
+earthengine-api==1.4.3
+requests==2.32.3
+APScheduler==3.10.4
+# Only needed for INGEST_TRANSPORT=gcs (batch Export.table.toCloudStorage).
+# The free "sync" transport does not import this.
+google-cloud-storage==2.18.2
