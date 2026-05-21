@@ -68,6 +68,7 @@ def upsert_observations(rows: Iterable[dict]) -> int:
     payload = [
         (
             r["object_id"], r.get("river_id"), r["sensor"], r["acquired_at"],
+            r.get("acquired_at_ts"),
             json.dumps(r["metrics"]), json.dumps(r.get("risk")),
         )
         for r in rows
@@ -78,13 +79,16 @@ def upsert_observations(rows: Iterable[dict]) -> int:
         psycopg2.extras.execute_values(
             cur,
             "INSERT INTO satellite_observation "
-            "(object_id, river_id, sensor, acquired_at, metrics, risk) VALUES %s "
+            "(object_id, river_id, sensor, acquired_at, acquired_at_ts, "
+            " metrics, risk) VALUES %s "
             "ON CONFLICT (object_id, sensor, acquired_at) DO UPDATE SET "
             "metrics = EXCLUDED.metrics, risk = EXCLUDED.risk, "
+            "acquired_at_ts = COALESCE(EXCLUDED.acquired_at_ts, "
+            "                          satellite_observation.acquired_at_ts), "
             "river_id = COALESCE(EXCLUDED.river_id, satellite_observation.river_id), "
             "ingested_at = NOW()",
             payload,
-            template="(%s,%s,%s,%s,%s,%s)",
+            template="(%s,%s,%s,%s,%s,%s,%s)",
             page_size=1000,
         )
     return len(payload)

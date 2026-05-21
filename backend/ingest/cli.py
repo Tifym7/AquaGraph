@@ -49,7 +49,8 @@ def _backfill(args) -> int:
     init_ee()
     from .backfill import run_backfill
     sensors = [s.strip().upper() for s in args.sensors.split(",") if s.strip()]
-    run_backfill(years=args.years, sensors=sensors, months=args.months)
+    run_backfill(years=args.years, sensors=sensors, months=args.months,
+                 mode=args.mode, newest_first=args.newest_first)
     return 0
 
 
@@ -90,6 +91,13 @@ def main(argv=None) -> int:
     pb.add_argument("--months", type=int, default=None,
                     help="override --years with an exact month count")
     pb.add_argument("--sensors", default="S2,S1")
+    pb.add_argument("--mode", choices=["composite", "pass"],
+                    default="composite",
+                    help="composite=1 monthly median/month (default); "
+                         "pass=every satellite acquisition (finer, heavier)")
+    pb.add_argument("--newest-first", action="store_true",
+                    help="process months latest->oldest (recent/demo data "
+                         "lands first on a long run)")
 
     ps = sub.add_parser("snapshot",
                         help="project latest DB values onto the map snapshot")

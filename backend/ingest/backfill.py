@@ -46,10 +46,15 @@ def _already_done(sensor: str, month: date, min_rows: int = 1000) -> bool:
 
 
 def run_backfill(years: int = 3, sensors: List[str] = None,
-                 months: int = None) -> dict:
+                 months: int = None, mode: str = "composite",
+                 newest_first: bool = False) -> dict:
     sensors = sensors or ["S2", "S1"]
     n = months if months else years * 12
-    months = _recent_months(n)
+    months = _recent_months(n)              # oldest -> newest
+    if newest_first:
+        months = months[::-1]               # latest data first
+        print(f"[backfill] order: NEWEST-first "
+              f"({months[0]:%Y-%m} -> {months[-1]:%Y-%m})", flush=True)
     summary = {s: {"done": 0, "skipped": 0, "rows": 0, "errors": 0}
                for s in sensors}
 
@@ -63,10 +68,10 @@ def run_backfill(years: int = 3, sensors: List[str] = None,
                 print(f"[{sensor} {mlabel}] already present - skip", flush=True)
                 summary[sensor]["skipped"] += 1
                 continue
-            print(f"[{sensor} {mlabel}] ingesting composite "
+            print(f"[{sensor} {mlabel}] ingesting {mode} "
                   f"{month}..{last_day} ...", flush=True)
             try:
-                res = ingest(sensor, mode="composite",
+                res = ingest(sensor, mode=mode,
                              since=month.isoformat(),
                              until=last_day.isoformat())
                 n = res.get("segments", 0)

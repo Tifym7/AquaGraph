@@ -24,12 +24,31 @@ history_bp = Blueprint("history", __name__)
 # Metrics present in satellite_observation.metrics, by sensor.
 #   S2 (Sentinel-2): spectral water-quality indices
 #   S1 (Sentinel-1): SAR oil-slick detection bands
-KNOWN_METRICS = {
-    "NDWI", "MNDWI", "NDVI", "NDTI", "NDCI", "BSI", "TURBIDITY",   # S2
-    "OIL_PROBABILITY", "VV_DARKENING_DB", "VH_DARKENING_DB",        # S1
-    "VV_EVENT", "VH_EVENT", "DARK_PIXEL", "WATER_PIXEL",            # S1
+# Computed pollution/risk fields live in the `risk` JSONB column (set by
+# sensor.add_risk in EE), not `metrics`. Map the selectable name -> risk key
+# so they're chartable / PDF-able exactly like the raw indices.
+RISK_KEYS = {
+    "POLLUTION": "risk_score", "RISK": "risk_score",
+    "RISK_SCORE": "risk_score", "WATER_RISK": "water_risk",
+    "LAND_RISK": "land_risk",
 }
-DEFAULT_REPORT_METRICS = ["NDTI", "NDCI", "TURBIDITY"]
+
+KNOWN_METRICS = {
+    "NDWI", "MNDWI", "NDVI", "NDTI", "NDCI", "BSI", "TURBIDITY",   # S2 metrics
+    "OIL_PROBABILITY", "VV_DARKENING_DB", "VH_DARKENING_DB",        # S1 metrics
+    "VV_EVENT", "VH_EVENT", "DARK_PIXEL", "WATER_PIXEL",            # S1 metrics
+    *RISK_KEYS,                                                     # risk col
+}
+DEFAULT_REPORT_METRICS = ["POLLUTION", "NDTI", "NDCI", "TURBIDITY"]
+
+
+def _resolve(metric: str):
+    """(jsonb_column, json_key) for a selectable metric — `risk` column for
+    pollution/risk fields, `metrics` column for raw indices/bands."""
+    m = metric.upper()
+    if m in RISK_KEYS:
+        return "risk", RISK_KEYS[m]
+    return "metrics", metric
 
 
 def _conn():
@@ -64,25 +83,28 @@ def _date_filters(args):
 
 
 def _series(scope_col: str, scope_val: str, metric: str, sensor: str, args):
-    """Time series of a metric, aggregated over the matching segments."""
-    clauses = [f"{scope_col} = %s", "sensor = %s", "jsonb_exists(metrics, %s)"]
-    params = [scope_val, sensor, metric]
+    """Time series of a metric, aggregated over the matching segments.
+    Reads the `metrics` JSONB for raw indices, or the `risk` JSONB for
+    pollution/risk fields (see _resolve)."""
+    col, key = _resolve(metric)              # col is a literal ('metrics'|'risk')
+    clauses = [f"{scope_col} = %s", "sensor = %s", f"jsonb_exists({col}, %s)"]
+    params = [scope_val, sensor, key]
     dc, dp = _date_filters(args)
     clauses += dc
     params += dp
     sql = f"""
         SELECT acquired_at,
-               round(avg((metrics->>%s)::numeric), 5) AS avg,
-               round(min((metrics->>%s)::numeric), 5) AS min,
-               round(max((metrics->>%s)::numeric), 5) AS max,
-               count(*)                                AS segment_count
+               round(avg(({col}->>%s)::numeric), 5) AS avg,
+               round(min(({col}->>%s)::numeric), 5) AS min,
+               round(max(({col}->>%s)::numeric), 5) AS max,
+               count(*)                              AS segment_count
         FROM satellite_observation
         WHERE {' AND '.join(clauses)}
         GROUP BY acquired_at
         ORDER BY acquired_at
     """
     with _conn() as c, c.cursor(cursor_factory=RealDictCursor) as cur:
-        cur.execute(sql, [metric, metric, metric, *params])
+        cur.execute(sql, [key, key, key, *params])
         rows = cur.fetchall()
     return [
         {

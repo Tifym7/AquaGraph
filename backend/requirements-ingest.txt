@@ -5,3 +5,6 @@
 earthengine-api==1.4.3
 requests==2.32.3
 APScheduler==3.10.4
+# Only needed for INGEST_TRANSPORT=gcs (batch Export.table.toCloudStorage).
+# The free "sync" transport does not import this.
+google-cloud-storage==2.18.2

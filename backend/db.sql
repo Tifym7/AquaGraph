@@ -60,16 +60,21 @@ CREATE TABLE IF NOT EXISTS satellite_observation (
     object_id     TEXT        NOT NULL,
     river_id      TEXT,
     sensor        TEXT        NOT NULL,
-    acquired_at   DATE        NOT NULL,
-    ingested_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    metrics       JSONB       NOT NULL,
-    risk          JSONB,
+    acquired_at    DATE        NOT NULL,
+    acquired_at_ts TIMESTAMPTZ,                    -- precise UTC scene time
+    ingested_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metrics        JSONB       NOT NULL,
+    risk           JSONB,
     CONSTRAINT uq_obs UNIQUE (object_id, sensor, acquired_at)
 );
+ALTER TABLE satellite_observation
+    ADD COLUMN IF NOT EXISTS acquired_at_ts TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS ix_obs_river_time
     ON satellite_observation (river_id, sensor, acquired_at);
 CREATE INDEX IF NOT EXISTS ix_obs_object_time
     ON satellite_observation (object_id, sensor, acquired_at);
+CREATE INDEX IF NOT EXISTS ix_obs_ts
+    ON satellite_observation (acquired_at_ts);
 
 CREATE TABLE IF NOT EXISTS ingestion_run (
     id            BIGSERIAL   PRIMARY KEY,

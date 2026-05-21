@@ -71,7 +71,7 @@ function Chart({ points }) {
 }
 
 export default function RiverEvolution({ riverId, riverName }) {
-  const [metric, setMetric] = useState('NDTI')
+  const [metric, setMetric] = useState('POLLUTION')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
 

@@ -41,3 +41,17 @@ class Sensor(ABC):
     @abstractmethod
     def discover_dates(self, since: str, until: str) -> List[str]:
         """Distinct acquisition dates (YYYY-MM-DD) with coverage over country."""
+
+    def window_time_ms(self, start: str, end: str):
+        """Server-side ee.Number: median system:time_start (ms epoch) of the
+        scenes inside [start, end). Used to stamp `acquired_at_ts` so we know
+        the actual UTC scene time (sun angle, day/night, orbit). Default impl
+        uses _base_collection or _collection if defined; sensors can override."""
+        import ee
+        col_fn = getattr(self, "_base_collection", None) or \
+                 getattr(self, "_collection", None)
+        if col_fn is None:
+            return ee.Number(0)
+        col = col_fn(start, end)
+        return ee.Number(col.aggregate_array("system:time_start")
+                           .reduce(ee.Reducer.median()))

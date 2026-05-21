@@ -8,20 +8,28 @@ volume already exists, so the initdb hook never re-runs.
 
 DDL = """
 CREATE TABLE IF NOT EXISTS satellite_observation (
-    id            BIGSERIAL   PRIMARY KEY,
-    object_id     TEXT        NOT NULL,
-    river_id      TEXT,
-    sensor        TEXT        NOT NULL,
-    acquired_at   DATE        NOT NULL,
-    ingested_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    metrics       JSONB       NOT NULL,
-    risk          JSONB,
+    id              BIGSERIAL   PRIMARY KEY,
+    object_id       TEXT        NOT NULL,
+    river_id        TEXT,
+    sensor          TEXT        NOT NULL,
+    acquired_at     DATE        NOT NULL,
+    -- precise scene timestamp (UTC) — for sun-angle / day-vs-night / orbit
+    -- features; nullable so legacy date-only rows still load.
+    acquired_at_ts  TIMESTAMPTZ,
+    ingested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    metrics         JSONB       NOT NULL,
+    risk            JSONB,
     CONSTRAINT uq_obs UNIQUE (object_id, sensor, acquired_at)
 );
+-- Bring existing tables (created before acquired_at_ts) up to schema:
+ALTER TABLE satellite_observation
+    ADD COLUMN IF NOT EXISTS acquired_at_ts TIMESTAMPTZ;
 CREATE INDEX IF NOT EXISTS ix_obs_river_time
     ON satellite_observation (river_id, sensor, acquired_at);
 CREATE INDEX IF NOT EXISTS ix_obs_object_time
     ON satellite_observation (object_id, sensor, acquired_at);
+CREATE INDEX IF NOT EXISTS ix_obs_ts
+    ON satellite_observation (acquired_at_ts);
 CREATE TABLE IF NOT EXISTS ingestion_run (
     id            BIGSERIAL   PRIMARY KEY,
     sensor        TEXT        NOT NULL,

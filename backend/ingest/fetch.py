@@ -17,7 +17,10 @@ Chunks are processed sequentially with a politeness sleep between them.
 import csv
 import io
 import time
+from datetime import datetime, timezone
 from typing import Iterator, List
+
+_TS_COL = "acquired_at_ts_ms"
 
 import ee
 import requests
@@ -53,7 +56,7 @@ def _http_csv(url: str) -> str:
 
 
 def _chunk_csv(indices, sensor, rivers, offset: int, size: int,
-               selectors: List[str]) -> str:
+               selectors: List[str], ts_ms) -> str:
     """One reduce+download for [offset, offset+size). EE rate/transient errors
     are retried inside ee_retry; memory/timeout raise typed errors."""
     chunk = ee.FeatureCollection(rivers.toList(size, offset))
@@ -64,6 +67,7 @@ def _chunk_csv(indices, sensor, rivers, offset: int, size: int,
         tileScale=config.REDUCE_TILESCALE,
     )
     stats = sensor.add_risk(stats)
+    stats = stats.map(lambda f: f.set(_TS_COL, ts_ms))
     stats = stats.map(lambda f: ee.Feature(None).copyProperties(f, selectors))
     url = ee_retry(
         lambda: stats.getDownloadURL(filetype="CSV", selectors=selectors),
@@ -91,21 +95,26 @@ def _parse(text: str, sensor: Sensor, acquired_at: str) -> Iterator[dict]:
                 continue
             num = _parse_float(raw)
             risk[f] = raw if num is None else round(num, 4)
+        ts_ms = _parse_float(rec.get(_TS_COL))
+        ts_iso = (datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
+                          .isoformat()
+                  if ts_ms and ts_ms > 0 else None)
         yield {
             "object_id": str(oid),
             "sensor": sensor.SENSOR,
             "acquired_at": acquired_at,
+            "acquired_at_ts": ts_iso,
             "metrics": metrics,
             "risk": risk or None,
         }
 
 
 def _iter_range(indices, sensor, rivers, offset: int, size: int,
-                selectors: List[str], acquired_at: str) -> Iterator[dict]:
+                selectors: List[str], acquired_at: str, ts_ms) -> Iterator[dict]:
     """Yield rows for [offset, offset+size), halving the range and retrying
     when EE reports a memory/compute limit (graceful degradation)."""
     try:
-        text = _chunk_csv(indices, sensor, rivers, offset, size, selectors)
+        text = _chunk_csv(indices, sensor, rivers, offset, size, selectors, ts_ms)
     except (EEMemoryError, EEComputeTimeout) as exc:
         if size <= config.FETCH_MIN_CHUNK:
             # Can't shrink further - skip this sub-range rather than abort the
@@ -117,9 +126,9 @@ def _iter_range(indices, sensor, rivers, offset: int, size: int,
         print(f"   [fetch] {type(exc).__name__} at {offset}:{offset + size} "
               f"-> splitting into {half}+{size - half}", flush=True)
         yield from _iter_range(indices, sensor, rivers, offset, half,
-                               selectors, acquired_at)
+                               selectors, acquired_at, ts_ms)
         yield from _iter_range(indices, sensor, rivers, offset + half,
-                               size - half, selectors, acquired_at)
+                               size - half, selectors, acquired_at, ts_ms)
         return
     yield from _parse(text, sensor, acquired_at)
 
@@ -146,7 +155,9 @@ def fetch_window(sensor: Sensor, start: str, end: str,
     rivers = ee.FeatureCollection(config.GEE_ASSET_RIVERS)
     count = int(ee_retry(lambda: rivers.size().getInfo(), what="asset size"))
     indices = sensor.indices_image(start, end)
-    selectors: List[str] = [_OID] + sensor.METRIC_FIELDS + sensor.RISK_FIELDS
+    ts_ms = sensor.window_time_ms(start, end)         # ee.Number (UTC ms)
+    selectors: List[str] = ([_OID, _TS_COL] + sensor.METRIC_FIELDS
+                            + sensor.RISK_FIELDS)
 
     total_chunks = (count + config.FETCH_CHUNK - 1) // config.FETCH_CHUNK
     tag = f"{sensor.SENSOR} {acquired_at}"
@@ -161,7 +172,7 @@ def fetch_window(sensor: Sensor, start: str, end: str,
         size = min(config.FETCH_CHUNK, count - offset)
         before = rows
         for row in _iter_range(indices, sensor, rivers, offset, size,
-                               selectors, acquired_at):
+                               selectors, acquired_at, ts_ms):
             rows += 1
             yield row
         if config.PROGRESS and (ci % config.PROGRESS_EVERY == 0

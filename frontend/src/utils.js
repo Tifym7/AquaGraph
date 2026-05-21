@@ -294,6 +294,9 @@ export function getPollutionStatusStyle(level) {
    S1 = Sentinel-1 oil detection). Kept separate from METRIC_KEYS, which
    drives the map's metric switcher. */
 export const HISTORY_METRICS = {
+  POLLUTION: { label: 'Pollution risk (score)', sensor: 'S2' },
+  WATER_RISK: { label: 'Water-quality risk', sensor: 'S2' },
+  LAND_RISK: { label: 'Land / bare-soil risk', sensor: 'S2' },
   NDTI: { label: 'Turbidity index (NDTI)', sensor: 'S2' },
   NDCI: { label: 'Chlorophyll (NDCI)', sensor: 'S2' },
   TURBIDITY: { label: 'Turbidity (sediment)', sensor: 'S2' },

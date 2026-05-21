@@ -66,6 +66,25 @@ S1_SMOOTHING_M = int(os.getenv("INGEST_S1_SMOOTHING_M", "30"))
 S1_WATER_OCCURRENCE_MIN = int(os.getenv("INGEST_S1_WATER_OCC_MIN", "20"))
 S1_OIL_THRESHOLD = float(os.getenv("INGEST_S1_OIL_THRESHOLD", "0.55"))
 
+# --- Transport: how reduced features leave Earth Engine -------------------
+# "sync" : free chunked getDownloadURL (no billing). The default;
+# "gcs"  : GEE batch Export.table.toCloudStorage -> download from a bucket.
+#          Server-side & parallel, no 5-min/memory caps -> finer scale,
+#          per-pass, many years, much faster. Needs billing + a GCS bucket.
+INGEST_TRANSPORT = os.getenv("INGEST_TRANSPORT", "sync").strip().lower()
+GCS_BUCKET = os.getenv("GCS_BUCKET", "").strip()
+GCS_PREFIX = os.getenv("GCS_PREFIX", "aquagraph-exports").strip("/")
+# Batch task polling (no hard cap like the synchronous path).
+EXPORT_POLL_SECONDS = int(os.getenv("INGEST_EXPORT_POLL", "20"))
+EXPORT_TIMEOUT_SECONDS = int(os.getenv("INGEST_EXPORT_TIMEOUT", "10800"))  # 3h
+# Delete exported objects after ingest (keeps GCS storage ~0 / costs nil).
+GCS_KEEP = _bool("INGEST_GCS_KEEP", False)
+# Concurrency: how many batch export tasks to keep submitted at once. EE
+# queues beyond its own run-concurrency, so this just keeps the pipeline
+# from blocking on one task at a time — turns a multi-day per-pass backfill
+# into hours. Each in-flight task is independent & idempotent.
+GCS_MAX_INFLIGHT = int(os.getenv("INGEST_GCS_MAX_INFLIGHT", "16"))
+
 # --- Database ---
 DB_URL = os.getenv("DB_URL", "").strip()
 if not DB_URL:
