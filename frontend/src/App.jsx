@@ -15,6 +15,7 @@ import Register from './components/Register'
 import Newsletter from './components/Newsletter'
 import Campaigns from './components/Campaigns'
 import LandingPage from './components/landing/LandingPage'
+import AboutPage from './components/AboutPage'
 import { ROMANIA_REGIONS } from './constants/Regions'
 
 const theme = createTheme({
@@ -139,6 +140,7 @@ export default function App() {
           onGoToRegister={() => setPage('register')}
           onGoToNewsletter={() => setPage('newsletter')}
           onGoToCampaigns={() => setPage('campaigns')} onLogout={handleLogout}
+          onGoToAbout={() => setPage('about')}
         />
       </ThemeProvider>
     )
@@ -189,18 +191,42 @@ export default function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Campaigns onGoToHome={() => setPage('landing')} onGoToMap={() => setPage('map')}
-          onBack={() => setPage('map')}
-          onGoToLogin={() => setPage('login')}
-          onGoToRegister={() => setPage('register')}
-          onGoToNewsletter={() => setPage('newsletter')}
-          onGoToAddCampaign={() => setPage('add-campaign')}
-          user={user}
-          onLogout={handleLogout}
+        <Campaigns
+            onGoToHome={() => setPage('landing')}
+            onGoToMap={() => setPage('map')}
+            onBack={() => setPage('map')}
+            onGoToLogin={() => setPage('login')}
+            onGoToRegister={() => setPage('register')}
+            onGoToNewsletter={() => setPage('newsletter')}
+            onGoToAddCampaign={() => setPage('add-campaign')}
+            user={user}
+            onLogout={handleLogout}
         />
       </ThemeProvider>
     )
   }
+
+  if (page === 'about') {
+    return (
+        <ThemeProvider theme={theme}>
+          <CssBaseline/>
+          <Box sx={{ overflowY: 'auto', height: '100vh' }}>
+            <AboutPage
+              user={user}
+              onGoToHome={() => setPage('landing')}
+              onGoToMap={() => setPage('map')}
+              onGoToLogin={() => setPage('login')}
+              onGoToRegister={() => setPage('register')}
+              onGoToNewsletter={() => setPage('newsletter')}
+              onGoToCampaigns={() => setPage('campaigns')}
+              onGoToAbout={() => setPage('about')}
+              onLogout={handleLogout}
+            />
+        </Box>
+        </ThemeProvider>
+    )
+  }
+
 
   // MAP (pagina principala dupa login)
   const sidebar = (
