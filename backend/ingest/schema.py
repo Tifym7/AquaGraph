@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS satellite_observation (
     river_id        TEXT,
     sensor          TEXT        NOT NULL,
     acquired_at     DATE        NOT NULL,
-    -- precise scene timestamp (UTC) — for sun-angle / day-vs-night / orbit
+    -- precise scene timestamp (UTC) - for sun-angle / day-vs-night / orbit
     -- features; nullable so legacy date-only rows still load.
     acquired_at_ts  TIMESTAMPTZ,
     ingested_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),

@@ -6,7 +6,6 @@ import {
   IconButton, Divider, Link, MenuItem, Select,
   FormControl, InputLabel, OutlinedInput,
 } from '@mui/material'
-import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import AccountCircleOutlined from '@mui/icons-material/AccountCircleOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined'
@@ -14,6 +13,7 @@ import LocationOnOutlinedIcon from '@mui/icons-material/LocationOnOutlined'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { LogoBadge } from './AppNavBar'
 import { ROMANIA_REGIONS } from '../constants/Regions'
 import { API_BASE } from '../utils'
 
@@ -96,8 +96,8 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
         <Box sx={{ width: '100%', maxWidth: 420, bgcolor: 'background.paper', borderRadius: 4, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.4)' }}>
 
           {/* Header */}
-          <Box sx={{ background: 'linear-gradient(135deg, #3c096c 0%, #7b2cbf 100%)', px: 3, pt: 3, pb: 3, display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-            <SatelliteAltIcon sx={{ fontSize: 32, color: '#e0aaff', mt: 0.3 }} />
+          <Box sx={{ background: 'linear-gradient(135deg, #3c096c 0%, #7b2cbf 100%)', px: 3, pt: 3, pb: 3, display: 'flex', alignItems: 'center', gap: 1.75 }}>
+            <LogoBadge size={44} />
             <Box sx={{ flex: 1 }}>
               <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#fff', lineHeight: 1.1, letterSpacing: '-0.5px' }}>
                 AquaGraph

@@ -1,13 +1,13 @@
 # Fast / precise ingestion via GCS batch export
 
-Two transports now coexist — pick per run with `INGEST_TRANSPORT`:
+Two transports now coexist - pick per run with `INGEST_TRANSPORT`:
 
 | `INGEST_TRANSPORT` | How | Needs | Speed / scale |
 |---|---|---|---|
 | `sync` *(default)* | chunked `getDownloadURL` (free) | nothing | OK for demo; ~80 min/month, ~5-min compute cap → coarse scale |
 | `gcs` | GEE batch `Export.table.toCloudStorage` → download from a bucket | billing + a GCS bucket | server-side & parallel, **no caps** → 10 m scale, per-pass, many years, far faster |
 
-`sync` is unchanged and remains the default — nothing you run today breaks.
+`sync` is unchanged and remains the default - nothing you run today breaks.
 Set `INGEST_TRANSPORT=gcs` only for the heavy precise backfills.
 
 ---
@@ -27,13 +27,13 @@ gcloud projects add-iam-policy-binding cassini2026 \
   --member="serviceAccount:$SA" --role="roles/storage.objectAdmin"
 ```
 
-(The SA key is the same one already used for EE — `GEE_SERVICE_ACCOUNT_KEY`.)
+(The SA key is the same one already used for EE - `GEE_SERVICE_ACCOUNT_KEY`.)
 
 ---
 
-## 2. Cost — the $10 voucher is plenty (effectively free)
+## 2. Cost - the $10 voucher is plenty (effectively free)
 
-- **Earth Engine compute**: free (noncommercial plan) — batch tasks included.
+- **Earth Engine compute**: free (noncommercial plan) - batch tasks included.
 - **`Export.table.toCloudStorage`**: free (it's an EE export, not a billed API).
 - **GCS storage**: the pipeline **deletes each object after ingest**
   (`INGEST_GCS_KEEP=0`, the default), so steady-state storage ≈ 0. Even if
@@ -46,7 +46,7 @@ So $10 covers this workload essentially indefinitely. Keep
 
 ---
 
-## 3. Run it — more precise, more years, faster
+## 3. Run it - more precise, more years, faster
 
 Everything downstream (Postgres schema, loader, snapshot, reports, the app)
 is identical; only the transport changes. Reuse the same `backfill.sh` /
@@ -78,7 +78,7 @@ bash /home/dlese/work/AquaGraph/scripts/backfill.sh
 ### Per-pass (finest temporal resolution, for ML)
 
 ```bash
-# every satellite acquisition, not a monthly median — heavier but batch
+# every satellite acquisition, not a monthly median - heavier but batch
 # handles it. One export task per pass date.
 ... same env as above ...
 python3 -m ingest.cli backfill --years 5 --sensors S2 --mode pass
@@ -107,12 +107,12 @@ segment **per real acquisition** (`acquired_at` = the pass date).
 `gcs` writes the **identical** `satellite_observation` rows as `sync` (same
 parser, schema, idempotent upsert). So:
 
-- It coexists with already-ingested `sync` data — re-running a window just
+- It coexists with already-ingested `sync` data - re-running a window just
   upserts (no duplicates; finer scale overwrites the coarse value for that
   `(object_id, sensor, acquired_at)`).
 - Sync to prod with the unchanged `docs/DB_SYNC.md` flow, or run the `gcs`
   backfill directly on the VM (it has billing access via the same SA key).
-- The `--profile ingest` scheduler can also use `gcs` — just set
+- The `--profile ingest` scheduler can also use `gcs` - just set
   `INGEST_TRANSPORT=gcs` + `GCS_BUCKET` in its env.
 
 ## 5. Verify the setup

@@ -323,6 +323,19 @@ export async function fetchRiverHistory(riverId, metric = 'NDTI', sensor = 'S2',
   }
 }
 
+/* Aggregate pipeline stats (per-sensor row/date/river/segment counts,
+   acquired_at_ts coverage, first/last dates). Powers the live numbers on
+   the data-pipeline presentation page. Resolves to null on failure. */
+export async function fetchPipelineStats() {
+  try {
+    const r = await axios.get(`${API_BASE}/pipeline/stats`)
+    return r.data
+  } catch (e) {
+    console.error('pipeline stats unavailable:', e)
+    return null
+  }
+}
+
 /* Per-segment value per date for one river, powering the map timeline
    scrubber. Returns { dates:[...], values:{ object_id:[v,...] }, ... } or
    null. `metric` is a map metric key; sensor defaults server-side (S1 for

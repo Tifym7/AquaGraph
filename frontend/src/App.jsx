@@ -5,10 +5,12 @@ import { Box, Drawer, Fab } from '@mui/material'
 import HomeIcon from '@mui/icons-material/Home'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
+import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
 import AppNavBar from './components/AppNavBar'
 import useIsMobile from './hooks/useIsMobile'
 import MapView from './components/MapView'
+import PipelinePage from './components/PipelinePage'
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
 import Register from './components/Register'
@@ -138,7 +140,9 @@ export default function App() {
           onGoToLogin={() => setPage('login')}
           onGoToRegister={() => setPage('register')}
           onGoToNewsletter={() => setPage('newsletter')}
-          onGoToCampaigns={() => setPage('campaigns')} onLogout={handleLogout}
+          onGoToCampaigns={() => setPage('campaigns')}
+          onGoToPipeline={() => setPage('pipeline')}
+          onLogout={handleLogout}
         />
       </ThemeProvider>
     )
@@ -185,6 +189,22 @@ export default function App() {
     )
   }
 
+  if (page === 'pipeline') {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <PipelinePage
+          user={user}
+          onLogout={handleLogout}
+          onGoToLanding={() => setPage('landing')}
+          onGoToMap={() => setPage('map')}
+          onGoToNewsletter={() => setPage('newsletter')}
+          onGoToCampaigns={() => setPage('campaigns')}
+        />
+      </ThemeProvider>
+    )
+  }
+
   if (page === 'campaigns') {
     return (
       <ThemeProvider theme={theme}>
@@ -221,6 +241,7 @@ export default function App() {
         <AppNavBar
           links={[
             { label: 'Home', icon: <HomeIcon />, onClick: () => setPage('landing') },
+            { label: 'Pipeline', icon: <AccountTreeIcon />, onClick: () => setPage('pipeline') },
             { label: 'Newsletter', icon: <EmailIcon />, onClick: () => setPage('newsletter') },
             { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => setPage('campaigns') },
           ]}

@@ -9,7 +9,7 @@ import HowItWorksSection from './HowItWorksSection'
 import CTASection from './CtaSection'
 import LandingFooter from './LandingFooter'
 
-export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToCampaigns, user, onLogout }) {
+export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToCampaigns, onGoToPipeline, user, onLogout }) {
   useEffect(() => {
     const prevBody = document.body.style.overflow
     const prevHtml = document.documentElement.style.overflow
@@ -21,7 +21,7 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
     }
   }, [])
 
-  // Demo: the map is public — exploring it never requires authentication.
+  // Demo: the map is public - exploring it never requires authentication.
   const handleMapClick = () => onGoToMap()
 
   return (
@@ -32,6 +32,7 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
         onGoToRegister={onGoToRegister}
         onGoToNewsletter={onGoToNewsletter}
         onGoToCampaigns={onGoToCampaigns}
+        onGoToPipeline={onGoToPipeline}
         user={user}
         onLogout={onLogout}
       />

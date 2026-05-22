@@ -9,8 +9,8 @@ import CloseIcon from '@mui/icons-material/Close'
 import LoginIcon from '@mui/icons-material/Login'
 import PersonAddIcon from '@mui/icons-material/PersonAdd'
 import LogoutIcon from '@mui/icons-material/Logout'
-import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import logoImg from '../assets/logo.jpeg'
 
 /* One responsive top bar shared by every page. Desktop (>= md) keeps the
    original 95px gradient bar with inline text buttons; below md the links
@@ -40,10 +40,50 @@ const AUTH_BTN = {
   px: 1.5,
 }
 
+/* Circular logo badge - the source artwork sits on a cream background, so we
+   give it a white disc to merge into, a faint brand-purple ring, and a soft
+   glow. The result reads as a single token on the dark navbar gradient
+   instead of a square pasted on. Scale slightly above 100% to crop the
+   logo's own margin so the artwork fills the disc edge-to-edge. */
+export function LogoBadge({ size = 44, ring = true }) {
+  return (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        flexShrink: 0,
+        borderRadius: '50%',
+        bgcolor: '#fff',
+        border: ring ? '1.5px solid rgba(224,170,255,0.55)' : 'none',
+        boxShadow: ring
+          ? '0 0 0 3px rgba(255,255,255,0.08), 0 4px 14px rgba(199,125,255,0.35)'
+          : '0 2px 8px rgba(0,0,0,0.15)',
+        overflow: 'hidden',
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Box
+        component="img"
+        src={logoImg}
+        alt="AquaGraph logo"
+        sx={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          transform: 'scale(1.08)',  // trim the artwork's own white margin
+          display: 'block',
+        }}
+      />
+    </Box>
+  )
+}
+
 function Brand({ leading, compact }) {
   return (
     <>
-      {leading || <SatelliteAltIcon sx={{ fontSize: 28, color: '#fff' }} />}
+      {leading || <LogoBadge size={compact ? 38 : 44} />}
       <Box sx={{ flexGrow: 0, mr: { xs: 0, md: 2 }, minWidth: 0 }}>
         <Typography variant="h6" noWrap sx={{ lineHeight: 1.2, letterSpacing: '-0.3px', color: '#fff' }}>
           AquaGraph
@@ -202,7 +242,10 @@ export default function AppNavBar({
         slotProps={{ paper: { sx: { width: 270, background: 'linear-gradient(180deg, #240046 0%, #3c096c 100%)', color: '#fff' } } }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, py: 1.5 }}>
-          <Typography variant="h6" sx={{ color: '#fff' }}>AquaGraph</Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
+            <LogoBadge size={36} />
+            <Typography variant="h6" noWrap sx={{ color: '#fff', letterSpacing: '-0.3px' }}>AquaGraph</Typography>
+          </Box>
           <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: '#fff' }} aria-label="close navigation">
             <CloseIcon />
           </IconButton>

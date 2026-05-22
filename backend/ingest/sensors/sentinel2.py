@@ -61,6 +61,33 @@ class Sentinel2(Sensor):
         composite = self._base_collection(start, end).median().clip(self.country())
         return _compute_indices(composite).select(self.METRIC_FIELDS)
 
+    def pollution_image(self, start: str, end: str) -> ee.Image:
+        """Per-pixel POLLUTION composite (integer 0-7) over [start, end).
+        Same formula as add_risk(), but applied pixel-wise rather than
+        per-segment - used by the offline thumbnail generator so the
+        Pipeline page can show a real EE-computed POLLUTION raster.
+
+        The production ingest path is unchanged: it still reduces to
+        per-segment means first, then runs add_risk() on the feature
+        collection. This method is a separate visualization-only route."""
+        img = self.indices_image(start, end)
+        mndwi = img.select("MNDWI")
+        ndti = img.select("NDTI")
+        turbidity = img.select("TURBIDITY")
+        ndvi = img.select("NDVI")
+        ndci = img.select("NDCI")
+        bsi = img.select("BSI")
+
+        is_water = mndwi.gt(0.2)
+        water_risk = (
+            ndti.gt(0.1).multiply(2)
+            .add(turbidity.gt(0.15))
+            .add(ndci.gt(0.1))
+            .add(ndti.gt(0.1).And(ndci.gt(0.1)))
+        ).multiply(is_water)
+        land_risk = ndvi.lt(0.3).add(bsi.gt(0.3))
+        return water_risk.add(land_risk).rename("POLLUTION").toInt()
+
     def add_risk(self, fc: ee.FeatureCollection) -> ee.FeatureCollection:
         def compute_risk(feature: ee.Feature) -> ee.Feature:
             mndwi = _safe(feature, "MNDWI")

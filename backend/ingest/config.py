@@ -81,7 +81,7 @@ EXPORT_TIMEOUT_SECONDS = int(os.getenv("INGEST_EXPORT_TIMEOUT", "10800"))  # 3h
 GCS_KEEP = _bool("INGEST_GCS_KEEP", False)
 # Concurrency: how many batch export tasks to keep submitted at once. EE
 # queues beyond its own run-concurrency, so this just keeps the pipeline
-# from blocking on one task at a time — turns a multi-day per-pass backfill
+# from blocking on one task at a time - turns a multi-day per-pass backfill
 # into hours. Each in-flight task is independent & idempotent.
 GCS_MAX_INFLIGHT = int(os.getenv("INGEST_GCS_MAX_INFLIGHT", "16"))
 
