@@ -6,9 +6,9 @@ const C = {
 }
 
 const STATS = [
-  { num: '1,200+', label: 'Monitored segments' },
+  { num: '3,500+', label: 'Monitored segments' },
   { num: '7',      label: 'Satellite metrics' },
-  { num: '72h',    label: 'Data update cycle' },
+  { num: '24h',    label: 'Data update cycle' },
   { num: 'S1/S2',  label: 'ESA Sentinel data' },
 ]
 

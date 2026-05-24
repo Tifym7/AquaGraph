@@ -5,6 +5,7 @@ import MapIcon from '@mui/icons-material/Map'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import CloudIcon from '@mui/icons-material/Cloud'
 import StorageIcon from '@mui/icons-material/Storage'
@@ -2574,7 +2575,7 @@ function S1Concept() {
 
 /* ---------- the page itself ---------- */
 export default function PipelinePage({ onGoToLanding, onGoToMap, onGoToNewsletter,
-                                       onGoToCampaigns, user, onLogout }) {
+                                       onGoToCampaigns, onGoToAbout, user, onLogout }) {
   const [stats, setStats] = useState(null)
   useEffect(() => { fetchPipelineStats().then(setStats) }, [])
 
@@ -2597,10 +2598,11 @@ export default function PipelinePage({ onGoToLanding, onGoToMap, onGoToNewslette
     <Box sx={{ minHeight: '100vh', background: C.tint }}>
       <AppNavBar
         links={[
-          { label: 'Home',       icon: <HomeIcon />,        onClick: onGoToLanding },
-          { label: 'Map',        icon: <MapIcon />,         onClick: onGoToMap },
-          { label: 'Newsletter', icon: <EmailIcon />,       onClick: onGoToNewsletter },
-          { label: 'Campaigns',  icon: <CampaignIcon />,    onClick: onGoToCampaigns },
+          { label: 'Home',       icon: <HomeIcon />,         onClick: onGoToLanding },
+          { label: 'Map',        icon: <MapIcon />,          onClick: onGoToMap },
+          { label: 'Campaigns',  icon: <CampaignIcon />,     onClick: onGoToCampaigns },
+          { label: 'Newsletter', icon: <EmailIcon />,        onClick: onGoToNewsletter },
+          { label: 'About',      icon: <InfoOutlinedIcon />, onClick: onGoToAbout },
         ]}
         user={user}
         onLogout={onLogout}

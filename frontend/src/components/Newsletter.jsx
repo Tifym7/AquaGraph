@@ -7,6 +7,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import MapIcon from '@mui/icons-material/Map'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import AppNavBar from './AppNavBar'
 import { fetchNews } from '../utils.js'
@@ -22,7 +23,7 @@ const C = {
   lightest: '#e0aaff',
 }
 
-export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToCampaigns, user, onLogout }) {
+export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToCampaigns, onGoToAbout, user, onLogout }) {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -59,6 +60,7 @@ export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin,
           { label: 'Map', icon: <MapIcon />, onClick: handleMapClick },
           { label: 'Campaigns', icon: <CampaignIcon />, onClick: onGoToCampaigns },
           { label: 'Newsletter', icon: <EmailIcon />, onClick: () => {}, active: true },
+          { label: 'About', icon: <InfoOutlinedIcon />, onClick: onGoToAbout },
         ]}
         user={user}
         onLogout={onLogout}

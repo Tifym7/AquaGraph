@@ -6,6 +6,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
 import AppNavBar from './components/AppNavBar'
 import useIsMobile from './hooks/useIsMobile'
@@ -17,6 +18,7 @@ import Register from './components/Register'
 import Newsletter from './components/Newsletter'
 import Campaigns from './components/Campaigns'
 import LandingPage from './components/landing/LandingPage'
+import AboutPage from './components/AboutPage'
 import { ROMANIA_REGIONS } from './constants/Regions'
 
 const theme = createTheme({
@@ -142,6 +144,7 @@ export default function App() {
           onGoToNewsletter={() => setPage('newsletter')}
           onGoToCampaigns={() => setPage('campaigns')}
           onGoToPipeline={() => setPage('pipeline')}
+          onGoToAbout={() => setPage('about')}
           onLogout={handleLogout}
         />
       </ThemeProvider>
@@ -182,8 +185,8 @@ export default function App() {
           onBack={() => setPage('map')}
           onGoToLogin={() => setPage('login')}
           onGoToRegister={() => setPage('register')}
+          onGoToAbout={() => setPage('about')}
           user={user}
-          onLogout={handleLogout}
         />
       </ThemeProvider>
     )
@@ -200,6 +203,7 @@ export default function App() {
           onGoToMap={() => setPage('map')}
           onGoToNewsletter={() => setPage('newsletter')}
           onGoToCampaigns={() => setPage('campaigns')}
+          onGoToAbout={() => setPage('about')}
         />
       </ThemeProvider>
     )
@@ -209,18 +213,44 @@ export default function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Campaigns onGoToHome={() => setPage('landing')} onGoToMap={() => setPage('map')}
-          onBack={() => setPage('map')}
-          onGoToLogin={() => setPage('login')}
-          onGoToRegister={() => setPage('register')}
-          onGoToNewsletter={() => setPage('newsletter')}
-          onGoToAddCampaign={() => setPage('add-campaign')}
-          user={user}
-          onLogout={handleLogout}
+        <Campaigns
+            onGoToHome={() => setPage('landing')}
+            onGoToMap={() => setPage('map')}
+            onBack={() => setPage('map')}
+            onGoToLogin={() => setPage('login')}
+            onGoToRegister={() => setPage('register')}
+            onGoToNewsletter={() => setPage('newsletter')}
+            onGoToAddCampaign={() => setPage('add-campaign')}
+            onGoToAbout={() => setPage('about')}
+            user={user}
+            onLogout={handleLogout}
         />
       </ThemeProvider>
     )
   }
+
+  if (page === 'about') {
+    return (
+        <ThemeProvider theme={theme}>
+          <CssBaseline/>
+          <Box sx={{ overflowY: 'auto', height: '100vh' }}>
+            <AboutPage
+              user={user}
+              onGoToHome={() => setPage('landing')}
+              onGoToMap={() => setPage('map')}
+              onGoToLogin={() => setPage('login')}
+              onGoToRegister={() => setPage('register')}
+              onGoToNewsletter={() => setPage('newsletter')}
+              onGoToCampaigns={() => setPage('campaigns')}
+              onGoToPipeline={() => setPage('pipeline')}
+              onGoToAbout={() => setPage('about')}
+              onLogout={handleLogout}
+            />
+        </Box>
+        </ThemeProvider>
+    )
+  }
+
 
   // MAP (pagina principala dupa login)
   const sidebar = (
@@ -242,8 +272,9 @@ export default function App() {
           links={[
             { label: 'Home', icon: <HomeIcon />, onClick: () => setPage('landing') },
             { label: 'Pipeline', icon: <AccountTreeIcon />, onClick: () => setPage('pipeline') },
-            { label: 'Newsletter', icon: <EmailIcon />, onClick: () => setPage('newsletter') },
             { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => setPage('campaigns') },
+            { label: 'Newsletter', icon: <EmailIcon />, onClick: () => setPage('newsletter') },
+            { label: 'About', icon: <InfoOutlinedIcon />, onClick: () => setPage('about') },
           ]}
           user={user}
           onLogout={handleLogout}

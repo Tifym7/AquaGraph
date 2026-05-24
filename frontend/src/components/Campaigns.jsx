@@ -8,6 +8,7 @@ import HomeIcon from '@mui/icons-material/Home'
 import MapIcon from '@mui/icons-material/Map'
 import EmailIcon from '@mui/icons-material/Email'
 import CampaignIcon from '@mui/icons-material/Campaign'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import AddIcon from '@mui/icons-material/Add'
 import WaterIcon from '@mui/icons-material/Water'
 import GroupsIcon from '@mui/icons-material/Groups'
@@ -35,7 +36,7 @@ const FALLBACK_CAMPAIGNS = [
   { id: 4, campaign_name: 'Argeșul Curat', organization_name: 'Voluntari pentru Natură', river_name: 'Argeș', coordinates: '44.9,25.1', start_date: '2025-08-01', end_date: '2025-09-01', likes: 38, participants: [] },
 ]
 
-export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToNewsletter, user, onLogout }) {
+export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToNewsletter, onGoToAbout, user, onLogout }) {
   const [view, setView] = useState('list')
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
@@ -117,8 +118,9 @@ export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, 
         links={[
           { label: 'Home', icon: <HomeIcon />, onClick: onGoToHome ?? onBack },
           { label: 'Map', icon: <MapIcon />, onClick: handleMapClick },
-          { label: 'Newsletter', icon: <EmailIcon />, onClick: onGoToNewsletter },
           { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => {}, active: true },
+          { label: 'Newsletter', icon: <EmailIcon />, onClick: onGoToNewsletter },
+          { label: 'About', icon: <InfoOutlinedIcon />, onClick: onGoToAbout },
         ]}
         user={user}
         onLogout={onLogout}

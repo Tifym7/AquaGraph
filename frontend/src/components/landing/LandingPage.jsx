@@ -4,12 +4,13 @@ import LandingNav from './LandingNav'
 import HeroSection from './HeroSection'
 import StatsBar from './StatsBar'
 import FeaturesSection from './FeaturesSection'
+import WhySection from './WhySection'
 import DataPreviewSection from './DataPreviewSection'
 import HowItWorksSection from './HowItWorksSection'
 import CTASection from './CtaSection'
 import LandingFooter from './LandingFooter'
 
-export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToCampaigns, onGoToPipeline, user, onLogout }) {
+export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToCampaigns, onGoToPipeline, onGoToAbout, user, onLogout }) {
   useEffect(() => {
     const prevBody = document.body.style.overflow
     const prevHtml = document.documentElement.style.overflow
@@ -21,7 +22,6 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
     }
   }, [])
 
-  // Demo: the map is public - exploring it never requires authentication.
   const handleMapClick = () => onGoToMap()
 
   return (
@@ -33,12 +33,14 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
         onGoToNewsletter={onGoToNewsletter}
         onGoToCampaigns={onGoToCampaigns}
         onGoToPipeline={onGoToPipeline}
+        onGoToAbout={onGoToAbout}
         user={user}
         onLogout={onLogout}
       />
       <HeroSection />
       <StatsBar />
       <FeaturesSection />
+      <WhySection />
       <DataPreviewSection onGoToMap={handleMapClick} />
       <HowItWorksSection />
       <CTASection />
