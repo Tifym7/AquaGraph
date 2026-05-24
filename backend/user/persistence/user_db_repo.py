@@ -34,6 +34,17 @@ class UserDBRepo(UserRepository):
                         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     )
                 """)
+                # GDPR consent audit trail. Idempotent ALTERs so existing
+                # deployments pick the columns up on the next boot without
+                # a manual migration step. We store *which version* was
+                # accepted (so we can prove what content the user saw)
+                # and *when*. NULL on legacy rows means "predates the
+                # Terms page going live".
+                cursor.execute("""
+                    ALTER TABLE users
+                      ADD COLUMN IF NOT EXISTS terms_version VARCHAR(16),
+                      ADD COLUMN IF NOT EXISTS terms_accepted_at TIMESTAMPTZ
+                """)
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS pending_user_verifications (
                         email VARCHAR(255) PRIMARY KEY,
@@ -55,20 +66,31 @@ class UserDBRepo(UserRepository):
             return None
         return User(row["username"], row["password"], row["email"], row["region"])
 
-    def save(self, user):
+    def save(self, user, *, terms_version=None):
+        """Insert / upsert a user. If `terms_version` is given (e.g. "1.0")
+        the row is stamped with that version + NOW() so we have a
+        GDPR-compliant audit trail of which Terms text was accepted."""
         # ← hash parola înainte de salvare
         hashed = generate_password_hash(user.get_password())
         with self.__get_connection() as connection:
             with connection.cursor(cursor_factory=RealDictCursor) as cursor:
                 cursor.execute("""
-                    INSERT INTO users (username, password, email, region)
-                    VALUES (%s, %s, %s, %s)
+                    INSERT INTO users
+                        (username, password, email, region,
+                         terms_version, terms_accepted_at)
+                    VALUES (%s, %s, %s, %s, %s,
+                            CASE WHEN %s IS NULL THEN NULL ELSE NOW() END)
                     ON CONFLICT (username) DO UPDATE
                     SET password = EXCLUDED.password,
                         email = EXCLUDED.email,
-                        region = EXCLUDED.region
+                        region = EXCLUDED.region,
+                        terms_version = COALESCE(EXCLUDED.terms_version,
+                                                 users.terms_version),
+                        terms_accepted_at = COALESCE(EXCLUDED.terms_accepted_at,
+                                                     users.terms_accepted_at)
                     RETURNING username, password, email, region
-                """, (user.get_username(), hashed, user.get_email(), user.get_region()))
+                """, (user.get_username(), hashed, user.get_email(), user.get_region(),
+                      terms_version, terms_version))
                 return self.__to_user(cursor.fetchone())
 
     def get_user_by_username(self, username):

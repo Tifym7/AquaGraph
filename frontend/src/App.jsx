@@ -15,6 +15,7 @@ import PipelinePage from './components/PipelinePage'
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
 import Register from './components/Register'
+import Terms from './components/Terms'
 import Newsletter from './components/Newsletter'
 import Campaigns from './components/Campaigns'
 import LandingPage from './components/landing/LandingPage'
@@ -172,6 +173,19 @@ export default function App() {
           onRegister={handleRegister}
           onGoToLogin={() => setPage('login')}
           onBack={() => setPage('landing')}
+          onGoToTerms={() => setPage('terms')}
+        />
+      </ThemeProvider>
+    )
+  }
+
+  if (page === 'terms') {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Terms
+          onBack={() => setPage('landing')}
+          onGoToRegister={() => setPage('register')}
         />
       </ThemeProvider>
     )
@@ -261,6 +275,7 @@ export default function App() {
       onMetricChange={setActiveMetric}
       onClose={() => setSelectedRiver(null)}
       onSelect={(r) => setSelectedRiver(r ? { ...r, _flyOnFocus: true } : null)}
+      user={user}
     />
   )
 

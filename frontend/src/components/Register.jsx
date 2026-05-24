@@ -5,6 +5,7 @@ import {
   Box, Typography, TextField, Button, InputAdornment,
   IconButton, Divider, Link, MenuItem, Select,
   FormControl, InputLabel, OutlinedInput,
+  Checkbox, FormControlLabel,
 } from '@mui/material'
 import AccountCircleOutlined from '@mui/icons-material/AccountCircleOutlined'
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
@@ -44,12 +45,16 @@ const theme = createTheme({
   },
 })
 
-export default function Register({ onRegister, onGoToLogin, onBack }) {
+export default function Register({ onRegister, onGoToLogin, onBack, onGoToTerms }) {
   const [form, setForm] = useState({ username: '', email: '', password: '', confirmPassword: '', region: '' })
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  /* GDPR: registration is the consent moment for "we hold an email and
+     use it for login + reports + critical updates". Account creation is
+     blocked until this is actively ticked - no pre-checked box. */
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   const set = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }))
 
@@ -67,10 +72,18 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
     if (form.password !== form.confirmPassword) {
       setError('Passwords do not match.'); return
     }
+    if (!termsAccepted) {
+      setError('Please review and accept the Terms & Privacy notice to continue.'); return
+    }
     setLoading(true)
     try {
       const { data } = await axios.post(`${API_BASE}/register`, {
-        username: form.username.trim(), email: form.email.trim(), password: form.password, region: form.region,
+        username: form.username.trim(), email: form.email.trim(), password: form.password,
+        region: form.region,
+        /* Sent alongside registration so the backend can stamp an
+           audit trail of which Terms version the user accepted. */
+        accepted_terms: true,
+        terms_version: '1.0',
       })
       localStorage.setItem('aq_token', data.token)
       axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`
@@ -174,13 +187,49 @@ export default function Register({ onRegister, onGoToLogin, onBack }) {
               }}
             />
 
+            {/* GDPR consent gate. Unticked by default - the regulation
+                requires active opt-in for "I have read and accept". The
+                link opens the Terms page on the same flow stack so the
+                user can come back to finish registering. */}
+            <FormControlLabel
+              sx={{
+                mb: 1.5, ml: 0, alignItems: 'flex-start',
+                '& .MuiFormControlLabel-label': { fontSize: 12.5, color: 'text.secondary', lineHeight: 1.5, pt: 0.6 },
+              }}
+              control={
+                <Checkbox
+                  size="small"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  sx={{ pt: 0.5, pr: 1, color: '#9d4edd',
+                         '&.Mui-checked': { color: '#5a189a' } }}
+                />
+              }
+              label={
+                <>
+                  I have read and agree to the{' '}
+                  <Link component="button" type="button"
+                        onClick={(e) => { e.preventDefault(); onGoToTerms && onGoToTerms() }}
+                        underline="hover"
+                        sx={{
+                          color: '#5a189a', fontWeight: 700,
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          fontSize: 12.5, p: 0, verticalAlign: 'baseline',
+                        }}>
+                    Terms &amp; Privacy notice
+                  </Link>. AquaGraph keeps my email for sign-in and to send
+                  reports plus critical service updates - nothing else.
+                </>
+              }
+            />
+
             {error && (
               <Typography sx={{ fontSize: 12, color: '#ff1744', mb: 2, bgcolor: 'rgba(255,23,68,0.05)', border: '1px solid rgba(255,23,68,0.2)', borderRadius: 2, px: 2, py: 1 }}>
                 {error}
               </Typography>
             )}
 
-            <Button fullWidth variant="contained" onClick={handleSubmit} disabled={loading}
+            <Button fullWidth variant="contained" onClick={handleSubmit} disabled={loading || !termsAccepted}
               sx={{
                 background: 'linear-gradient(135deg, #5a189a 0%, #3c096c 100%)',
                 py: 1.2, mb: 2,
