@@ -97,29 +97,29 @@ const GITHUB_URL   = 'https://github.com/Tifym7/AquaGraph'
 const TIMELINE = [
   {
     date: 'Spring 2026',
-    label: 'Cassini Hackathon — Space for Water',
-    text: 'AquaGraph was born during the EU-funded Cassini Hackathon, a pan-European challenge across 11 countries focused on space data for environmental good. Competing in the "Space for Water" track, the team built a working prototype in 48 hours — satellite ingestion, geospatial processing, interactive map — and placed 3rd in Romania.',
+    label: 'Cassini Hackathon: Space for Water',
+    text: 'AquaGraph was born during the EU-funded Cassini Hackathon, a pan-European challenge across 11 countries focused on space data for environmental good. Competing in the "Space for Water" track, the team built a working prototype in 48 hours (satellite ingestion, geospatial processing, interactive map) and placed 3rd in Romania.',
     accent: C.mid3,
   },
   {
     date: 'Post-hackathon',
     label: 'Joining Momentum',
-    text: 'After the hackathon we kept going. AquaGraph joined Momentum, a startup accelerator and innovation hub, to develop the platform further — expanding coverage, refining the processing pipeline, and building the community features that make it more than just a map.',
+    text: 'After the hackathon we kept going. AquaGraph joined Momentum, a startup accelerator and innovation hub, to develop the platform further: expanding coverage, refining the processing pipeline, and building the community features that make it more than just a map.',
     accent: C.mid2,
   },
   {
     date: 'Today',
     label: 'Open to everyone',
-    text: 'The platform is publicly accessible — no login required to explore the map. We believe environmental data should be a public good, and we\'re continuing to add features, improve accuracy, and grow the community around clean water in Romania.',
+    text: 'The platform is publicly accessible, no login required to explore the map. We believe environmental data should be a public good, and we\'re continuing to add features, improve accuracy, and grow the community around clean water in Romania.',
     accent: C.mid1,
   },
 ]
 
 const VALUES = [
   { icon: '🌍', title: 'Open by default', text: 'Satellite data is funded by European taxpayers. We think the insights built on it should be freely accessible too.' },
-  { icon: '🔬', title: 'Science-first', text: 'Every metric on the map — NDWI, NDCI, turbidity, oil risk — is grounded in published remote sensing methodology.' },
+  { icon: '🔬', title: 'Science-first', text: 'Every metric on the map (NDWI, NDCI, turbidity, oil risk) is grounded in published remote sensing methodology.' },
   { icon: '🤝', title: 'Community-driven', text: 'Ground truth matters. Citizens, researchers, and local officials all have a role to play alongside the satellite.' },
-  { icon: '⚡', title: 'Built to scale', text: 'The pipeline is designed to expand — more rivers, more metrics, more countries — as we grow.' },
+  { icon: '⚡', title: 'Built to scale', text: 'The pipeline is designed to expand: more rivers, more metrics, more countries, as we grow.' },
 ]
 
 export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoToNewsletter, onGoToCampaigns, user, onLogout }) {
@@ -187,7 +187,7 @@ export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoT
             maxWidth: 540,
             mx: 'auto',
           }}>
-            AquaGraph is a satellite-powered water quality platform built for Romania's rivers — open, free, and designed for everyone.
+            AquaGraph is a satellite-powered water quality platform built for Romania's rivers, open and designed for everyone.
           </Typography>
         </Box>
       </Box>
@@ -354,7 +354,7 @@ export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoT
             Built by students, driven by purpose
           </Typography>
           <Typography sx={{ color: '#555', fontSize: '1rem', lineHeight: 1.8, mb: 5, maxWidth: 900 }}>
-            We met at the Cassini Hackathon in Spring 2026 — a group of students from UBB and UTCN in Cluj-Napoca, brought together by a shared interest in satellite technology and environmental data. What started as a 48-hour sprint turned into something we couldn't put down.
+            We met at the Cassini Hackathon in Spring 2026, a group of students from UBB and UTCN in Cluj-Napoca, brought together by a shared interest in satellite technology and environmental data. What started as a 48-hour sprint turned into something we couldn't put down.
           </Typography>
 
           <Carousel />

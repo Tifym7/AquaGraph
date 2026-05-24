@@ -18,14 +18,14 @@ const PROBLEMS = [
     stat: '882',
     statLabel: 'monitoring stations for the whole country',
     problem: 'Coverage is dangerously thin',
-    detail: 'Romania\'s entire hydro-meteorological network has only 882 stations — leaving thousands of river segments with no real - time data at all.',
+    detail: 'Romania\'s entire hydro-meteorological network has only 882 stations, leaving thousands of river segments with no real-time data at all.',
   },
   {
     icon: '⏱️',
     stat: '72h+',
     statLabel: 'average detection delay',
     problem: 'Too slow to act',
-    detail: 'Traditional sampling requires field teams, lab analysis, and reporting cycles — by then, the damage has already spread downstream.',
+    detail: 'Traditional sampling requires field teams, lab analysis, and reporting cycles. By then, the damage has already spread downstream.',
   },
   {
     icon: '🌊',
@@ -40,17 +40,17 @@ const SOLUTIONS = [
   {
     icon: '🛰️',
     title: '3,500+ segments monitored',
-    text: 'ESA Copernicus Sentinel-1 and Sentinel-2 imagery covers the entire country — giving AquaGraph continuous coverage that no ground sensor network could match.',
+    text: 'ESA Copernicus Sentinel-1 and Sentinel-2 imagery covers the entire country, giving AquaGraph continuous coverage that no ground sensor network could match.',
   },
   {
     icon: '⏱️',
     title: '24h detection duty cycle',
-    text: 'Satellite revisit schedules mean AquaGraph can flag a new pollution event within 24 hours — 3× faster than traditional field sampling.',
+    text: 'Satellite revisit schedules mean AquaGraph can flag a new pollution event within 24 hours, 3× faster than traditional field sampling.',
   },
   {
     icon: '📊',
     title: '7 water-quality metrics',
-    text: 'From NDWI and NDCI to turbidity, oil-leakage risk and discharge rate — each river segment is scored across multiple dimensions.',
+    text: 'From NDWI and NDCI to turbidity, oil-leakage risk and discharge rate, each river segment is scored across multiple dimensions.',
   },
   {
     icon: '⚠️',
@@ -64,8 +64,8 @@ const SOLUTIONS = [
   },
   {
     icon: '🌍',
-    title: 'Free during early access',
-    text: 'AquaGraph is free to explore while we\'re in early access. Subscription tiers are on the roadmap — but for now, the full map is open to everyone.',
+    title: 'Open to everyone',
+    text: 'No login is required to explore the full map. We believe environmental data should be a public good, available to citizens, researchers, and local authorities alike.',
   },
 ]
 
@@ -155,7 +155,7 @@ export default function WhySection() {
                   </Typography>
                 </Box>
 
-                {/* Arrow — only between cards, not after the last */}
+                {/* Arrow shown only between cards, not after the last */}
                 {i < PROBLEMS.length - 1 && (
                   <Box sx={{
                     display: 'flex',
@@ -208,7 +208,7 @@ export default function WhySection() {
             How AquaGraph makes a difference
           </Typography>
           <Typography sx={{ color: '#555', fontSize: '1rem', lineHeight: 1.8, mb: 6, maxWidth: 900 }}>
-            By combining open satellite data with smart processing and a public interface, we give anyone the tools to see and act on water quality — in real time.
+            By combining open satellite data with smart processing and a public interface, we give anyone the tools to see and act on water quality, in real time.
           </Typography>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, pl: { xs: 0, md: 8 } }}>

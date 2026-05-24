@@ -290,14 +290,16 @@ def _ollama_summarise(
         if len(image_data_urls) >= 4:
             break
 
-    timeout    = int(os.getenv("OLLAMA_TIMEOUT_SECONDS", "300"))
-    # Reasoning models (Qwen3, DeepSeek R1, ...) routinely spend
-    # 1500-2500 tokens analysing the prompt + images before they emit
-    # the final answer. The visible report body itself only wants
-    # ~300-500 tokens. Setting the ceiling to 3000 leaves room for both
-    # phases without blowing the latency budget (~50s on a 35B model
-    # at ~60 tok/s).
-    max_tokens = int(os.getenv("OLLAMA_MAX_TOKENS", "3000"))
+    timeout    = int(os.getenv("OLLAMA_TIMEOUT_SECONDS", "600"))
+    # Headroom, not a target. Reasoning models normally finish in
+    # 1500-3000 completion tokens (we observed 1389-2292 on real
+    # AquaGraph scenes), but occasionally - depending on the model
+    # variant and scene complexity - chain-of-thought balloons past
+    # any low ceiling we'd pick. The model stops naturally at
+    # finish_reason='stop' when it's done; a high max_tokens just
+    # removes the truncation failure mode. 32k stays well inside
+    # Qwen3 32k-128k context windows.
+    max_tokens = int(os.getenv("OLLAMA_MAX_TOKENS", "32000"))
     endpoint   = f"{base_url}/v1/chat/completions"
 
     def _call(prompt: str, with_images: bool) -> str:

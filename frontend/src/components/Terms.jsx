@@ -192,9 +192,9 @@ export default function Terms({ onBack, onGoToRegister }) {
               The short version.
             </Typography>
             <Typography sx={{ color: C.muted, fontSize: 15, lineHeight: 1.6, mb: 2 }}>
-              AquaGraph is a free satellite-based water-pollution monitor for
+              AquaGraph is a satellite-based water-pollution monitor for
               Romania's rivers. To use it as a registered user, we need an
-              email address - and that's all the personal data we keep.
+              email address, and that's all the personal data we keep.
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
                         gap: 1.5 }}>
@@ -309,16 +309,16 @@ export default function Terms({ onBack, onGoToRegister }) {
               minimal:
             </p>
             <ul>
-              <li><strong>Email address</strong> — your sign-in identifier and
+              <li><strong>Email address</strong>: your sign-in identifier and
                   the channel we use to send the reports listed below.</li>
-              <li><strong>Username</strong> — the display name you pick at
+              <li><strong>Username</strong>: the display name you pick at
                   registration. Can be a pseudonym.</li>
-              <li><strong>Region of interest</strong> — the Romanian county you
+              <li><strong>Region of interest</strong>: the Romanian county you
                   chose at registration, so we can centre the map for you. It
                   is not a precise location.</li>
-              <li><strong>Salted password hash</strong> — never the password
+              <li><strong>Salted password hash</strong>: never the password
                   itself. We have no way to read your password.</li>
-              <li><strong>Account timestamps</strong> — when the account was
+              <li><strong>Account timestamps</strong>: when the account was
                   created, when it last signed in. Operational, not analytical.</li>
             </ul>
             <p>
@@ -338,13 +338,13 @@ export default function Terms({ onBack, onGoToRegister }) {
               <li><strong>Reports &amp; very important AquaGraph updates.</strong>{' '}
                   When you trigger a PDF report for a river, the file is
                   attached to (or linked from) an email to you. We will also
-                  use this address to warn you about critical service issues
-                  — for example a data outage that affects rivers you watch,
+                  use this address to warn you about critical service issues,
+                  such as a data outage that affects rivers you watch,
                   a security incident requiring action, or a planned shutdown.</li>
             </ul>
             <p>
               These are <strong>service emails</strong> tied to your use of
-              the platform — they are <em>not</em> marketing. You cannot
+              the platform. They are <em>not</em> marketing. You cannot
               "opt out" of password-reset emails or critical incident
               notifications, because they're necessary to operate the
               account. Everything else (reports) is initiated by you.
@@ -366,7 +366,7 @@ export default function Terms({ onBack, onGoToRegister }) {
                   with other sources to build a behavioural profile.</li>
               <li><strong>No automated decisions with legal effect.</strong>{' '}
                   The pollution scores on the map are about <em>rivers</em>,
-                  not people — they never produce a decision about you.</li>
+                  not people. They never produce a decision about you.</li>
               <li><strong>No transfer outside the EU/EEA.</strong> All
                   personal data stays on EU-based infrastructure.</li>
             </ul>
@@ -385,16 +385,16 @@ export default function Terms({ onBack, onGoToRegister }) {
               For transparency:
             </p>
             <ul>
-              <li><strong>Account login &amp; report delivery</strong> —{' '}
-                  <em>Art. 6(1)(b) — performance of a contract</em>. We need
+              <li><strong>Account login &amp; report delivery</strong>:{' '}
+                  <em>Art. 6(1)(b), performance of a contract</em>. We need
                   these to provide the service you signed up for.</li>
-              <li><strong>Storing the salted password hash</strong> —{' '}
-                  <em>Art. 6(1)(f) — legitimate interest</em> in keeping
+              <li><strong>Storing the salted password hash</strong>:{' '}
+                  <em>Art. 6(1)(f), legitimate interest</em> in keeping
                   accounts secure, which is also your interest.</li>
-              <li><strong>Critical service notifications</strong> —{' '}
-                  <em>Art. 6(1)(f) — legitimate interest</em> in informing
+              <li><strong>Critical service notifications</strong>:{' '}
+                  <em>Art. 6(1)(f), legitimate interest</em> in informing
                   you about issues affecting the service.</li>
-              <li><strong>Anything beyond the above</strong> — would require
+              <li><strong>Anything beyond the above</strong> would require
                   your <em>explicit consent</em> under Art. 6(1)(a), asked
                   for separately. Today there is nothing in this bucket.</li>
             </ul>
@@ -410,20 +410,20 @@ export default function Terms({ onBack, onGoToRegister }) {
             </p>
             <p>Retention:</p>
             <ul>
-              <li><strong>Active account</strong> — for as long as your
+              <li><strong>Active account</strong>: for as long as your
                   account exists. You decide when it ends.</li>
-              <li><strong>Account deletion</strong> — personal data is
+              <li><strong>Account deletion</strong>: personal data is
                   removed within <strong>30 days</strong> of your request.
                   Backups containing the data roll off within an additional
                   90 days.</li>
-              <li><strong>Inactive accounts</strong> — if an account is
+              <li><strong>Inactive accounts</strong>: if an account is
                   unused for 24 months, we'll email you once, then delete it
                   if you don't respond.</li>
             </ul>
             <p>
               River observations and pollution scores are <em>not</em>{' '}
-              personal data — they're public environmental measurements
-              keyed by river segment, not by user — and are kept
+              personal data (they're public environmental measurements
+              keyed by river segment, not by user) and are kept
               indefinitely as the open dataset.
             </p>
           </SectionCard>
@@ -435,25 +435,25 @@ export default function Terms({ onBack, onGoToRegister }) {
               Exercising any of them is free, and we'll act within 30 days:
             </p>
             <ul>
-              <li><strong>Right of access (Art. 15)</strong> — get a copy of
+              <li><strong>Right of access (Art. 15)</strong>: get a copy of
                   the data we hold about you.</li>
-              <li><strong>Right to rectification (Art. 16)</strong> — fix
+              <li><strong>Right to rectification (Art. 16)</strong>: fix
                   anything inaccurate. You can also self-serve via your
                   account settings.</li>
-              <li><strong>Right to erasure / "right to be forgotten" (Art. 17)</strong>{' '}
-                  — delete your account and all associated personal data.</li>
-              <li><strong>Right to restrict processing (Art. 18)</strong> —
+              <li><strong>Right to erasure / "right to be forgotten" (Art. 17)</strong>:{' '}
+                  delete your account and all associated personal data.</li>
+              <li><strong>Right to restrict processing (Art. 18)</strong>:
                   pause processing while a dispute is resolved.</li>
-              <li><strong>Right to data portability (Art. 20)</strong> —
+              <li><strong>Right to data portability (Art. 20)</strong>:
                   receive your data in a structured, machine-readable format
                   (JSON).</li>
-              <li><strong>Right to object (Art. 21)</strong> — object to
+              <li><strong>Right to object (Art. 21)</strong>: object to
                   processing based on legitimate interest.</li>
-              <li><strong>Right to withdraw consent (Art. 7(3))</strong> —
+              <li><strong>Right to withdraw consent (Art. 7(3))</strong>:
                   where consent was the basis, withdraw it without
                   affecting prior processing. Withdrawing consent for login
                   effectively means deleting the account.</li>
-              <li><strong>Right to lodge a complaint</strong> — with the
+              <li><strong>Right to lodge a complaint</strong>: with the
                   Romanian Data Protection Authority{' '}
                   <a href="https://www.dataprotection.ro" target="_blank"
                      rel="noopener noreferrer"
@@ -503,7 +503,7 @@ export default function Terms({ onBack, onGoToRegister }) {
             </p>
             <ul>
               <li><strong>One <code>localStorage</code> entry</strong>{' '}
-                  (<code>aq_token</code>) — your bearer token, set at login
+                  (<code>aq_token</code>): your bearer token, set at login
                   and removed at logout. Strictly necessary to keep you
                   signed in.</li>
               <li><strong>No third-party cookies.</strong> No Google
@@ -514,7 +514,7 @@ export default function Terms({ onBack, onGoToRegister }) {
             </ul>
             <p>
               Because the only stored item is strictly necessary, GDPR does
-              not require a cookie banner — but you should know it's there.
+              not require a cookie banner, but you should know it's there.
             </p>
           </SectionCard>
 
@@ -580,7 +580,7 @@ export default function Terms({ onBack, onGoToRegister }) {
                   boxShadow: '0 6px 18px rgba(90,24,154,0.25)',
                   '&:hover': { background: `linear-gradient(135deg, ${C.deep}, ${C.brand})` },
                 }}>
-                I've read this — back to registration
+                I've read this. Back to registration
               </Button>
             )}
           </Box>
