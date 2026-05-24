@@ -42,9 +42,34 @@ services:
       DB_PASSWORD: password
       SECRET_KEY: change-me-in-production
       TOKEN_EXPIRY_HOURS: "24"
+      # --- Advanced segment report (all optional, degrades gracefully) ---
+      # Earth Engine: enables live Sentinel imagery in the technical PDF.
+      # If the key file isn't present at /secrets/gee-key.json the report
+      # still builds, just without the imagery panel.
+      GEE_SERVICE_ACCOUNT_KEY: /secrets/gee-key.json
+      GEE_PROJECT: ${GEE_PROJECT:-cassini2026}
+      # Ollama: enables the multimodal AI synthesis section. Empty URL
+      # disables it; the report still ships with imagery + charts.
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+      OLLAMA_MODEL:    ${OLLAMA_MODEL:-llava}
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-120}
+      # SMTP: required for the advanced report to actually reach the user
+      # (also used by account email verification today).
+      SMTP_HOST:       ${SMTP_HOST:-}
+      SMTP_PORT:       ${SMTP_PORT:-587}
+      SMTP_USERNAME:   ${SMTP_USERNAME:-}
+      SMTP_PASSWORD:   ${SMTP_PASSWORD:-}
+      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
+      SMTP_USE_TLS:    ${SMTP_USE_TLS:-true}
     ports:
       - "5000:5000"
       - "5173:5173"
+    volumes:
+      # GEE service-account key, mounted read-only. Same default the
+      # ingest profile uses - if your repo doesn't have the key file
+      # locally, create an empty placeholder OR set GEE_KEY_FILE to
+      # /dev/null to skip EE features.
+      - ${GEE_KEY_FILE:-./aquagraph-gee-key.json}:/secrets/gee-key.json:ro
 
   # Satellite-pass ingestion scheduler. Opt-in (profile) so `docker compose
   # up` for app dev does NOT start it. Writes history to the same Postgres

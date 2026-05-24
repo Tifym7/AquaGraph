@@ -25,6 +25,7 @@ from user.services.campaign_service import CampaignService
 from user.model.campaign import Campaign
 from auth import auth_bp
 from history_api import history_bp
+from advanced_report_api import advreport_bp
 from user.persistence.campaign_db_repository import CampaignDBRepository
 
 
@@ -40,6 +41,7 @@ from metrics import (
 app = Flask(__name__)
 app.register_blueprint(auth_bp)
 app.register_blueprint(history_bp)
+app.register_blueprint(advreport_bp)
 
 _campaign_repo = CampaignDBRepository(
     url=os.getenv('DB_URL', 'postgresql://localhost:5432/aquagraph'),

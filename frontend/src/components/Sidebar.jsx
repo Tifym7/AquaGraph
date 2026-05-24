@@ -1,14 +1,107 @@
 import { useEffect, useState } from 'react'
+import axios from 'axios'
 import {
   Box, Typography, Divider, List, ListItemButton, ListItemText,
   LinearProgress, Chip, Card, CardContent, Button, Stack, CircularProgress,
+  Alert, AlertTitle,
 } from '@mui/material'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import WaterIcon from '@mui/icons-material/Water'
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward'
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward'
-import { fetchUpstream, fetchDownstream, getMetricColor, fetchRiver, METRIC_LABELS, METRIC_KEYS } from '../utils'
+import EmailIcon from '@mui/icons-material/Email'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import { fetchUpstream, fetchDownstream, getMetricColor, fetchRiver, METRIC_LABELS, METRIC_KEYS, API_BASE } from '../utils'
 import RiverEvolution from './RiverEvolution'
+
+/* Inline trigger for the slow advanced (technical) report.
+   - Visible only inside the per-segment view (object_id is required).
+   - Logged-in users get a one-click flow; their account email is the
+     default recipient (resolved server-side from the auth token).
+   - The POST returns 202 immediately; the UI flips to a "we'll email
+     you" state until the user navigates away or re-clicks.
+   - All EE/Ollama/SMTP failures are surfaced in plain language by the
+     backend; here we just relay them. */
+function AdvancedReportTrigger({ objectId, user }) {
+  const [state, setState] = useState('idle')   // idle | sending | queued | error
+  const [message, setMessage] = useState('')
+
+  const trigger = async () => {
+    setState('sending')
+    setMessage('')
+    try {
+      const { data } = await axios.post(
+        `${API_BASE}/segment/${objectId}/advanced-report`,
+        {},   // backend resolves email from the authenticated user
+      )
+      setState('queued')
+      setMessage(data.message || `We'll email it to ${data.email} when it's ready.`)
+    } catch (err) {
+      setState('error')
+      setMessage(err?.response?.data?.error || 'Could not start the report. Try again later.')
+    }
+  }
+
+  if (!user) {
+    return (
+      <Alert severity="info" variant="outlined" icon={<AutoAwesomeIcon fontSize="small" />}
+        sx={{ borderRadius: 2, py: 0.5, mb: 2,
+                borderColor: '#c4b5fd', bgcolor: '#faf5ff',
+                '& .MuiAlert-message': { fontSize: 12.5, color: '#3c096c' } }}>
+        <AlertTitle sx={{ fontSize: 12.5, fontWeight: 800, mb: 0 }}>
+          Advanced report
+        </AlertTitle>
+        Sign in to generate a technical PDF (Sentinel imagery + AI synthesis) for this
+        segment, emailed when ready.
+      </Alert>
+    )
+  }
+  if (state === 'queued') {
+    return (
+      <Alert severity="success" variant="outlined" icon={<EmailIcon fontSize="small" />}
+        sx={{ borderRadius: 2, py: 0.5, mb: 2 }}>
+        <AlertTitle sx={{ fontSize: 12.5, fontWeight: 800, mb: 0 }}>
+          Generating - check your inbox
+        </AlertTitle>
+        <Typography sx={{ fontSize: 12.5 }}>{message}</Typography>
+      </Alert>
+    )
+  }
+  return (
+    <Box sx={{ mb: 2 }}>
+      <Button
+        fullWidth variant="outlined"
+        onClick={trigger}
+        disabled={state === 'sending'}
+        startIcon={state === 'sending'
+          ? <CircularProgress size={14} thickness={5} />
+          : <AutoAwesomeIcon sx={{ fontSize: 18 }} />}
+        sx={{
+          textTransform: 'none', fontWeight: 700, fontSize: 12.5,
+          borderRadius: 2, py: 0.9,
+          borderColor: '#c4b5fd', color: '#3c096c',
+          background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+          '&:hover': {
+            borderColor: '#7b2cbf',
+            background: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)',
+          },
+        }}>
+        {state === 'sending' ? 'Queueing the report...'
+                              : 'Generate advanced report (PDF · by email)'}
+      </Button>
+      <Typography sx={{ fontSize: 11, color: '#6b7280', mt: 0.5, px: 0.25,
+                          lineHeight: 1.4 }}>
+        Technical (“x-ray”) PDF with live Sentinel imagery for this
+        segment + AI synthesis. Takes a few minutes; we'll email it to you.
+      </Typography>
+      {state === 'error' && (
+        <Typography sx={{ fontSize: 11.5, color: '#b91c1c', mt: 0.75 }}>
+          {message}
+        </Typography>
+      )}
+    </Box>
+  )
+}
 
 const SIDEBAR_WIDTH = 360
 
@@ -359,7 +452,7 @@ function SegmentRiskCards({ risk, compare }) {
   )
 }
 
-function RiverDetail({ river, onClose, onRiverClick, metric }) {
+function RiverDetail({ river, onClose, onRiverClick, metric, user }) {
   const norm = getSegmentNormalized(river)
   const color = getMetricColor(norm, metric)
   const risk = getSegmentRisk(river)
@@ -414,6 +507,15 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
             )}
           </Box>
         </Stack>
+        {/* Advanced report trigger - only meaningful inside the
+            per-segment view where we have a concrete object_id to send
+            to Earth Engine + Ollama. Hidden in the river overview. */}
+        {isSegmentView && (
+          <AdvancedReportTrigger
+            objectId={river.selectedSegment.object_id}
+            user={user}
+          />
+        )}
         <Card variant="outlined" sx={{ borderRadius: 2, mb: SECTION_MB, borderColor: C.border }}>
           <CardContent sx={{ p: 2, pb: '16px !important' }}>
             <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>{metricLabel} Value</Typography>
@@ -494,7 +596,7 @@ function RiverListItem({ river, isSelected, onSelect, metric }) {
   )
 }
 
-export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metric, onMetricChange }) {
+export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metric, onMetricChange, user }) {
   const handleFlowClick = async (clickedRiver) => {
     /* Navigating to a connected river is a whole-river selection: clear any
        segment selected on the previous river and fetch under the active
@@ -563,7 +665,7 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
       )}
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         {selectedRiver ? (
-          <RiverDetail river={selectedRiver} metric={metric} onClose={() => { onSelect(null); onClose() }} onRiverClick={handleFlowClick} />
+          <RiverDetail river={selectedRiver} metric={metric} onClose={() => { onSelect(null); onClose() }} onRiverClick={handleFlowClick} user={user} />
         ) : (
           <List disablePadding sx={{ pt: 1 }}>
             {top10.map((river, i) => (
