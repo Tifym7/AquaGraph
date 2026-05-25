@@ -44,32 +44,35 @@ services:
       TOKEN_EXPIRY_HOURS: "24"
       # --- Advanced segment report (all optional, degrades gracefully) ---
       # Earth Engine: enables live Sentinel imagery in the technical PDF.
-      # If the key file isn't present at /secrets/gee-key.json the report
-      # still builds, just without the imagery panel.
-      GEE_SERVICE_ACCOUNT_KEY: /secrets/gee-key.json
+      # Key file is mounted as a Docker secret (see `secrets:` at the
+      # bottom + `GEE_KEY_FILE` env override). If the host file is
+      # missing the secret simply isn't mounted and EE init returns
+      # cleanly without crashing the worker.
+      GEE_SERVICE_ACCOUNT_KEY: /run/secrets/gee_service_account_key
       GEE_PROJECT: ${GEE_PROJECT:-cassini2026}
       # Ollama: enables the multimodal AI synthesis section. Empty URL
       # disables it; the report still ships with imagery + charts.
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
       OLLAMA_MODEL:    ${OLLAMA_MODEL:-llava}
       OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-120}
-      # SMTP: required for the advanced report to actually reach the user
-      # (also used by account email verification today).
-      SMTP_HOST:       ${SMTP_HOST:-}
-      SMTP_PORT:       ${SMTP_PORT:-587}
-      SMTP_USERNAME:   ${SMTP_USERNAME:-}
-      SMTP_PASSWORD:   ${SMTP_PASSWORD:-}
-      SMTP_FROM_EMAIL: ${SMTP_FROM_EMAIL:-}
-      SMTP_USE_TLS:    ${SMTP_USE_TLS:-true}
+      # SMTP via Resend. The actual API key is mounted as a Docker secret
+      # (see the `secrets:` block at the bottom + `RESEND_KEY_FILE` env
+      # var to override the host path). The app reads SMTP_PASSWORD_FILE
+      # first; falls back to SMTP_PASSWORD if you want to pass it inline.
+      # Override SMTP_HOST/PORT/USERNAME if pointing at a different relay.
+      SMTP_HOST:          ${SMTP_HOST:-smtp.resend.com}
+      SMTP_PORT:          ${SMTP_PORT:-587}
+      SMTP_USERNAME:      ${SMTP_USERNAME:-resend}
+      SMTP_PASSWORD:      ${SMTP_PASSWORD:-}
+      SMTP_PASSWORD_FILE: /run/secrets/resend_api_key
+      SMTP_FROM_EMAIL:    ${SMTP_FROM_EMAIL:-noreply@aquagraph.org}
+      SMTP_USE_TLS:       ${SMTP_USE_TLS:-true}
     ports:
       - "5000:5000"
       - "5173:5173"
-    volumes:
-      # GEE service-account key, mounted read-only. Same default the
-      # ingest profile uses - if your repo doesn't have the key file
-      # locally, create an empty placeholder OR set GEE_KEY_FILE to
-      # /dev/null to skip EE features.
-      - ${GEE_KEY_FILE:-./aquagraph-gee-key.json}:/secrets/gee-key.json:ro
+    secrets:
+      - resend_api_key
+      - gee_service_account_key
 
   # Satellite-pass ingestion scheduler. Opt-in (profile) so `docker compose
   # up` for app dev does NOT start it. Writes history to the same Postgres
@@ -103,3 +106,13 @@ services:
 
 volumes:
   aquagraph-pgdata:
+
+# Secrets are bind-mounted read-only into the containers that list them
+# under `secrets:`. The host files live OUTSIDE the repo (never commit
+# them). Override the *_FILE env vars to point at different host paths
+# on prod, or leave the defaults for local dev.
+secrets:
+  resend_api_key:
+    file: ${RESEND_KEY_FILE:-/home/dlese/work/deploy/resend_key}
+  gee_service_account_key:
+    file: ${GEE_KEY_FILE:-/home/dlese/aquagraph-gee-key.json}

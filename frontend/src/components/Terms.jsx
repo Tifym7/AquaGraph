@@ -110,7 +110,7 @@ export default function Terms({ onBack, onGoToRegister }) {
 
   /* Memoise mailto so the page footer never re-renders. */
   const contactMailto = useMemo(() =>
-    'mailto:privacy@aquagraph.app?subject=GDPR%20data%20request', [])
+    'mailto:privacy@aquagraph.org?subject=GDPR%20data%20request', [])
 
   /* Make sure we land at the top when the page mounts - register flow
      navigation can otherwise reuse the previous scroll position. */
@@ -297,7 +297,7 @@ export default function Terms({ onBack, onGoToRegister }) {
             <p>
               All data-protection requests can be sent to{' '}
               <a href={contactMailto} style={{ color: C.brand, fontWeight: 700 }}>
-                privacy@aquagraph.app
+                privacy@aquagraph.org
               </a>. We aim to respond within 30 days.
             </p>
           </SectionCard>
@@ -463,7 +463,7 @@ export default function Terms({ onBack, onGoToRegister }) {
             <p>
               Send the request to <a href={contactMailto}
                   style={{ color: C.brand, fontWeight: 700 }}>
-                privacy@aquagraph.app</a> from the email tied to your account.
+                privacy@aquagraph.org</a> from the email tied to your account.
             </p>
           </SectionCard>
 
@@ -549,7 +549,7 @@ export default function Terms({ onBack, onGoToRegister }) {
                    textDecoration: 'none',
                    boxShadow: '0 6px 18px rgba(90,24,154,0.25)',
                  }}>
-                privacy@aquagraph.app
+                privacy@aquagraph.org
               </a>
             </p>
             <p>

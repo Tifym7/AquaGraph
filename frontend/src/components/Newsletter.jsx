@@ -3,13 +3,8 @@ import {
   Box, Typography, Button,
   CircularProgress, Alert
 } from '@mui/material'
-import HomeIcon from '@mui/icons-material/Home'
-import MapIcon from '@mui/icons-material/Map'
-import EmailIcon from '@mui/icons-material/Email'
-import CampaignIcon from '@mui/icons-material/Campaign'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
-import AppNavBar from './AppNavBar'
+import SiteNav from './SiteNav'
 import { fetchNews } from '../utils.js'
 
 const C = {
@@ -23,7 +18,7 @@ const C = {
   lightest: '#e0aaff',
 }
 
-export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToCampaigns, onGoToAbout, user, onLogout }) {
+export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToRegister, onGoToPipeline, onGoToCampaigns, onGoToAbout, user, onLogout }) {
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -53,15 +48,15 @@ export default function Newsletter({ onBack, onGoToHome, onGoToMap, onGoToLogin,
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', background: '#ffffff', overflowY: 'auto' }}>
 
-      <AppNavBar
-        sx={{ background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)` }}
-        links={[
-          { label: 'Home', icon: <HomeIcon />, onClick: onGoToHome ?? onBack },
-          { label: 'Map', icon: <MapIcon />, onClick: handleMapClick },
-          { label: 'Campaigns', icon: <CampaignIcon />, onClick: onGoToCampaigns },
-          { label: 'Newsletter', icon: <EmailIcon />, onClick: () => {}, active: true },
-          { label: 'About', icon: <InfoOutlinedIcon />, onClick: onGoToAbout },
-        ]}
+      <SiteNav
+        current="newsletter"
+        onGoToHome={onGoToHome ?? onBack}
+        onGoToMap={handleMapClick}
+        onGoToPipeline={onGoToPipeline}
+        onGoToCampaigns={onGoToCampaigns}
+        onGoToAbout={onGoToAbout}
+        onGoToLogin={onGoToLogin}
+        onGoToRegister={onGoToRegister}
         user={user}
         onLogout={onLogout}
       />

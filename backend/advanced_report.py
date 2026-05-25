@@ -452,7 +452,7 @@ def build_advanced_pdf(
     object_id  = seg.get("object_id") or "?"
 
     # Cover --------------------------------------------------------------
-    story.append(Paragraph("AquaGraph — Advanced Segment Report", H1))
+    story.append(Paragraph("AquaGraph - Advanced Segment Report", H1))
     story.append(Paragraph(
         f"<b>{river_name}</b> · segment <font face='Courier'>{object_id}</font>",
         BODY,
@@ -490,7 +490,7 @@ def build_advanced_pdf(
 
     # Imagery panel ------------------------------------------------------
     story.append(PageBreak())
-    story.append(Paragraph("Sentinel imagery — this segment", H1))
+    story.append(Paragraph("Sentinel imagery - this segment", H1))
     story.append(Paragraph(
         f"Buffered bbox around segment {object_id}, "
         f"{date_from} → {date_to}. Each panel shows one metric over the "
@@ -684,35 +684,23 @@ def _render_sparkline(points: list, label: str) -> Optional[bytes]:
 
 
 # ---------------------------------------------------------------------------
-# Email delivery.
+# Email delivery. All branding (logo, signature, footer) lives in
+# email_template.send_email - this module just composes the body that
+# goes inside the branded shell.
 
 def _send_email_with_pdf(
-    to_addr: str, subject: str, body_text: str, pdf_bytes: bytes,
-    filename: str,
+    to_addr: str, subject: str, body_text: str, body_html: str,
+    pdf_bytes: bytes, filename: str, preheader: str,
 ) -> None:
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USERNAME")
-    smtp_pw   = os.getenv("SMTP_PASSWORD")
-    sender    = os.getenv("SMTP_FROM_EMAIL", smtp_user)
-    use_tls   = os.getenv("SMTP_USE_TLS", "true").lower() != "false"
-    if not smtp_host or not sender:
-        raise RuntimeError("SMTP configuration is missing")
-
-    msg = EmailMessage()
-    msg["Subject"] = subject
-    msg["From"] = sender
-    msg["To"] = to_addr
-    msg.set_content(body_text)
-    msg.add_attachment(pdf_bytes, maintype="application", subtype="pdf",
-                        filename=filename)
-
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=30) as smtp:
-        if use_tls:
-            smtp.starttls()
-        if smtp_user and smtp_pw:
-            smtp.login(smtp_user, smtp_pw)
-        smtp.send_message(msg)
+    from email_template import send_email
+    send_email(
+        to_addr=to_addr,
+        subject=subject,
+        text_body=body_text,
+        html_body=body_html,
+        preheader=preheader,
+        attachments=[(filename, pdf_bytes, "application/pdf")],
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -791,26 +779,49 @@ def handle_advanced_segment_report(
 
     # Phase 5: SMTP delivery -------------------------------------------------
     jobs.set_progress(job_id, "sending the email")
-    body = (
+    river_name = seg.get("river_name", "river")
+    body_text = (
         f"Hello,\n\n"
         f"Your AquaGraph advanced report for segment {seg_id} on "
-        f"{seg.get('river_name', 'river')} is attached.\n\n"
-        f"Window: {date_from} -> {date_to}\n"
+        f"{river_name} is attached.\n\n"
+        f"Window:  {date_from} -> {date_to}\n"
         f"Metrics: {', '.join(metrics)}\n\n"
         f"This is the technical companion to the standard PDF report - it "
-        f"includes per-segment Sentinel imagery and an AI-synthesised "
-        f"conclusion. Open the attached PDF for the details.\n\n"
-        f"- AquaGraph\n"
+        f"includes per-segment Sentinel imagery, time-series of every "
+        f"requested index, and an AI-synthesised conclusion + a flagged "
+        f"issues list. Open the attached PDF for the details."
+    )
+    body_html = (
+        f'<p style="margin:0 0 14px 0;">Hello,</p>'
+        f'<p style="margin:0 0 14px 0;">Your AquaGraph advanced report for segment '
+        f'<code style="font-family:ui-monospace,Menlo,Consolas,monospace;'
+        f'background:#faf5ff;padding:2px 6px;border-radius:4px;color:#3c096c;">'
+        f'{seg_id}</code> on <strong>{river_name}</strong> is attached.</p>'
+        f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" '
+        f'style="margin:6px 0 16px 0;border:1px solid #ede9fe;border-radius:8px;'
+        f'background:linear-gradient(160deg,#ffffff 0%,#faf5ff 100%);width:100%;">'
+        f'<tr><td style="padding:10px 14px;font-size:13px;line-height:1.6;color:#1f1b2e;">'
+        f'<div><strong style="color:#5a189a;">Window</strong> &nbsp;'
+        f'{date_from} → {date_to}</div>'
+        f'<div><strong style="color:#5a189a;">Metrics</strong> &nbsp;'
+        f'{", ".join(metrics)}</div>'
+        f'</td></tr></table>'
+        f'<p style="margin:0 0 14px 0;">This is the technical companion to the '
+        f'standard PDF report - it includes per-segment Sentinel imagery, '
+        f'time-series of every requested index, and an AI-synthesised '
+        f'conclusion plus a flagged-issues list. The PDF is attached below.</p>'
     )
     filename = (
         f"aquagraph_segment_{seg_id}_{date.today().isoformat()}.pdf"
     )
     _send_email_with_pdf(
         to_addr=email,
-        subject=f"AquaGraph advanced report · segment {seg_id}",
-        body_text=body,
+        subject=f"AquaGraph advanced report · {river_name} · segment {seg_id}",
+        body_text=body_text,
+        body_html=body_html,
         pdf_bytes=pdf,
         filename=filename,
+        preheader=f"Advanced report for {river_name} segment {seg_id} - PDF attached.",
     )
 
     jobs.mark_done(job_id, result_kb=len(pdf) // 1024)

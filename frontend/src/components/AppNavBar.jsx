@@ -80,8 +80,8 @@ export function LogoBadge({ size = 44, ring = true }) {
   )
 }
 
-function Brand({ leading, compact }) {
-  return (
+function Brand({ leading, compact, onClick }) {
+  const content = (
     <>
       {leading || <LogoBadge size={compact ? 38 : 44} />}
       <Box sx={{ flexGrow: 0, mr: { xs: 0, md: 2 }, minWidth: 0 }}>
@@ -96,6 +96,29 @@ function Brand({ leading, compact }) {
       </Box>
     </>
   )
+
+  if (!onClick) return content
+
+  return (
+    <Box
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      aria-label="Go to home"
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        cursor: 'pointer',
+        transition: 'opacity 0.15s',
+        '&:hover': { opacity: 0.85 },
+        '&:focus-visible': { outline: '2px solid rgba(255,255,255,0.6)', outlineOffset: 2, borderRadius: 4 },
+      }}
+    >
+      {content}
+    </Box>
+  )
 }
 
 export default function AppNavBar({
@@ -108,6 +131,7 @@ export default function AppNavBar({
   onRegister,
   userMenuDetail = false,
   backAction,
+  onLogoClick,
   sx,
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -125,7 +149,7 @@ export default function AppNavBar({
     return (
       <AppBar position="sticky" elevation={0} sx={appBarSx}>
         <Toolbar sx={{ gap: 1.5, minHeight: { xs: 60, md: 80 } }}>
-          <Brand leading={leading} compact />
+          <Brand leading={leading} compact onClick={onLogoClick} />
           <Box sx={{ flexGrow: 1 }} />
           <Button startIcon={<ArrowBackIcon />} size="small" onClick={backAction.onClick} sx={NAV_BTN}>
             {backAction.label}
@@ -205,7 +229,7 @@ export default function AppNavBar({
   return (
     <AppBar position="sticky" elevation={0} sx={appBarSx}>
       <Toolbar sx={{ gap: 1.5, minHeight: { xs: 60, md: '95px !important' } }}>
-        <Brand leading={leading} compact={false} />
+        <Brand leading={leading} compact={false} onClick={onLogoClick} />
         <Box sx={{ flexGrow: 1 }} />
 
         {/* Desktop: inline links + account */}

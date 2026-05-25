@@ -2,13 +2,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import { fetchRivers, fetchSegments, lodForZoom, CLICK_OVERLAY_ZOOM_THRESHOLD } from './utils'
 import { Box, Drawer, Fab } from '@mui/material'
-import HomeIcon from '@mui/icons-material/Home'
-import EmailIcon from '@mui/icons-material/Email'
-import CampaignIcon from '@mui/icons-material/Campaign'
-import AccountTreeIcon from '@mui/icons-material/AccountTree'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
-import AppNavBar from './components/AppNavBar'
+import SiteNav from './components/SiteNav'
 import useIsMobile from './hooks/useIsMobile'
 import MapView from './components/MapView'
 import PipelinePage from './components/PipelinePage'
@@ -199,6 +194,7 @@ export default function App() {
           onBack={() => setPage('map')}
           onGoToLogin={() => setPage('login')}
           onGoToRegister={() => setPage('register')}
+          onGoToPipeline={() => setPage('pipeline')}
           onGoToAbout={() => setPage('about')}
           user={user}
         />
@@ -218,6 +214,8 @@ export default function App() {
           onGoToNewsletter={() => setPage('newsletter')}
           onGoToCampaigns={() => setPage('campaigns')}
           onGoToAbout={() => setPage('about')}
+          onGoToLogin={() => setPage('login')}
+          onGoToRegister={() => setPage('register')}
         />
       </ThemeProvider>
     )
@@ -233,6 +231,7 @@ export default function App() {
             onBack={() => setPage('map')}
             onGoToLogin={() => setPage('login')}
             onGoToRegister={() => setPage('register')}
+            onGoToPipeline={() => setPage('pipeline')}
             onGoToNewsletter={() => setPage('newsletter')}
             onGoToAddCampaign={() => setPage('add-campaign')}
             onGoToAbout={() => setPage('about')}
@@ -283,17 +282,17 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppNavBar
-          links={[
-            { label: 'Home', icon: <HomeIcon />, onClick: () => setPage('landing') },
-            { label: 'Pipeline', icon: <AccountTreeIcon />, onClick: () => setPage('pipeline') },
-            { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => setPage('campaigns') },
-            { label: 'Newsletter', icon: <EmailIcon />, onClick: () => setPage('newsletter') },
-            { label: 'About', icon: <InfoOutlinedIcon />, onClick: () => setPage('about') },
-          ]}
+        <SiteNav
+          current="map"
+          onGoToHome={() => setPage('landing')}
+          onGoToPipeline={() => setPage('pipeline')}
+          onGoToCampaigns={() => setPage('campaigns')}
+          onGoToNewsletter={() => setPage('newsletter')}
+          onGoToAbout={() => setPage('about')}
+          onGoToLogin={() => setPage('login')}
+          onGoToRegister={() => setPage('register')}
           user={user}
           onLogout={handleLogout}
-          userMenuDetail
         />
 
         <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>

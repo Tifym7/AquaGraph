@@ -24,32 +24,44 @@ class UserService:
         return f"{random.randint(0, 999999):06d}"
 
     def __send_verification_email(self, recipient_email, verification_code):
-        smtp_host = os.getenv("SMTP_HOST")
-        smtp_port = int(os.getenv("SMTP_PORT", "587"))
-        smtp_username = os.getenv("SMTP_USERNAME")
-        smtp_password = os.getenv("SMTP_PASSWORD")
-        sender_email = os.getenv("SMTP_FROM_EMAIL", smtp_username)
-        use_tls = os.getenv("SMTP_USE_TLS", "true").lower() != "false"
-
-        if not smtp_host or not sender_email:
-            raise RuntimeError("SMTP configuration is missing")
-
-        message = EmailMessage()
-        message["Subject"] = "Your AquaGraph verification code"
-        message["From"] = sender_email
-        message["To"] = recipient_email
-        message.set_content(
-            "Use this code to finish creating your AquaGraph account: "
-            f"{verification_code}. "
-            f"It expires in {self.VERIFICATION_TTL_MINUTES} minutes."
+        """Branded HTML email with the verification code rendered in a
+        big mono-spaced badge. Sent through the shared email_template
+        module so the look, signature, and footer match the advanced
+        report and any future email types."""
+        from email_template import send_email
+        ttl = self.VERIFICATION_TTL_MINUTES
+        text_body = (
+            "Hello,\n\n"
+            "Use this code to finish creating your AquaGraph account:\n\n"
+            f"    {verification_code}\n\n"
+            f"It expires in {ttl} minutes. If you didn't try to sign up, "
+            "you can safely ignore this message."
         )
-
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as smtp:
-            if use_tls:
-                smtp.starttls()
-            if smtp_username and smtp_password:
-                smtp.login(smtp_username, smtp_password)
-            smtp.send_message(message)
+        html_body = (
+            '<p style="margin:0 0 14px 0;">Hello,</p>'
+            '<p style="margin:0 0 16px 0;">Use this code to finish creating '
+            'your AquaGraph account:</p>'
+            '<div style="text-align:center;margin:18px 0 22px 0;">'
+            '  <div style="display:inline-block;padding:14px 22px;border-radius:10px;'
+            '              background:linear-gradient(135deg,#3c096c,#7b2cbf);'
+            '              color:#ffffff;font-family:ui-monospace,Menlo,Consolas,monospace;'
+            '              font-size:24px;font-weight:800;letter-spacing:4px;'
+            '              box-shadow:0 6px 18px rgba(90,24,154,0.25);">'
+            f'    {verification_code}'
+            '  </div>'
+            '</div>'
+            f'<p style="margin:0 0 8px 0;color:#6b7280;font-size:13px;">'
+            f'It expires in {ttl} minutes. If you didn\'t try to sign '
+            'up, you can safely ignore this message.</p>'
+        )
+        send_email(
+            to_addr=recipient_email,
+            subject="Your AquaGraph verification code",
+            text_body=text_body,
+            html_body=html_body,
+            preheader=f"Verification code {verification_code} - "
+                       f"expires in {ttl} minutes.",
+        )
 
     def request_email_verification(self, user: User):
         self.__validator.validateUser(user)

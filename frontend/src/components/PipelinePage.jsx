@@ -1,11 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Typography, Container, Grid, Paper, Chip, Button } from '@mui/material'
-import HomeIcon from '@mui/icons-material/Home'
 import MapIcon from '@mui/icons-material/Map'
-import EmailIcon from '@mui/icons-material/Email'
-import CampaignIcon from '@mui/icons-material/Campaign'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
 import CloudIcon from '@mui/icons-material/Cloud'
 import StorageIcon from '@mui/icons-material/Storage'
@@ -23,7 +19,7 @@ import OilBarrelIcon from '@mui/icons-material/OilBarrel'
 import LayersIcon from '@mui/icons-material/Layers'
 import SyncAltIcon from '@mui/icons-material/SyncAlt'
 import SchemaIcon from '@mui/icons-material/Schema'
-import AppNavBar from './AppNavBar'
+import SiteNav from './SiteNav'
 import { fetchPipelineStats } from '../utils'
 
 /* Real Sentinel-2/1 thumbnails per example river (summer 2024), generated
@@ -2575,7 +2571,8 @@ function S1Concept() {
 
 /* ---------- the page itself ---------- */
 export default function PipelinePage({ onGoToLanding, onGoToMap, onGoToNewsletter,
-                                       onGoToCampaigns, onGoToAbout, user, onLogout }) {
+                                       onGoToCampaigns, onGoToAbout, onGoToLogin,
+                                       onGoToRegister, user, onLogout }) {
   const [stats, setStats] = useState(null)
   useEffect(() => { fetchPipelineStats().then(setStats) }, [])
 
@@ -2596,17 +2593,17 @@ export default function PipelinePage({ onGoToLanding, onGoToMap, onGoToNewslette
 
   return (
     <Box sx={{ minHeight: '100vh', background: C.tint }}>
-      <AppNavBar
-        links={[
-          { label: 'Home',       icon: <HomeIcon />,         onClick: onGoToLanding },
-          { label: 'Map',        icon: <MapIcon />,          onClick: onGoToMap },
-          { label: 'Campaigns',  icon: <CampaignIcon />,     onClick: onGoToCampaigns },
-          { label: 'Newsletter', icon: <EmailIcon />,        onClick: onGoToNewsletter },
-          { label: 'About',      icon: <InfoOutlinedIcon />, onClick: onGoToAbout },
-        ]}
+      <SiteNav
+        current="pipeline"
+        onGoToHome={onGoToLanding}
+        onGoToMap={onGoToMap}
+        onGoToCampaigns={onGoToCampaigns}
+        onGoToNewsletter={onGoToNewsletter}
+        onGoToAbout={onGoToAbout}
+        onGoToLogin={onGoToLogin}
+        onGoToRegister={onGoToRegister}
         user={user}
         onLogout={onLogout}
-        userMenuDetail
       />
 
       <Hero onGoToMap={onGoToMap} />

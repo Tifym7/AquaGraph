@@ -1,14 +1,8 @@
 import LinkedInIcon from '@mui/icons-material/LinkedIn'
 import GitHubIcon from '@mui/icons-material/GitHub'
 import LandingFooter from './landing/LandingFooter'
-import AppNavBar from './AppNavBar'
+import SiteNav from './SiteNav'
 import { Box, Typography, IconButton } from '@mui/material'
-import HomeIcon from '@mui/icons-material/Home'
-import MapIcon from '@mui/icons-material/Map'
-import EmailIcon from '@mui/icons-material/Email'
-import CampaignIcon from '@mui/icons-material/Campaign'
-import AccountTreeIcon from '@mui/icons-material/AccountTree'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import { useState, useEffect } from 'react'
 import photo1 from '../assets/photo1.JPG'
 import photo2 from '../assets/photo2.JPG'
@@ -122,18 +116,18 @@ const VALUES = [
   { icon: '⚡', title: 'Built to scale', text: 'The pipeline is designed to expand: more rivers, more metrics, more countries, as we grow.' },
 ]
 
-export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoToNewsletter, onGoToCampaigns, user, onLogout }) {
+export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoToNewsletter, onGoToCampaigns, onGoToLogin, onGoToRegister, user, onLogout }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
-      <AppNavBar
-        links={[
-          { label: 'Home',       icon: <HomeIcon />,          onClick: onGoToHome },
-          { label: 'Map',        icon: <MapIcon />,           onClick: onGoToMap },
-          { label: 'Pipeline',   icon: <AccountTreeIcon />,   onClick: onGoToPipeline },
-          { label: 'Campaigns',  icon: <CampaignIcon />,      onClick: onGoToCampaigns },
-          { label: 'Newsletter', icon: <EmailIcon />,         onClick: onGoToNewsletter },
-          { label: 'About',      icon: <InfoOutlinedIcon />,  onClick: () => {}, active: true },
-        ]}
+      <SiteNav
+        current="about"
+        onGoToHome={onGoToHome}
+        onGoToMap={onGoToMap}
+        onGoToPipeline={onGoToPipeline}
+        onGoToCampaigns={onGoToCampaigns}
+        onGoToNewsletter={onGoToNewsletter}
+        onGoToLogin={onGoToLogin}
+        onGoToRegister={onGoToRegister}
         user={user}
         onLogout={onLogout}
       />

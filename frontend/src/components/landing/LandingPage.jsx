@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { Box } from '@mui/material'
-import LandingNav from './LandingNav'
+import SiteNav from '../SiteNav'
 import HeroSection from './HeroSection'
 import StatsBar from './StatsBar'
 import FeaturesSection from './FeaturesSection'
@@ -26,7 +26,9 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
-      <LandingNav
+      <SiteNav
+        current="home"
+        onGoToHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onGoToMap={handleMapClick}
         onGoToLogin={onGoToLogin}
         onGoToRegister={onGoToRegister}
