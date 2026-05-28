@@ -2,19 +2,19 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material'
 import { fetchRivers, fetchSegments, lodForZoom, CLICK_OVERLAY_ZOOM_THRESHOLD } from './utils'
 import { Box, Drawer, Fab } from '@mui/material'
-import HomeIcon from '@mui/icons-material/Home'
-import EmailIcon from '@mui/icons-material/Email'
-import CampaignIcon from '@mui/icons-material/Campaign'
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted'
-import AppNavBar from './components/AppNavBar'
+import SiteNav from './components/SiteNav'
 import useIsMobile from './hooks/useIsMobile'
 import MapView from './components/MapView'
+import PipelinePage from './components/PipelinePage'
 import Sidebar from './components/Sidebar'
 import Login from './components/Login'
 import Register from './components/Register'
+import Terms from './components/Terms'
 import Newsletter from './components/Newsletter'
 import Campaigns from './components/Campaigns'
 import LandingPage from './components/landing/LandingPage'
+import AboutPage from './components/AboutPage'
 import { ROMANIA_REGIONS } from './constants/Regions'
 
 const theme = createTheme({
@@ -138,7 +138,10 @@ export default function App() {
           onGoToLogin={() => setPage('login')}
           onGoToRegister={() => setPage('register')}
           onGoToNewsletter={() => setPage('newsletter')}
-          onGoToCampaigns={() => setPage('campaigns')} onLogout={handleLogout}
+          onGoToCampaigns={() => setPage('campaigns')}
+          onGoToPipeline={() => setPage('pipeline')}
+          onGoToAbout={() => setPage('about')}
+          onLogout={handleLogout}
         />
       </ThemeProvider>
     )
@@ -165,6 +168,19 @@ export default function App() {
           onRegister={handleRegister}
           onGoToLogin={() => setPage('login')}
           onBack={() => setPage('landing')}
+          onGoToTerms={() => setPage('terms')}
+        />
+      </ThemeProvider>
+    )
+  }
+
+  if (page === 'terms') {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Terms
+          onBack={() => setPage('landing')}
+          onGoToRegister={() => setPage('register')}
         />
       </ThemeProvider>
     )
@@ -178,8 +194,28 @@ export default function App() {
           onBack={() => setPage('map')}
           onGoToLogin={() => setPage('login')}
           onGoToRegister={() => setPage('register')}
+          onGoToPipeline={() => setPage('pipeline')}
+          onGoToAbout={() => setPage('about')}
+          user={user}
+        />
+      </ThemeProvider>
+    )
+  }
+
+  if (page === 'pipeline') {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <PipelinePage
           user={user}
           onLogout={handleLogout}
+          onGoToLanding={() => setPage('landing')}
+          onGoToMap={() => setPage('map')}
+          onGoToNewsletter={() => setPage('newsletter')}
+          onGoToCampaigns={() => setPage('campaigns')}
+          onGoToAbout={() => setPage('about')}
+          onGoToLogin={() => setPage('login')}
+          onGoToRegister={() => setPage('register')}
         />
       </ThemeProvider>
     )
@@ -189,18 +225,45 @@ export default function App() {
     return (
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <Campaigns onGoToHome={() => setPage('landing')} onGoToMap={() => setPage('map')}
-          onBack={() => setPage('map')}
-          onGoToLogin={() => setPage('login')}
-          onGoToRegister={() => setPage('register')}
-          onGoToNewsletter={() => setPage('newsletter')}
-          onGoToAddCampaign={() => setPage('add-campaign')}
-          user={user}
-          onLogout={handleLogout}
+        <Campaigns
+            onGoToHome={() => setPage('landing')}
+            onGoToMap={() => setPage('map')}
+            onBack={() => setPage('map')}
+            onGoToLogin={() => setPage('login')}
+            onGoToRegister={() => setPage('register')}
+            onGoToPipeline={() => setPage('pipeline')}
+            onGoToNewsletter={() => setPage('newsletter')}
+            onGoToAddCampaign={() => setPage('add-campaign')}
+            onGoToAbout={() => setPage('about')}
+            user={user}
+            onLogout={handleLogout}
         />
       </ThemeProvider>
     )
   }
+
+  if (page === 'about') {
+    return (
+        <ThemeProvider theme={theme}>
+          <CssBaseline/>
+          <Box sx={{ overflowY: 'auto', height: '100vh' }}>
+            <AboutPage
+              user={user}
+              onGoToHome={() => setPage('landing')}
+              onGoToMap={() => setPage('map')}
+              onGoToLogin={() => setPage('login')}
+              onGoToRegister={() => setPage('register')}
+              onGoToNewsletter={() => setPage('newsletter')}
+              onGoToCampaigns={() => setPage('campaigns')}
+              onGoToPipeline={() => setPage('pipeline')}
+              onGoToAbout={() => setPage('about')}
+              onLogout={handleLogout}
+            />
+        </Box>
+        </ThemeProvider>
+    )
+  }
+
 
   // MAP (pagina principala dupa login)
   const sidebar = (
@@ -211,6 +274,7 @@ export default function App() {
       onMetricChange={setActiveMetric}
       onClose={() => setSelectedRiver(null)}
       onSelect={(r) => setSelectedRiver(r ? { ...r, _flyOnFocus: true } : null)}
+      user={user}
     />
   )
 
@@ -218,15 +282,17 @@ export default function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh' }}>
-        <AppNavBar
-          links={[
-            { label: 'Home', icon: <HomeIcon />, onClick: () => setPage('landing') },
-            { label: 'Newsletter', icon: <EmailIcon />, onClick: () => setPage('newsletter') },
-            { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => setPage('campaigns') },
-          ]}
+        <SiteNav
+          current="map"
+          onGoToHome={() => setPage('landing')}
+          onGoToPipeline={() => setPage('pipeline')}
+          onGoToCampaigns={() => setPage('campaigns')}
+          onGoToNewsletter={() => setPage('newsletter')}
+          onGoToAbout={() => setPage('about')}
+          onGoToLogin={() => setPage('login')}
+          onGoToRegister={() => setPage('register')}
           user={user}
           onLogout={handleLogout}
-          userMenuDetail
         />
 
         <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>

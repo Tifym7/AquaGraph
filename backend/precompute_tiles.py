@@ -416,6 +416,22 @@ def main():
     write_segment_lods(views)
     precompute_tiles(views, METRICS_FOR_TILES)
 
+    # Tile rebuild is the natural epoch for the Pipeline page's headline
+    # counts (rows / dates / rivers / segments / coverage). Refresh the
+    # cache here so the next page load shows the new numbers without
+    # paying the ~8 s aggregate scan. Best-effort: any failure (DB down,
+    # schema not yet migrated, ...) is logged and ignored - tiles are the
+    # primary deliverable of this script.
+    try:
+        from history_api import refresh_pipeline_stats_cache
+        stats = refresh_pipeline_stats_cache()
+        total = stats.get("total_rows", 0)
+        sensors = ",".join(sorted(stats.get("sensors", {}).keys())) or "-"
+        print(f"Pipeline stats cache refreshed: {total} rows across "
+              f"sensors=[{sensors}]")
+    except Exception as exc:
+        print(f"WARN: pipeline stats cache refresh skipped ({exc!r})")
+
 
 if __name__ == "__main__":
     main()

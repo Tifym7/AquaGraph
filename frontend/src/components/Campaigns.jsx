@@ -4,10 +4,7 @@ import {
   CircularProgress, Alert, Fab, Snackbar, IconButton
 } from '@mui/material'
 import AppNavBar from './AppNavBar'
-import HomeIcon from '@mui/icons-material/Home'
-import MapIcon from '@mui/icons-material/Map'
-import EmailIcon from '@mui/icons-material/Email'
-import CampaignIcon from '@mui/icons-material/Campaign'
+import SiteNav from './SiteNav'
 import AddIcon from '@mui/icons-material/Add'
 import WaterIcon from '@mui/icons-material/Water'
 import GroupsIcon from '@mui/icons-material/Groups'
@@ -35,7 +32,7 @@ const FALLBACK_CAMPAIGNS = [
   { id: 4, campaign_name: 'Argeșul Curat', organization_name: 'Voluntari pentru Natură', river_name: 'Argeș', coordinates: '44.9,25.1', start_date: '2025-08-01', end_date: '2025-09-01', likes: 38, participants: [] },
 ]
 
-export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToNewsletter, user, onLogout }) {
+export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, onGoToRegister, onGoToPipeline, onGoToNewsletter, onGoToAbout, user, onLogout }) {
   const [view, setView] = useState('list')
   const [campaigns, setCampaigns] = useState([])
   const [loading, setLoading] = useState(true)
@@ -106,20 +103,19 @@ export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, 
     else onGoToLogin()
   }
 
-  // Navbar comuna
-  const navSx = { background: `linear-gradient(90deg, ${C.darkest} 0%, ${C.dark2} 60%, ${C.mid1} 100%)` }
   const NavBar = ({ currentPage = 'campaigns', onBack: handleBack }) => (
     currentPage === 'add' ? (
-      <AppNavBar sx={navSx} backAction={{ label: 'Back to Campaigns', onClick: handleBack }} />
+      <AppNavBar backAction={{ label: 'Back to Campaigns', onClick: handleBack }} />
     ) : (
-      <AppNavBar
-        sx={navSx}
-        links={[
-          { label: 'Home', icon: <HomeIcon />, onClick: onGoToHome ?? onBack },
-          { label: 'Map', icon: <MapIcon />, onClick: handleMapClick },
-          { label: 'Newsletter', icon: <EmailIcon />, onClick: onGoToNewsletter },
-          { label: 'Campaigns', icon: <CampaignIcon />, onClick: () => {}, active: true },
-        ]}
+      <SiteNav
+        current="campaigns"
+        onGoToHome={onGoToHome ?? onBack}
+        onGoToMap={handleMapClick}
+        onGoToPipeline={onGoToPipeline}
+        onGoToNewsletter={onGoToNewsletter}
+        onGoToAbout={onGoToAbout}
+        onGoToLogin={onGoToLogin}
+        onGoToRegister={onGoToRegister}
         user={user}
         onLogout={onLogout}
       />

@@ -1,15 +1,16 @@
 import { useEffect } from 'react'
 import { Box } from '@mui/material'
-import LandingNav from './LandingNav'
+import SiteNav from '../SiteNav'
 import HeroSection from './HeroSection'
 import StatsBar from './StatsBar'
 import FeaturesSection from './FeaturesSection'
+import WhySection from './WhySection'
 import DataPreviewSection from './DataPreviewSection'
 import HowItWorksSection from './HowItWorksSection'
 import CTASection from './CtaSection'
 import LandingFooter from './LandingFooter'
 
-export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToCampaigns, user, onLogout }) {
+export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, onGoToNewsletter, onGoToCampaigns, onGoToPipeline, onGoToAbout, user, onLogout }) {
   useEffect(() => {
     const prevBody = document.body.style.overflow
     const prevHtml = document.documentElement.style.overflow
@@ -21,23 +22,27 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
     }
   }, [])
 
-  // Demo: the map is public — exploring it never requires authentication.
   const handleMapClick = () => onGoToMap()
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: '#fff' }}>
-      <LandingNav
+      <SiteNav
+        current="home"
+        onGoToHome={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onGoToMap={handleMapClick}
         onGoToLogin={onGoToLogin}
         onGoToRegister={onGoToRegister}
         onGoToNewsletter={onGoToNewsletter}
         onGoToCampaigns={onGoToCampaigns}
+        onGoToPipeline={onGoToPipeline}
+        onGoToAbout={onGoToAbout}
         user={user}
         onLogout={onLogout}
       />
       <HeroSection />
       <StatsBar />
       <FeaturesSection />
+      <WhySection />
       <DataPreviewSection onGoToMap={handleMapClick} />
       <HowItWorksSection />
       <CTASection />

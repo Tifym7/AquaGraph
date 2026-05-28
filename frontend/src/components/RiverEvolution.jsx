@@ -1,7 +1,111 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Box, Typography, Button, CircularProgress } from '@mui/material'
+import axios from 'axios'
+import { Box, Typography, Button, CircularProgress, Tooltip } from '@mui/material'
 import DownloadIcon from '@mui/icons-material/Download'
-import { fetchRiverHistory, riverReportUrl, HISTORY_METRICS } from '../utils'
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome'
+import { fetchRiverHistory, riverReportUrl, HISTORY_METRICS, API_BASE } from '../utils'
+
+/* Inline trigger for the slow advanced (technical) report.
+   - Visible only when an object_id (per-segment view) is present.
+   - Logged-in users get a one-click flow; their account email is the
+     default recipient (resolved server-side from the auth token).
+   - The POST returns 202 immediately; the button re-enables as soon
+     as the round-trip completes so re-fires (different windows, repeat
+     after a regression) are one click each. The latest result shows
+     beneath the button. */
+function AdvancedReportTrigger({ objectId, user }) {
+  // `pending` blocks the button only while the POST is in flight.
+  // `last` is the latest queued / error feedback - keyed by timestamp
+  // so the alert visibly re-renders on each click.
+  const [pending, setPending] = useState(false)
+  const [last, setLast] = useState(null)
+
+  const trigger = async () => {
+    setPending(true)
+    setLast(null)
+    try {
+      const { data } = await axios.post(
+        `${API_BASE}/segment/${objectId}/advanced-report`, {},
+      )
+      setLast({
+        kind: 'queued',
+        message: data.message
+          || `We'll email it to ${data.email} when it's ready.`,
+        ts: Date.now(),
+      })
+    } catch (err) {
+      setLast({
+        kind: 'error',
+        message: err?.response?.data?.error
+          || 'Could not start the report. Try again later.',
+        ts: Date.now(),
+      })
+    } finally {
+      setPending(false)
+    }
+  }
+
+  const buttonSx = {
+    textTransform: 'none', fontWeight: 700, fontSize: 12.5,
+    borderRadius: 999, px: 2, py: 0.7, letterSpacing: 0.2,
+    borderColor: '#7b2cbf', color: '#3c096c',
+    background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+    '&:hover': {
+      borderColor: '#5a189a',
+      background: 'linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%)',
+    },
+    '&.Mui-disabled': { color: '#9ca3af', borderColor: '#e5e7eb', background: 'transparent' },
+  }
+
+  if (!user) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, maxWidth: 240 }}>
+        <Tooltip title="Sign in to generate a technical PDF (Sentinel imagery + AI synthesis), emailed when ready.">
+          <span>
+            <Button size="small" variant="outlined" disabled
+              startIcon={<AutoAwesomeIcon sx={{ fontSize: 17 }} />}
+              sx={buttonSx}>
+              Advanced report
+            </Button>
+          </span>
+        </Tooltip>
+        <Typography sx={{ fontSize: 11, color: '#6b7280', textAlign: 'center', lineHeight: 1.4 }}>
+          Sign in to use this
+        </Typography>
+      </Box>
+    )
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, maxWidth: 240 }}>
+      <Tooltip title="Technical PDF with live Sentinel imagery for this segment + AI synthesis. Takes a few minutes; we'll email it to you. Click again any time to generate another.">
+        <span>
+          <Button
+            size="small" variant="outlined" onClick={trigger}
+            disabled={pending}
+            startIcon={pending
+              ? <CircularProgress size={14} thickness={5} />
+              : <AutoAwesomeIcon sx={{ fontSize: 17 }} />}
+            sx={buttonSx}>
+            {pending ? 'Queueing...' : 'Advanced report'}
+          </Button>
+        </span>
+      </Tooltip>
+      {last && last.kind === 'queued' && (
+        <Typography key={last.ts}
+          sx={{ fontSize: 11, color: '#16a34a', textAlign: 'center', lineHeight: 1.4 }}>
+          {last.message}
+        </Typography>
+      )}
+      {last && last.kind === 'error' && (
+        <Typography key={last.ts}
+          sx={{ fontSize: 11, color: '#b91c1c', textAlign: 'center', lineHeight: 1.4 }}>
+          {last.message}
+        </Typography>
+      )}
+    </Box>
+  )
+}
 
 /* Purple palette - matches Sidebar's C constant. */
 const C = {
@@ -70,7 +174,7 @@ function Chart({ points }) {
   )
 }
 
-export default function RiverEvolution({ riverId, riverName }) {
+export default function RiverEvolution({ riverId, riverName, objectId, user }) {
   const [metric, setMetric] = useState('POLLUTION')
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -119,7 +223,7 @@ export default function RiverEvolution({ riverId, riverName }) {
       <Typography variant="caption" sx={{ color: C.textMuted, display: 'block', mt: 1 }}>
         {points.length} observation{points.length === 1 ? '' : 's'}
       </Typography>
-      <Box sx={{ mt: '0.5cm', display: 'flex', justifyContent: 'center' }}>
+      <Box sx={{ mt: '0.5cm', display: 'flex', justifyContent: 'center', alignItems: 'flex-start', gap: 1.5, flexWrap: 'wrap' }}>
         <Button
           size="small"
           variant="contained"
@@ -145,6 +249,7 @@ export default function RiverEvolution({ riverId, riverName }) {
         >
           PDF report
         </Button>
+        {objectId && <AdvancedReportTrigger objectId={objectId} user={user} />}
       </Box>
     </Box>
   )

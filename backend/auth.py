@@ -60,6 +60,15 @@ def register():
     data = request.get_json(silent=True)
     if not data:
         return jsonify({'error': 'Corp JSON lipsă'}), 400
+    # GDPR: reject registration unless the user actively ticked the
+    # Terms checkbox on the form. Front-end already blocks the submit
+    # button, but the server enforces it independently - anyone hitting
+    # the API directly still has to send the flag.
+    if not data.get('accepted_terms'):
+        return jsonify({
+            'error': 'You must accept the Terms & Privacy notice to create an account.'
+        }), 400
+    terms_version = (data.get('terms_version') or '').strip() or None
     try:
         user = User(
             username=data.get('username', '').strip(),
@@ -67,7 +76,7 @@ def register():
             email=data.get('email', '').strip(),
             region=data.get('region', '').strip(),
         )
-        saved = _repo.save(user)
+        saved = _repo.save(user, terms_version=terms_version)
         token = _generate_token(saved.get_username())
         return jsonify({
             'token': token,

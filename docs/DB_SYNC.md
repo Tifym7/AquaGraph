@@ -1,7 +1,7 @@
 # Syncing historical satellite data between databases
 
 How to move the per-segment satellite history (the data behind the river
-timeline, evolution charts and PDF reports) between environments — typically
+timeline, evolution charts and PDF reports) between environments - typically
 **local dev → production VM**, occasionally **prod → local** for debugging.
 
 ---
@@ -18,14 +18,14 @@ Only the two time-series tables are transferred:
 **Deliberately NOT synced:**
 
 - `users`, `pending_user_verifications`, `campaigns`, `campaign_participants`
-  — these are owned by each environment; overwriting prod users/campaigns with
+  - these are owned by each environment; overwriting prod users/campaigns with
   dev data would be destructive.
-- `data/rivers_romania.json`, the tile pyramid, `segments_lod_*.json` — these
+- `data/rivers_romania.json`, the tile pyramid, `segments_lod_*.json` - these
   are **derived** from the DB. Don't copy them; regenerate on the target with
   `ingest.snapshot` (see step 4).
 
 Because we only move numeric per-segment values (no geometry, no rasters), a
-multi-month dump is **tens of MB compressed** — trivial to `scp`.
+multi-month dump is **tens of MB compressed** - trivial to `scp`.
 
 ---
 
@@ -43,17 +43,17 @@ fully compatible.
 
 **The constraint:** prod Postgres is intentionally *not* reachable from the
 VM host or the internet (no `ports:` in `docker-compose.prod.yml`). So the
-restore **must be executed inside / against the `db` container on the VM** —
+restore **must be executed inside / against the `db` container on the VM** -
 you cannot `pg_restore` to it remotely. The commands below do exactly that.
 
 ---
 
-## 3. Full refresh (recommended — simple, data is small)
+## 3. Full refresh (recommended - simple, data is small)
 
 Replaces the two tables on the target with the source's. Idempotent
 (`--clean --if-exists`), safe to re-run, never touches users/campaigns.
 
-### 3a. Dump on the source (container-side — no host `pg_dump` needed)
+### 3a. Dump on the source (container-side - no host `pg_dump` needed)
 
 Local dev:
 
@@ -74,7 +74,7 @@ scripts/dump_timeseries.sh`.)
 scp aquagraph_timeseries.dump <vm-user>@<vm-host>:~/
 ```
 
-> Put it in `~`, **not** the repo checkout — the deploy GitHub Action runs
+> Put it in `~`, **not** the repo checkout - the deploy GitHub Action runs
 > `git reset --hard origin/deploy` and would delete untracked files there.
 
 ### 3c. Restore on the VM, inside the prod `db` container
@@ -92,7 +92,7 @@ tables is fine.
 
 ### 3d. (optional) Refresh the base map from the restored data
 
-DB-backed features (timeline, charts, PDF) are **live immediately** — no
+DB-backed features (timeline, charts, PDF) are **live immediately** - no
 restart needed. Only the zoomed-out raster tiles / startup snapshot are stale:
 
 ```bash
@@ -121,7 +121,7 @@ docker compose exec -T db psql -U user -d aquagraph -c \
   > new_rows.csv
 ```
 
-(Use the target's current `max(acquired_at)` as the cutoff — see Troubleshooting.)
+(Use the target's current `max(acquired_at)` as the cutoff - see Troubleshooting.)
 
 ### 4b. Load + upsert on the VM via a staging table
 
@@ -150,7 +150,7 @@ This mirrors `ingest/db.py:upsert_observations`, so re-running is harmless.
 
 ## 5. Reverse direction (prod → local, for debugging)
 
-Symmetric — swap source/target:
+Symmetric - swap source/target:
 
 ```bash
 # pull prod history down (run on the VM)
@@ -179,7 +179,7 @@ GEE_KEY_FILE=/abs/path/aquagraph-gee-key.json \
 The dump/restore above is then only a **one-time seed** of the demo backfill
 you already pulled locally; afterwards the scheduler keeps prod fresh on its
 cron. The Postgres named volume persists across `deploy`-branch deploys, so
-the seed survives every redeploy — you do it once.
+the seed survives every redeploy - you do it once.
 
 ---
 
@@ -188,7 +188,7 @@ the seed survives every redeploy — you do it once.
 - `--clean --if-exists` only drops/recreates `satellite_observation` and
   `ingestion_run`. Users, campaigns, auth tables are untouched.
 - `UNIQUE (object_id, sensor, acquired_at)` makes both full restore and
-  incremental upsert safe to repeat — no duplicate rows.
+  incremental upsert safe to repeat - no duplicate rows.
 - The GitHub Action deploys **code/image, not data**; the `aquagraph-pgdata`
   volume is independent of deploys.
 - Never commit `.dump` files; keep them out of the repo checkout on the VM.
@@ -202,7 +202,7 @@ the seed survives every redeploy — you do it once.
 | `relation "satellite_observation" does not exist` on restore | Target schema not bootstrapped. Start the app once (lazy `ingest/schema.py` creates it) or apply `backend/migrations/002_timeseries.sql`. `--clean --if-exists` then succeeds. |
 | `pg_restore: unsupported version` | Source/target Postgres major versions differ. Both must be 16 (they are by default). Re-dump from the matching version. |
 | `permission denied` | Use the DB owner (`$DB_USER` on prod, `user` locally). `--no-owner --no-privileges` already strips ownership from the dump. |
-| Restore "hangs" | Prod DB isn't host-published — you ran `pg_restore` against a host port that doesn't exist. Run it **inside the container** as in §3c. |
+| Restore "hangs" | Prod DB isn't host-published - you ran `pg_restore` against a host port that doesn't exist. Run it **inside the container** as in §3c. |
 | Need the incremental cutoff date | `docker compose -f docker-compose.prod.yml exec -T db psql -U "$DB_USER" -d aquagraph -tc "SELECT max(acquired_at) FROM satellite_observation;"` |
 
 ---

@@ -162,7 +162,7 @@ def _run_sequential(code, sensor, windows, seg2river) -> int:
 def _run_concurrent_gcs(code, sensor, windows, seg2river) -> int:
     """GCS batch transport: keep up to GCS_MAX_INFLIGHT export tasks running;
     download + upsert each as it COMPLETES; refill the pool. Failed/timed-out
-    windows are skipped (idempotent — re-run later). Turns a per-pass
+    windows are skipped (idempotent - re-run later). Turns a per-pass
     multi-year backfill from days into hours."""
     import time as _t
     from . import config as _cfg
@@ -176,6 +176,26 @@ def _run_concurrent_gcs(code, sensor, windows, seg2river) -> int:
     while pending or inflight:
         while pending and len(inflight) < _cfg.GCS_MAX_INFLIGHT:
             acq, ws, we = pending.pop(0)
+            # --- recover stranded CSVs before submitting a new export ---
+            # An earlier run's task may have finished server-side AFTER we
+            # timed out client-side (or after a crash); its CSV will be
+            # sitting in the bucket. Ingest that instead of paying EE again.
+            obj_prefix, found = gx.existing_blobs(sensor, acq)
+            if found:
+                try:
+                    n = _commit(code, acq, seg2river,
+                                gx.drain_rows(sensor, obj_prefix, acq))
+                    total += n
+                    ndone += 1
+                    print(f"  [{code}] {acq} RECOVERED from bucket "
+                          f"({len(found)} blob) -> {n} rows  "
+                          f"[{ndone + nfail}/{nwin}, {total} total]",
+                          flush=True)
+                except Exception as exc:
+                    nfail += 1
+                    print(f"  [{code}] {acq} recover FAILED: {exc!r} "
+                          f"- skipped", flush=True)
+                continue
             try:
                 task, prefix = gx.build_task(sensor, ws, we, acq)
                 gx.start_task(task, what=f"export.start[{code} {acq}]")

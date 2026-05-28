@@ -43,7 +43,7 @@ DEFAULT_REPORT_METRICS = ["POLLUTION", "NDTI", "NDCI", "TURBIDITY"]
 
 
 def _resolve(metric: str):
-    """(jsonb_column, json_key) for a selectable metric — `risk` column for
+    """(jsonb_column, json_key) for a selectable metric - `risk` column for
     pollution/risk fields, `metrics` column for raw indices/bands."""
     m = metric.upper()
     if m in RISK_KEYS:
@@ -154,6 +154,100 @@ def segment_history(object_id):
 # 'discharge' is excluded - it is not satellite-derived, so it has no history.
 _TIMELINE_METRICS = {"pollution", "risk", "water", "land",
                      "NDVI", "MNDWI", "NDCI", "TURBIDITY", "BSI"}
+
+
+# --- /api/pipeline/stats cache ---------------------------------------------
+# The aggregate query below is a full table scan with three count(DISTINCT)
+# columns - ~8 s on a populated DB. The Pipeline page hits it on every load,
+# so we serve it from a tiny JSON file that's refreshed at the tile-build
+# epoch (see refresh_pipeline_stats_cache()). The file lives next to data/
+# tiles so the same volume mount carries it. Lazy-builds on cache miss.
+import datetime as _dt
+import json as _json
+import tempfile as _tempfile
+from threading import Lock as _Lock
+
+_PIPELINE_STATS_PATH = os.path.join(
+    os.path.dirname(__file__), "data", "pipeline_stats.json"
+)
+_pipeline_stats_lock = _Lock()
+
+
+def _compute_pipeline_stats() -> dict:
+    """Run the aggregate SQL and return the dict that the route ships."""
+    with _conn() as c, c.cursor(cursor_factory=RealDictCursor) as cur:
+        cur.execute("""
+            SELECT sensor,
+                   count(*)                                 AS rows,
+                   count(DISTINCT acquired_at)              AS dates,
+                   count(DISTINCT river_id)
+                     FILTER (WHERE river_id IS NOT NULL)    AS rivers,
+                   count(DISTINCT object_id)                AS segments,
+                   count(*) FILTER (WHERE acquired_at_ts IS NOT NULL)
+                                                            AS with_ts,
+                   min(acquired_at)::text                   AS first_date,
+                   max(acquired_at)::text                   AS last_date
+            FROM satellite_observation
+            GROUP BY sensor ORDER BY sensor
+        """)
+        sensors = {r["sensor"]: dict(r) for r in cur.fetchall()}
+        cur.execute("SELECT count(*) AS n FROM satellite_observation")
+        total = cur.fetchone()["n"]
+    return {
+        "sensors": sensors,
+        "total_rows": total,
+        "cached_at": _dt.datetime.now(_dt.timezone.utc)
+            .isoformat(timespec="seconds").replace("+00:00", "Z"),
+    }
+
+
+def _write_pipeline_stats_cache(stats: dict) -> None:
+    """Atomically replace the cache file (write to tmp, fsync, rename)."""
+    os.makedirs(os.path.dirname(_PIPELINE_STATS_PATH), exist_ok=True)
+    fd, tmp = _tempfile.mkstemp(prefix=".pipeline_stats.",
+                                 dir=os.path.dirname(_PIPELINE_STATS_PATH))
+    try:
+        with os.fdopen(fd, "w") as fh:
+            _json.dump(stats, fh)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, _PIPELINE_STATS_PATH)
+    except Exception:
+        try: os.unlink(tmp)
+        except OSError: pass
+        raise
+
+
+def refresh_pipeline_stats_cache() -> dict:
+    """Recompute and persist the Pipeline-page stats. Call this whenever the
+    tile pyramid is rebuilt - the tile rebuild is the natural epoch where
+    visible map state changes, so the headline counts on the Pipeline page
+    should advance with it. Safe to call from a script; thread-safe."""
+    with _pipeline_stats_lock:
+        stats = _compute_pipeline_stats()
+        _write_pipeline_stats_cache(stats)
+        return stats
+
+
+@history_bp.route("/api/pipeline/stats", methods=["GET"])
+def pipeline_stats():
+    """Cached numbers for the Pipeline presentation page. Per-sensor row /
+    date / river / segment counts + ts coverage + first/last acquisition.
+
+    Serves from data/pipeline_stats.json (refreshed at tile-rebuild time).
+    Pass ?refresh=1 to force-recompute (handy without re-running tiles)."""
+    force = request.args.get("refresh") in ("1", "true", "yes")
+    try:
+        if force:
+            return jsonify(refresh_pipeline_stats_cache())
+        try:
+            with open(_PIPELINE_STATS_PATH) as fh:
+                return jsonify(_json.load(fh))
+        except (FileNotFoundError, _json.JSONDecodeError):
+            # First boot / corrupted file - lazy-fill once, then serve.
+            return jsonify(refresh_pipeline_stats_cache())
+    except psycopg2.Error as e:
+        return jsonify({"error": "stats unavailable", "detail": str(e)}), 503
 
 
 @history_bp.route("/api/river/<river_id>/segments-history", methods=["GET"])

@@ -57,7 +57,7 @@ const FEATURES = [
 
 export default function FeaturesSection() {
   return (
-    <Box sx={{ py: { xs: 5, md: 8 }, px: { xs: 2.5, md: 8 }, maxWidth: 1100, mx: 'auto', width: '100%' }}>
+    <Box sx={{ pt: { xs: 4, md: 5.5 }, pb: { xs: 5, md: 8 }, px: { xs: 2.5, md: 8 }, maxWidth: 1200, mx: 'auto', width: '100%' }}>
       <Typography sx={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: C.mid3, fontWeight: 700, mb: 0.5 }}>
         Features
       </Typography>

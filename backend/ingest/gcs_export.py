@@ -7,7 +7,7 @@ and we stream it back. Makes finer scale, per-pass mode and many years fast.
 Requires billing + a GCS bucket. Selected via `INGEST_TRANSPORT=gcs`.
 
 This module exposes small primitives so the loader can run **many tasks
-concurrently** (submit a pool, ingest each as it COMPLETES) — that's what
+concurrently** (submit a pool, ingest each as it COMPLETES) - that's what
 makes a per-pass multi-year backfill finish in hours, not days. It also keeps
 `export_window` (single blocking window) for simple / composite use; both
 yield the exact same row dicts as `fetch.fetch_window`.
@@ -91,6 +91,24 @@ def task_error(task) -> str:
         return task.status().get("error_message", "")
     except Exception:
         return ""
+
+
+def existing_blobs(sensor: Sensor, acquired_at: str):
+    """List any CSVs already in GCS for this window. Lets the orchestrator
+    *recover* tasks that finished server-side after a client-side timeout
+    (or after a crash/restart) instead of re-running the export. Returns
+    (obj_prefix, [blob, ...]); empty list means nothing waiting."""
+    if not config.GCS_BUCKET:
+        return ("", [])
+    obj_prefix = f"{config.GCS_PREFIX}/{sensor.SENSOR}/{acquired_at}"
+    try:
+        client = _gcs_client()
+        blobs = [b for b in client.list_blobs(config.GCS_BUCKET,
+                                              prefix=obj_prefix)
+                 if b.name.endswith(".csv")]
+    except Exception:
+        blobs = []
+    return (obj_prefix, blobs)
 
 
 def drain_rows(sensor: Sensor, obj_prefix: str,

@@ -359,7 +359,7 @@ function SegmentRiskCards({ risk, compare }) {
   )
 }
 
-function RiverDetail({ river, onClose, onRiverClick, metric }) {
+function RiverDetail({ river, onClose, onRiverClick, metric, user }) {
   const norm = getSegmentNormalized(river)
   const color = getMetricColor(norm, metric)
   const risk = getSegmentRisk(river)
@@ -466,7 +466,12 @@ function RiverDetail({ river, onClose, onRiverClick, metric }) {
         </Box>
         <Box mb={SECTION_MB} sx={{ pt: '16px' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Evolution Over Time</Typography>
-          <RiverEvolution riverId={river.id} riverName={river.name} />
+          <RiverEvolution
+            riverId={river.id}
+            riverName={river.name}
+            objectId={isSegmentView ? river.selectedSegment.object_id : null}
+            user={user}
+          />
         </Box>
         <Box sx={{ pt: '16px' }}>
           <Typography variant="caption" color="text.secondary" fontWeight={700} sx={{ textTransform: 'uppercase', letterSpacing: 1, display: 'block', mb: 1.5, pl: 0.25 }}>Connected Rivers</Typography>
@@ -494,7 +499,7 @@ function RiverListItem({ river, isSelected, onSelect, metric }) {
   )
 }
 
-export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metric, onMetricChange }) {
+export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metric, onMetricChange, user }) {
   const handleFlowClick = async (clickedRiver) => {
     /* Navigating to a connected river is a whole-river selection: clear any
        segment selected on the previous river and fetch under the active
@@ -563,7 +568,7 @@ export default function Sidebar({ rivers, selectedRiver, onSelect, onClose, metr
       )}
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
         {selectedRiver ? (
-          <RiverDetail river={selectedRiver} metric={metric} onClose={() => { onSelect(null); onClose() }} onRiverClick={handleFlowClick} />
+          <RiverDetail river={selectedRiver} metric={metric} onClose={() => { onSelect(null); onClose() }} onRiverClick={handleFlowClick} user={user} />
         ) : (
           <List disablePadding sx={{ pt: 1 }}>
             {top10.map((river, i) => (
