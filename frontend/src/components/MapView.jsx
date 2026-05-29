@@ -422,6 +422,7 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
     const now = performance.now()
     const ducks = []
     const seenLines = new Set()
+    let countDucks = 0;
     for (const poly of polys) {
       if (!isPolygonWideEnough(poly)) continue
       const line = pickPolylineInPolygon(poly, segments)
@@ -431,17 +432,20 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
       seenLines.add(key)
       const flockSize = 1 + Math.floor(Math.random() * 3) // 1..3
       for (let i = 0; i < flockSize; i++) {
-        ducks.push({
-          line,
-          t: Math.random(),
-          dir: Math.random() < 0.5 ? 1 : -1,
-          // ~3x slower than before - calm, lazy drift along the river.
-          baseSpeed: 0.000007 + Math.random() * 0.0000001,
-          bobPhase: Math.random() * Math.PI * 2,
-          bobFreq: 0.0018 + Math.random() * 0.001,
-          dashUntil: 0,
-          nextDashAt: now + 6000 + Math.random() * 10000,
-        })
+        if (countDucks < 10) {
+          ducks.push({
+            line,
+            t: Math.random(),
+            dir: Math.random() < 0.5 ? 1 : -1,
+            // ~3x slower than before - calm, lazy drift along the river.
+            baseSpeed: 0.000007 + Math.random() * 0.0000001,
+            bobPhase: Math.random() * Math.PI * 2,
+            bobFreq: 0.0018 + Math.random() * 0.001,
+            dashUntil: 0,
+            nextDashAt: now + 6000 + Math.random() * 10000,
+          })
+          countDucks += 1;
+        }
       }
     }
     if (!ducks.length) return

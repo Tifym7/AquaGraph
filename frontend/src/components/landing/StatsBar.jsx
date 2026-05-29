@@ -109,8 +109,11 @@ export default function StatsBar() {
   return (
     <Box sx={{
       background: '#ffffff',
+      // Symmetric vertical padding so the stat cards float in a clear
+      // white band - they used to butt directly against the next
+      // section's tinted gradient (pb was 0).
       pt: { xs: 4, md: 5.5 },
-      pb: 0,
+      pb: { xs: 4, md: 5.5 },
       px: { xs: 2, md: 4 },
     }}>
       <Box sx={{

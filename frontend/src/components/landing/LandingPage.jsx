@@ -3,10 +3,9 @@ import { Box } from '@mui/material'
 import SiteNav from '../SiteNav'
 import HeroSection from './HeroSection'
 import StatsBar from './StatsBar'
-import FeaturesSection from './FeaturesSection'
 import WhySection from './WhySection'
+import CapabilitiesSection from './CapabilitiesSection'
 import DataPreviewSection from './DataPreviewSection'
-import HowItWorksSection from './HowItWorksSection'
 import CTASection from './CtaSection'
 import LandingFooter from './LandingFooter'
 
@@ -39,12 +38,13 @@ export default function LandingPage({ onGoToMap, onGoToLogin, onGoToRegister, on
         user={user}
         onLogout={onLogout}
       />
+      {/* Reader's arc: hook → scale → why it matters → what we do → try it → contribute.
+          One concept per section, no repeats. */}
       <HeroSection />
       <StatsBar />
-      <FeaturesSection />
       <WhySection />
+      <CapabilitiesSection />
       <DataPreviewSection onGoToMap={handleMapClick} />
-      <HowItWorksSection />
       <CTASection />
       <LandingFooter
         onGoToMap={handleMapClick}

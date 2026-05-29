@@ -3,11 +3,6 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import SettingsInputAntennaIcon from '@mui/icons-material/SettingsInputAntenna'
 import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import WavesIcon from '@mui/icons-material/Waves'
-import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
-import InsightsIcon from '@mui/icons-material/Insights'
-import WarningAmberIcon from '@mui/icons-material/WarningAmber'
-import CampaignIcon from '@mui/icons-material/Campaign'
-import PublicIcon from '@mui/icons-material/Public'
 
 const C = {
   darkest: '#10002b',
@@ -22,61 +17,32 @@ const C = {
 
 /* `icon` is a React component (not an element) so the renderer can size
    and tint it per location. Material Icons mirror each previous emoji
-   while reading as professional UI. */
+   while reading as professional UI.
+
+   The companion SOLUTIONS list that used to live here was merged into
+   `CapabilitiesSection` to stop repeating the same value props three
+   times across the landing page. */
 const PROBLEMS = [
   {
     icon: SettingsInputAntennaIcon,
-    stat: '882',
-    statLabel: 'monitoring stations for the whole country',
-    problem: 'Coverage is dangerously thin',
-    detail: 'Romania\'s entire hydro-meteorological network has only 882 stations, leaving thousands of river segments with no real-time data at all.',
+    stat: '~700',
+    statLabel: 'national in-situ monitoring stations',
+    problem: 'Coverage is sparse',
+    detail: 'Romania\'s hydro-meteorological ground network is small relative to the size of the river system, leaving the vast majority of segments without real-time monitoring.',
   },
   {
     icon: AccessTimeIcon,
     stat: '72h+',
-    statLabel: 'average detection delay',
+    statLabel: 'typical detection delay with field sampling',
     problem: 'Too slow to act',
-    detail: 'Traditional sampling requires field teams, lab analysis, and reporting cycles. By then, the damage has already spread downstream.',
+    detail: 'Traditional sampling requires field teams, lab analysis, and reporting cycles. By then, a contamination event has already moved downstream.',
   },
   {
     icon: WavesIcon,
-    stat: '340+',
-    statLabel: 'pollution incidents / year',
-    problem: 'No early warning system',
-    detail: 'Industrial spills, agricultural runoff, and sewage leaks often go unreported. There\'s no unified platform to track or alert affected communities.',
-  },
-]
-
-const SOLUTIONS = [
-  {
-    icon: SatelliteAltIcon,
-    title: '3,500+ segments monitored',
-    text: 'ESA Copernicus Sentinel-1 and Sentinel-2 imagery covers the entire country, giving AquaGraph continuous coverage that no ground sensor network could match.',
-  },
-  {
-    icon: AccessTimeIcon,
-    title: '24h detection duty cycle',
-    text: 'Satellite revisit schedules mean AquaGraph can flag a new pollution event within 24 hours, 3x faster than traditional field sampling.',
-  },
-  {
-    icon: InsightsIcon,
-    title: '7 water-quality metrics',
-    text: 'From NDWI and NDCI to turbidity, oil-leakage risk and discharge rate, each river segment is scored across multiple dimensions.',
-  },
-  {
-    icon: WarningAmberIcon,
-    title: 'Propagation modelling',
-    text: 'Once a pollution source is detected, AquaGraph models how it moves upstream or downstream, so authorities can act before it reaches populated areas.',
-  },
-  {
-    icon: CampaignIcon,
-    title: 'Community layer',
-    text: 'Citizens can report issues on the map and join local cleanup campaigns, connecting satellite data with ground truth.',
-  },
-  {
-    icon: PublicIcon,
-    title: 'Open to everyone',
-    text: 'No login is required to explore the full map. We believe environmental data should be a public good, available to citizens, researchers, and local authorities alike.',
+    stat: 'Few',
+    statLabel: 'incidents make it into public records',
+    problem: 'No unified early warning',
+    detail: 'Industrial spills, agricultural runoff and sewage leaks often go unreported. There\'s no public platform to track them or alert the communities downstream.',
   },
 ]
 
@@ -193,91 +159,10 @@ export default function WhySection() {
         </Box>
       </Box>
 
-      {/* ── Solution block ── */}
-      <Box sx={{
-        background: '#fff',
-        px: { xs: 2.5, md: 8 },
-        py: { xs: 6, md: 9 },
-      }}>
-        <Box sx={{ maxWidth: 1100, mx: 'auto' }}>
-          <Typography sx={{
-            fontSize: '0.72rem',
-            fontWeight: 700,
-            letterSpacing: '0.15em',
-            textTransform: 'uppercase',
-            color: C.mid2,
-            mb: 1.5,
-          }}>
-            Our approach
-          </Typography>
-          <Typography variant="h3" sx={{
-            fontWeight: 800,
-            fontSize: { xs: '1.9rem', md: '2.6rem' },
-            color: C.darkest,
-            lineHeight: 1.15,
-            letterSpacing: '-0.03em',
-            mb: 1.5,
-            maxWidth: 620,
-          }}>
-            How AquaGraph makes a difference
-          </Typography>
-          <Typography sx={{ color: '#555', fontSize: '1rem', lineHeight: 1.8, mb: 6, maxWidth: 900 }}>
-            By combining open satellite data with smart processing and a public interface, we give anyone the tools to see and act on water quality, in real time.
-          </Typography>
-
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, pl: { xs: 0, md: 8 } }}>
-            {SOLUTIONS.map((s, i) => {
-              const Icon = s.icon
-              return (
-              <Box key={s.title} sx={{ display: 'flex', gap: { xs: 2, md: 6 } }}>
-                {/* Timeline spine */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 36 }}>
-                  <Box sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '50%',
-                    background: `linear-gradient(135deg, ${C.mid2}, ${C.mid3})`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                    zIndex: 1,
-                  }}>
-                    <Typography sx={{ color: '#fff', fontWeight: 800, fontSize: '0.85rem', lineHeight: 1 }}>
-                      {String(i + 1).padStart(2, '0')}
-                    </Typography>
-                  </Box>
-                  {i < SOLUTIONS.length - 1 && (
-                    <Box sx={{
-                      width: 2,
-                      flex: 1,
-                      background: `linear-gradient(${C.mid3}, ${C.mid2})`,
-                      opacity: 0.25,
-                      mt: 0.5,
-                      mb: 0.5,
-                    }} />
-                  )}
-                </Box>
-
-                {/* Content */}
-                <Box sx={{ pb: i < SOLUTIONS.length - 1 ? 4 : 0, pt: 0.5, pl: { xs: 1, md: 3 } }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-                    <Icon sx={{ fontSize: 22, color: C.mid2 }} />
-                    <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: C.darkest }}>
-                      {s.title}
-                    </Typography>
-                  </Box>
-                  <Typography sx={{ color: '#777', fontSize: '0.88rem', lineHeight: 1.7, maxWidth: 900 }}>
-                    {s.text}
-                  </Typography>
-                </Box>
-              </Box>
-              )
-            })}
-          </Box>
-        </Box>
-      </Box>
-
+      {/* The companion "Our approach" / SOLUTIONS block that used to
+          render here is now in CapabilitiesSection (single source of
+          truth for what AquaGraph does), so the landing reader sees
+          the problem once and the solution once. */}
     </Box>
   )
 }
