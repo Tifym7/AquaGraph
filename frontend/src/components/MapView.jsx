@@ -25,14 +25,17 @@ const BASEMAP_OPTIONS = [
   { id: 'esri-natgeo', label: 'NatGeo', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}' },
 ]
 
+/* The five metrics surfaced in the map's metric switcher. Keys that
+   exist in utils.js (METRIC_KEYS / METRIC_GRADIENTS) but aren't listed
+   here - currently 'land' (oil leakage) and 'discharge' - stay defined
+   for other consumers (PDF reports, history charts) but are hidden
+   from the on-map dropdown. */
 const METRIC_OPTIONS = [
   { key: 'pollution', label: 'Pollution Risk', gradient: METRIC_GRADIENTS.pollution, labels: ['Clean', 'Moderate', 'Critical'] },
   { key: 'NDVI', label: 'NDVI (vegetation)', gradient: METRIC_GRADIENTS.NDVI, labels: ['Low Veg', 'Moderate', 'Dense'] },
   { key: 'MNDWI', label: 'MNDWI (water)', gradient: METRIC_GRADIENTS.MNDWI, labels: ['No Water', 'Moderate', 'High Water'] },
   { key: 'NDCI', label: 'NDCI (chlorophyll)', gradient: METRIC_GRADIENTS.NDCI, labels: ['Low', 'Moderate', 'High'] },
   { key: 'TURBIDITY', label: 'TURBIDITY (sediment)', gradient: METRIC_GRADIENTS.TURBIDITY, labels: ['Clear', 'Moderate', 'High Turbidity'] },
-  { key: 'land', label: 'Oil leackage', gradient: METRIC_GRADIENTS.land, labels: ['Low', 'Moderate', 'High'] },
-  { key: 'discharge', label: 'Discharge (m³/s)', gradient: METRIC_GRADIENTS.discharge, labels: ['Trickle', 'River', 'Danube'] },
 ]
 
 const LOD_FADE_MS = 350

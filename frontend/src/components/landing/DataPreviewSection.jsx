@@ -2,10 +2,10 @@ import { Box, Typography, Button } from '@mui/material'
 import mapPreview from '../../assets/harta.png'
 
 const C = {
-  dark1:   '#240046',
-  mid1:    '#5a189a',
-  mid2:    '#7b2cbf',
-  mid3:    '#9d4edd',
+  dark1: '#240046',
+  mid1: '#5a189a',
+  mid2: '#7b2cbf',
+  mid3: '#9d4edd',
 }
 
 export default function DataPreviewSection({ onGoToMap }) {
@@ -26,7 +26,7 @@ export default function DataPreviewSection({ onGoToMap }) {
             Explore Romania's rivers
           </Typography>
           <Typography sx={{ fontSize: '0.9rem', color: C.mid1, lineHeight: 1.75, mb: 3, maxWidth: 380 }}>
-            Interactive map with satellite tiles, 7 water quality metrics and click on any river segment for full details.
+            Interactive map with satellite tiles, 9 water quality metrics and click on any river segment for full details.
           </Typography>
           <Button
             variant="contained"
