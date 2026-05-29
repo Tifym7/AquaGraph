@@ -11,6 +11,9 @@ import {
 } from '../utils'
 import duckUrl from '../assets/duck.svg'
 import useIsMobile from '../hooks/useIsMobile'
+import ScheduleIcon from '@mui/icons-material/Schedule'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import PauseIcon from '@mui/icons-material/Pause'
 
 const BASEMAP_OPTIONS = [
   { id: 'carto-light', label: 'Light', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> - © OSM contributors' },
@@ -317,7 +320,7 @@ function WaterPolygonLayer({ isActive, mapBounds, polys, segments, onSegmentClic
   )
 }
 
-/* ----- Ducks 🦆 -----
+/* ----- Ducks -----
    Pure cuteness layer: at z >= POLYGON_ZOOM_THRESHOLD, place 1-3 ducks on
    each visible water-body polygon that's wide enough to plausibly hold one.
    Each duck drifts slowly along the polyline running through its polygon,
@@ -878,7 +881,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
             boxShadow: '0 4px 14px rgba(90,24,154,0.4)',
           }}
         >
-          <span style={{ fontSize: 14 }}>🕘</span> Timeline · {tl.dates.length} dates
+          <ScheduleIcon sx={{ fontSize: 16, mr: 0.25, verticalAlign: '-3px' }} /> Timeline · {tl.dates.length} dates
         </button>
       )}
 
@@ -904,7 +907,9 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
                 color: '#fff', fontSize: 14, lineHeight: 1, display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
               }}
-            >{tlPlaying ? '❚❚' : '▶'}</button>
+            >{tlPlaying
+              ? <PauseIcon sx={{ fontSize: 18 }} />
+              : <PlayArrowIcon sx={{ fontSize: 20 }} />}</button>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
                 display: 'flex', justifyContent: 'space-between',

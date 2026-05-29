@@ -1,5 +1,13 @@
 import { Box, Typography } from '@mui/material'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import SettingsInputAntennaIcon from '@mui/icons-material/SettingsInputAntenna'
+import AccessTimeIcon from '@mui/icons-material/AccessTime'
+import WavesIcon from '@mui/icons-material/Waves'
+import SatelliteAltIcon from '@mui/icons-material/SatelliteAlt'
+import InsightsIcon from '@mui/icons-material/Insights'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import CampaignIcon from '@mui/icons-material/Campaign'
+import PublicIcon from '@mui/icons-material/Public'
 
 const C = {
   darkest: '#10002b',
@@ -12,23 +20,26 @@ const C = {
   accent:  'rgba(199,125,255,0.18)',
 }
 
+/* `icon` is a React component (not an element) so the renderer can size
+   and tint it per location. Material Icons mirror each previous emoji
+   while reading as professional UI. */
 const PROBLEMS = [
   {
-    icon: '📡',
+    icon: SettingsInputAntennaIcon,
     stat: '882',
     statLabel: 'monitoring stations for the whole country',
     problem: 'Coverage is dangerously thin',
     detail: 'Romania\'s entire hydro-meteorological network has only 882 stations, leaving thousands of river segments with no real-time data at all.',
   },
   {
-    icon: '⏱️',
+    icon: AccessTimeIcon,
     stat: '72h+',
     statLabel: 'average detection delay',
     problem: 'Too slow to act',
     detail: 'Traditional sampling requires field teams, lab analysis, and reporting cycles. By then, the damage has already spread downstream.',
   },
   {
-    icon: '🌊',
+    icon: WavesIcon,
     stat: '340+',
     statLabel: 'pollution incidents / year',
     problem: 'No early warning system',
@@ -38,32 +49,32 @@ const PROBLEMS = [
 
 const SOLUTIONS = [
   {
-    icon: '🛰️',
+    icon: SatelliteAltIcon,
     title: '3,500+ segments monitored',
     text: 'ESA Copernicus Sentinel-1 and Sentinel-2 imagery covers the entire country, giving AquaGraph continuous coverage that no ground sensor network could match.',
   },
   {
-    icon: '⏱️',
+    icon: AccessTimeIcon,
     title: '24h detection duty cycle',
-    text: 'Satellite revisit schedules mean AquaGraph can flag a new pollution event within 24 hours, 3× faster than traditional field sampling.',
+    text: 'Satellite revisit schedules mean AquaGraph can flag a new pollution event within 24 hours, 3x faster than traditional field sampling.',
   },
   {
-    icon: '📊',
+    icon: InsightsIcon,
     title: '7 water-quality metrics',
     text: 'From NDWI and NDCI to turbidity, oil-leakage risk and discharge rate, each river segment is scored across multiple dimensions.',
   },
   {
-    icon: '⚠️',
+    icon: WarningAmberIcon,
     title: 'Propagation modelling',
     text: 'Once a pollution source is detected, AquaGraph models how it moves upstream or downstream, so authorities can act before it reaches populated areas.',
   },
   {
-    icon: '📢',
+    icon: CampaignIcon,
     title: 'Community layer',
     text: 'Citizens can report issues on the map and join local cleanup campaigns, connecting satellite data with ground truth.',
   },
   {
-    icon: '🌍',
+    icon: PublicIcon,
     title: 'Open to everyone',
     text: 'No login is required to explore the full map. We believe environmental data should be a public good, available to citizens, researchers, and local authorities alike.',
   },
@@ -111,7 +122,9 @@ export default function WhySection() {
             alignItems: 'stretch',
             gap: { xs: 2, md: 0 },
           }}>
-            {PROBLEMS.map((p, i) => (
+            {PROBLEMS.map((p, i) => {
+              const Icon = p.icon
+              return (
               <Box key={p.stat} sx={{
                 display: 'flex',
                 flexDirection: { xs: 'column', md: 'row' },
@@ -137,7 +150,7 @@ export default function WhySection() {
                     borderColor: 'rgba(122,44,191,0.28)',
                   },
                 }}>
-                  <Typography sx={{ fontSize: '1.5rem', mb: 0.5 }}>{p.icon}</Typography>
+                  <Icon sx={{ fontSize: 26, color: C.mid2, mb: 0.5 }} />
                   <Typography sx={{
                     fontSize: '1.6rem', fontWeight: 900, color: C.mid2,
                     lineHeight: 1, letterSpacing: '-0.03em',
@@ -174,7 +187,8 @@ export default function WhySection() {
                   </Box>
                 )}
               </Box>
-            ))}
+              )
+            })}
           </Box>
         </Box>
       </Box>
@@ -212,7 +226,9 @@ export default function WhySection() {
           </Typography>
 
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, pl: { xs: 0, md: 8 } }}>
-            {SOLUTIONS.map((s, i) => (
+            {SOLUTIONS.map((s, i) => {
+              const Icon = s.icon
+              return (
               <Box key={s.title} sx={{ display: 'flex', gap: { xs: 2, md: 6 } }}>
                 {/* Timeline spine */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 36 }}>
@@ -246,7 +262,7 @@ export default function WhySection() {
                 {/* Content */}
                 <Box sx={{ pb: i < SOLUTIONS.length - 1 ? 4 : 0, pt: 0.5, pl: { xs: 1, md: 3 } }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75 }}>
-                    <Typography sx={{ fontSize: '1.4rem' }}>{s.icon}</Typography>
+                    <Icon sx={{ fontSize: 22, color: C.mid2 }} />
                     <Typography sx={{ fontWeight: 700, fontSize: '1rem', color: C.darkest }}>
                       {s.title}
                     </Typography>
@@ -256,7 +272,8 @@ export default function WhySection() {
                   </Typography>
                 </Box>
               </Box>
-            ))}
+              )
+            })}
           </Box>
         </Box>
       </Box>

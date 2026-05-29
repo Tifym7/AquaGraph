@@ -10,6 +10,8 @@ import BoltIcon from '@mui/icons-material/Bolt'
 import VerifiedIcon from '@mui/icons-material/Verified'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import ShieldIcon from '@mui/icons-material/Shield'
+import CheckIcon from '@mui/icons-material/Check'
+import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked'
 import WaterDropIcon from '@mui/icons-material/WaterDrop'
 import ForestIcon from '@mui/icons-material/Forest'
 import SpaIcon from '@mui/icons-material/Spa'
@@ -652,9 +654,10 @@ function BucketAnim() {
 
 /* ---------- extensibility capsule ----------
    Made of one card per pluggable axis (sensor / transport / source-schema).
-   Each card lists what's wired today (✓) and what plugs in next (◯), so the
-   reader leaves understanding that the architecture is not GEE-shaped - GEE
-   just happens to be its first backend. */
+   Each card lists what's wired today (filled check) and what plugs in
+   next (empty circle), so the reader leaves understanding that the
+   architecture is not GEE-shaped - GEE just happens to be its first
+   backend. */
 function ChipRow({ items, active }) {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.7, mt: 1 }}>
@@ -669,9 +672,9 @@ function ChipRow({ items, active }) {
             : '#fff',
           border: active ? 'none' : `1px dashed ${C.border}`,
         }}>
-          <Box component="span" sx={{ fontSize: 10.5 }}>
-            {active ? '✓' : '◯'}
-          </Box>
+          {active
+            ? <CheckIcon sx={{ fontSize: 13 }} />
+            : <RadioButtonUncheckedIcon sx={{ fontSize: 12 }} />}
           {s}
         </Box>
       ))}
