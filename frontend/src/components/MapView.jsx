@@ -11,6 +11,9 @@ import {
 } from '../utils'
 import duckUrl from '../assets/duck.svg'
 import useIsMobile from '../hooks/useIsMobile'
+import ScheduleIcon from '@mui/icons-material/Schedule'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import PauseIcon from '@mui/icons-material/Pause'
 
 const BASEMAP_OPTIONS = [
   { id: 'carto-light', label: 'Light', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '&copy; <a href="https://carto.com/">CARTO</a> - © OSM contributors' },
@@ -22,14 +25,17 @@ const BASEMAP_OPTIONS = [
   { id: 'esri-natgeo', label: 'NatGeo', url: 'https://server.arcgisonline.com/ArcGIS/rest/services/NatGeo_World_Map/MapServer/tile/{z}/{y}/{x}' },
 ]
 
+/* The five metrics surfaced in the map's metric switcher. Keys that
+   exist in utils.js (METRIC_KEYS / METRIC_GRADIENTS) but aren't listed
+   here - currently 'land' (oil leakage) and 'discharge' - stay defined
+   for other consumers (PDF reports, history charts) but are hidden
+   from the on-map dropdown. */
 const METRIC_OPTIONS = [
   { key: 'pollution', label: 'Pollution Risk', gradient: METRIC_GRADIENTS.pollution, labels: ['Clean', 'Moderate', 'Critical'] },
   { key: 'NDVI', label: 'NDVI (vegetation)', gradient: METRIC_GRADIENTS.NDVI, labels: ['Low Veg', 'Moderate', 'Dense'] },
   { key: 'MNDWI', label: 'MNDWI (water)', gradient: METRIC_GRADIENTS.MNDWI, labels: ['No Water', 'Moderate', 'High Water'] },
   { key: 'NDCI', label: 'NDCI (chlorophyll)', gradient: METRIC_GRADIENTS.NDCI, labels: ['Low', 'Moderate', 'High'] },
   { key: 'TURBIDITY', label: 'TURBIDITY (sediment)', gradient: METRIC_GRADIENTS.TURBIDITY, labels: ['Clear', 'Moderate', 'High Turbidity'] },
-  { key: 'land', label: 'Oil leackage', gradient: METRIC_GRADIENTS.land, labels: ['Low', 'Moderate', 'High'] },
-  { key: 'discharge', label: 'Discharge (m³/s)', gradient: METRIC_GRADIENTS.discharge, labels: ['Trickle', 'River', 'Danube'] },
 ]
 
 const LOD_FADE_MS = 350
@@ -317,7 +323,7 @@ function WaterPolygonLayer({ isActive, mapBounds, polys, segments, onSegmentClic
   )
 }
 
-/* ----- Ducks 🦆 -----
+/* ----- Ducks -----
    Pure cuteness layer: at z >= POLYGON_ZOOM_THRESHOLD, place 1-3 ducks on
    each visible water-body polygon that's wide enough to plausibly hold one.
    Each duck drifts slowly along the polyline running through its polygon,
@@ -419,6 +425,7 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
     const now = performance.now()
     const ducks = []
     const seenLines = new Set()
+    let countDucks = 0;
     for (const poly of polys) {
       if (!isPolygonWideEnough(poly)) continue
       const line = pickPolylineInPolygon(poly, segments)
@@ -428,17 +435,20 @@ function DucksLayer({ isActive, polys, segments, mapBounds }) {
       seenLines.add(key)
       const flockSize = 1 + Math.floor(Math.random() * 3) // 1..3
       for (let i = 0; i < flockSize; i++) {
-        ducks.push({
-          line,
-          t: Math.random(),
-          dir: Math.random() < 0.5 ? 1 : -1,
-          // ~3x slower than before - calm, lazy drift along the river.
-          baseSpeed: 0.000007 + Math.random() * 0.0000001,
-          bobPhase: Math.random() * Math.PI * 2,
-          bobFreq: 0.0018 + Math.random() * 0.001,
-          dashUntil: 0,
-          nextDashAt: now + 6000 + Math.random() * 10000,
-        })
+        if (countDucks < 10) {
+          ducks.push({
+            line,
+            t: Math.random(),
+            dir: Math.random() < 0.5 ? 1 : -1,
+            // ~3x slower than before - calm, lazy drift along the river.
+            baseSpeed: 0.000007 + Math.random() * 0.0000001,
+            bobPhase: Math.random() * Math.PI * 2,
+            bobFreq: 0.0018 + Math.random() * 0.001,
+            dashUntil: 0,
+            nextDashAt: now + 6000 + Math.random() * 10000,
+          })
+          countDucks += 1;
+        }
       }
     }
     if (!ducks.length) return
@@ -878,7 +888,7 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
             boxShadow: '0 4px 14px rgba(90,24,154,0.4)',
           }}
         >
-          <span style={{ fontSize: 14 }}>🕘</span> Timeline · {tl.dates.length} dates
+          <ScheduleIcon sx={{ fontSize: 16, mr: 0.25, verticalAlign: '-3px' }} /> Timeline · {tl.dates.length} dates
         </button>
       )}
 
@@ -904,7 +914,9 @@ export default function MapView({ segmentLods, activeLod, selectedRiver, onRiver
                 color: '#fff', fontSize: 14, lineHeight: 1, display: 'flex',
                 alignItems: 'center', justifyContent: 'center',
               }}
-            >{tlPlaying ? '❚❚' : '▶'}</button>
+            >{tlPlaying
+              ? <PauseIcon sx={{ fontSize: 18 }} />
+              : <PlayArrowIcon sx={{ fontSize: 20 }} />}</button>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{
                 display: 'flex', justifyContent: 'space-between',

@@ -47,6 +47,33 @@ services:
       TOKEN_EXPIRY_HOURS: "24"
       GUNICORN_WORKERS: ${GUNICORN_WORKERS:-1}
       GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      # --- Advanced segment report (all optional, degrades gracefully) ---
+      # Earth Engine: enables live Sentinel imagery in the technical PDF.
+      # The key file is mounted as a Docker secret; if the host file is
+      # missing the secret simply isn't there and EE init returns cleanly
+      # without crashing the worker.
+      GEE_SERVICE_ACCOUNT_KEY: /run/secrets/gee_service_account_key
+      GEE_PROJECT: ${GEE_PROJECT:-cassini2026}
+      # Ollama: multimodal AI synthesis on the report's last page.
+      # Empty URL disables it; the report still ships with imagery + charts.
+      OLLAMA_BASE_URL:        ${OLLAMA_BASE_URL:-}
+      OLLAMA_MODEL:           ${OLLAMA_MODEL:-llava}
+      OLLAMA_TIMEOUT_SECONDS: ${OLLAMA_TIMEOUT_SECONDS:-300}
+      OLLAMA_MAX_TOKENS:      ${OLLAMA_MAX_TOKENS:-32000}
+      # SMTP via Resend (or any relay). The API key is mounted as a
+      # Docker secret, NOT injected via env, so it never appears in
+      # `docker inspect` or compose's resolved config.
+      SMTP_HOST:          ${SMTP_HOST:-smtp.resend.com}
+      SMTP_PORT:          ${SMTP_PORT:-587}
+      SMTP_USERNAME:      ${SMTP_USERNAME:-resend}
+      SMTP_PASSWORD:      ${SMTP_PASSWORD:-}
+      SMTP_PASSWORD_FILE: /run/secrets/resend_api_key
+      SMTP_FROM_EMAIL:    ${SMTP_FROM_EMAIL:-noreply@aquagraph.org}
+      SMTP_FROM_NAME:     ${SMTP_FROM_NAME:-AquaGraph}
+      SMTP_USE_TLS:       ${SMTP_USE_TLS:-true}
+    secrets:
+      - resend_api_key
+      - gee_service_account_key
     # No host port published on purpose: the app is NOT exposed on the VM's
     # public IP. The only ingress is the cloudflared tunnel below, which
     # reaches this container over the private compose network at app:5000.
@@ -103,3 +130,13 @@ services:
 
 volumes:
   aquagraph-pgdata:
+
+# Secrets are bind-mounted read-only into the containers that list them
+# under `secrets:`. The host files live OUTSIDE the repo (never commit
+# them). Set RESEND_KEY_FILE and GEE_KEY_FILE in the VM's .env to point
+# at the real absolute paths.
+secrets:
+  resend_api_key:
+    file: ${RESEND_KEY_FILE:-./resend_key}
+  gee_service_account_key:
+    file: ${GEE_KEY_FILE:-./aquagraph-gee-key.json}

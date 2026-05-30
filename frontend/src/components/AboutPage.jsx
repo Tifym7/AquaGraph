@@ -1,5 +1,9 @@
 import LinkedInIcon from '@mui/icons-material/LinkedIn'
 import GitHubIcon from '@mui/icons-material/GitHub'
+import PublicIcon from '@mui/icons-material/Public'
+import ScienceIcon from '@mui/icons-material/Science'
+import HandshakeIcon from '@mui/icons-material/Handshake'
+import BoltIcon from '@mui/icons-material/Bolt'
 import LandingFooter from './landing/LandingFooter'
 import SiteNav from './SiteNav'
 import { Box, Typography, IconButton } from '@mui/material'
@@ -110,10 +114,10 @@ const TIMELINE = [
 ]
 
 const VALUES = [
-  { icon: '🌍', title: 'Open by default', text: 'Satellite data is funded by European taxpayers. We think the insights built on it should be freely accessible too.' },
-  { icon: '🔬', title: 'Science-first', text: 'Every metric on the map (NDWI, NDCI, turbidity, oil risk) is grounded in published remote sensing methodology.' },
-  { icon: '🤝', title: 'Community-driven', text: 'Ground truth matters. Citizens, researchers, and local officials all have a role to play alongside the satellite.' },
-  { icon: '⚡', title: 'Built to scale', text: 'The pipeline is designed to expand: more rivers, more metrics, more countries, as we grow.' },
+  { icon: PublicIcon,    title: 'Open by default',   text: 'Satellite data is funded by European taxpayers. We think the insights built on it should be freely accessible too.' },
+  { icon: ScienceIcon,   title: 'Science-first',     text: 'Every metric on the map (NDWI, NDCI, turbidity, oil risk) is grounded in published remote sensing methodology.' },
+  { icon: HandshakeIcon, title: 'Community-driven',  text: 'Ground truth matters. Citizens, researchers, and local officials all have a role to play alongside the satellite.' },
+  { icon: BoltIcon,      title: 'Built to scale',    text: 'The pipeline is designed to expand: more rivers, more metrics, more countries, as we grow.' },
 ]
 
 export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoToNewsletter, onGoToCampaigns, onGoToLogin, onGoToRegister, user, onLogout }) {
@@ -292,20 +296,29 @@ export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoT
             gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
             gap: 3,
           }}>
-            {VALUES.map((v) => (
-              <Box key={v.title} sx={{
-                border: '1.5px solid rgba(122,44,191,0.12)',
-                borderRadius: 3,
-                p: 3,
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'box-shadow 0.2s, border-color 0.2s',
-                '&:hover': {
-                  boxShadow: '0 6px 28px rgba(90,24,154,0.1)',
-                  borderColor: 'rgba(122,44,191,0.3)',
-                },
-              }}>
-                  <Typography sx={{ fontSize: '1.8rem', mb: 1.5 }}>{v.icon}</Typography>
+            {VALUES.map((v) => {
+              const Icon = v.icon
+              return (
+                <Box key={v.title} sx={{
+                  border: '1.5px solid rgba(122,44,191,0.12)',
+                  borderRadius: 3,
+                  p: 3,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  transition: 'box-shadow 0.2s, border-color 0.2s',
+                  '&:hover': {
+                    boxShadow: '0 6px 28px rgba(90,24,154,0.1)',
+                    borderColor: 'rgba(122,44,191,0.3)',
+                  },
+                }}>
+                  <Box sx={{
+                    width: 44, height: 44, mb: 1.75,
+                    borderRadius: 2,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: `linear-gradient(135deg, ${C.mid1} 0%, ${C.mid2} 100%)`,
+                  }}>
+                    <Icon sx={{ fontSize: 24, color: '#fff' }} />
+                  </Box>
                   <Typography sx={{ fontWeight: 700, color: C.darkest, fontSize: '1rem', mb: 0.75 }}>
                     {v.title}
                   </Typography>
@@ -313,7 +326,8 @@ export default function AboutPage({ onGoToHome, onGoToMap, onGoToPipeline, onGoT
                     {v.text}
                   </Typography>
                 </Box>
-              ))}
+              )
+            })}
             </Box>
         </Box>
       </Box>

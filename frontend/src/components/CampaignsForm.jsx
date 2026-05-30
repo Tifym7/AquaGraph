@@ -319,9 +319,13 @@ export default function CampaniiForm({ user, onSubmit, onCancel }) {
               <Typography sx={{ fontSize: 12, color: C.mid2, fontWeight: 600 }}>
                 {markerPos.lat.toFixed(5)}, {markerPos.lng.toFixed(5)}
               </Typography>
-              <Typography sx={{ fontSize: 11, color: C.mid3, ml: 'auto' }}>
-                Marker set ✓
-              </Typography>
+              <Box sx={{
+                display: 'flex', alignItems: 'center', gap: 0.4, ml: 'auto',
+                fontSize: 11, color: C.mid3,
+              }}>
+                Marker set
+                <CheckCircleOutlineIcon sx={{ fontSize: 13 }} />
+              </Box>
             </Box>
           )}
 

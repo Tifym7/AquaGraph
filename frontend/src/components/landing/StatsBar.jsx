@@ -8,11 +8,11 @@ import { fetchPipelineStats, METRIC_KEYS } from '../../utils'
 
 const C = {
   darkest: '#10002b',
-  dark2:   '#3c096c',
-  mid1:    '#5a189a',
-  mid2:    '#7b2cbf',
-  mid3:    '#9d4edd',
-  lightest:'#e0aaff',
+  dark2: '#3c096c',
+  mid1: '#5a189a',
+  mid2: '#7b2cbf',
+  mid3: '#9d4edd',
+  lightest: '#e0aaff',
 }
 
 /* Eased count-up so the numbers feel alive when the live API returns. */
@@ -109,8 +109,11 @@ export default function StatsBar() {
   return (
     <Box sx={{
       background: '#ffffff',
+      // Symmetric vertical padding so the stat cards float in a clear
+      // white band - they used to butt directly against the next
+      // section's tinted gradient (pb was 0).
       pt: { xs: 4, md: 5.5 },
-      pb: 0,
+      pb: { xs: 4, md: 5.5 },
       px: { xs: 2, md: 4 },
     }}>
       <Box sx={{
@@ -128,15 +131,15 @@ export default function StatsBar() {
         />
         <StatCard
           icon={<InsightsIcon sx={{ fontSize: 22 }} />}
-          value={METRIC_KEYS.length}
+          value={9}
           label="Satellite metrics"
-          sub="NDWI · NDCI · turbidity · oil risk and more"
+          sub="NDWI, NDCI, turbidity, oil risk and more"
         />
         <StatCard
           icon={<UpdateIcon sx={{ fontSize: 22 }} />}
-          value={dates ? fmt(datesAnim) : '24h'}
+          value={dates ? fmt(datesAnim) : '<5h'}
           label={dates ? 'Satellite acquisitions' : 'Update cadence'}
-          sub={dates ? 'Distinct S1 + S2 dates ingested so far' : 'New observations land within 24 hours'}
+          sub={dates ? 'Distinct S1 + S2 dates ingested so far' : 'New observations land within few hours'}
         />
         <StatCard
           icon={<SatelliteAltIcon sx={{ fontSize: 22 }} />}

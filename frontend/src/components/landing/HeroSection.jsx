@@ -1,10 +1,38 @@
+import { useRef } from 'react'
 import { Box, Typography } from '@mui/material'
 import image from '../../assets/danube.jpg'
 
 
 export default function HeroSection() {
+  /* Used by the scroll-down arrow at the bottom of the hero. We try
+     scrollIntoView on the hero's next sibling (StatsBar) first - that
+     works no matter which DOM node is the actual scrolling root
+     (window vs html vs a wrapper with overflow). Two fallbacks chase
+     it in case the sibling isn't there or scrollIntoView is disabled
+     by a CSS prefers-reduced-motion / scroll-behaviour override. */
+  const heroRef = useRef(null)
+  const scrollPastHero = () => {
+    const hero = heroRef.current
+    if (!hero) return
+    const next = hero.nextElementSibling
+    if (next && typeof next.scrollIntoView === 'function') {
+      next.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      return
+    }
+    // Absolute Y of the hero's bottom edge.
+    const rect = hero.getBoundingClientRect()
+    const target = window.scrollY + rect.bottom
+    // Try the modern API first; if smooth is being silently dropped,
+    // do an immediate jump as the last-resort fallback.
+    try {
+      window.scrollTo({ top: target, behavior: 'smooth' })
+    } catch {
+      window.scrollTo(0, target)
+    }
+  }
+
   return (
-    <Box sx={{
+    <Box ref={heroRef} sx={{
       position: 'relative',
       height: '55vh',
       minHeight: 360,
@@ -75,26 +103,51 @@ export default function HeroSection() {
         </Typography>
       </Box>
 
-      {/* Sageata scroll */}
-      <Box sx={{
-        position: 'absolute',
-        bottom: 20,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 0,
-        zIndex: 2,
-      }}>
-        {/* Sageata SVG, animatie CSS */}
+      {/* Scroll-down button. Was decoration-only before; now a real
+          button that smooth-scrolls past the hero so the next section
+          (StatsBar) lands at the top of the viewport. The bobbing
+          animation lives on the inner SVG so the hit-target stays
+          still and easy to click. */}
+      <Box
+        component="button"
+        type="button"
+        onClick={scrollPastHero}
+        aria-label="Scroll past the hero to the next section"
+        sx={{
+          position: 'absolute',
+          bottom: 16,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          // Reset native button chrome
+          background: 'none',
+          border: 'none',
+          padding: '8px 12px',
+          margin: 0,
+          font: 'inherit',
+          color: 'inherit',
+          cursor: 'pointer',
+          zIndex: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          opacity: 0.9,
+          transition: 'opacity 0.2s ease, transform 0.2s ease',
+          '&:hover': { opacity: 1, transform: 'translate(-50%, 2px)' },
+          '&:focus-visible': {
+            outline: '2px solid rgba(255,255,255,0.85)',
+            outlineOffset: 4,
+            borderRadius: 8,
+          },
+        }}
+      >
         <Box
           component="svg"
           viewBox="0 0 24 24"
+          aria-hidden="true"
           sx={{
             width: 32, height: 32,
             fill: 'none',
-            stroke: 'rgba(255,255,255,0.6)',
+            stroke: 'rgba(255,255,255,0.85)',
             strokeWidth: 2,
             strokeLinecap: 'round',
             strokeLinejoin: 'round',

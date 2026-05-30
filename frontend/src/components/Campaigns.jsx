@@ -9,6 +9,8 @@ import AddIcon from '@mui/icons-material/Add'
 import WaterIcon from '@mui/icons-material/Water'
 import GroupsIcon from '@mui/icons-material/Groups'
 import FavoriteIcon from '@mui/icons-material/Favorite'
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
+import CheckIcon from '@mui/icons-material/Check'
 import axios from 'axios'
 import CampaniiForm from './CampaignsForm.jsx'
 import { API_BASE } from '../utils'
@@ -203,8 +205,16 @@ export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, 
                     </Box>
                   </Box>
 
-                  <Typography sx={{ fontSize: '0.82rem', color: '#64748b', mb: 2 }}>
-                    📅 {campaign.start_date || campaign.startDate} → {campaign.end_date || campaign.endDate}
+                  <Typography
+                    component="div"
+                    sx={{
+                      fontSize: '0.82rem', color: '#64748b', mb: 2,
+                      display: 'flex', alignItems: 'center', gap: 0.6,
+                    }}>
+                    <CalendarTodayIcon sx={{ fontSize: 14 }} />
+                    {campaign.start_date || campaign.startDate}
+                    <Box component="span" sx={{ opacity: 0.6, px: 0.4 }}>→</Box>
+                    {campaign.end_date || campaign.endDate}
                   </Typography>
 
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -212,7 +222,9 @@ export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, 
                       onClick={() => handleParticipate(campaign)}
                       disabled={participating[campaign.id] || isParticipant(campaign)}
                       size="small" variant="contained"
-                      startIcon={<GroupsIcon sx={{ fontSize: '0.85rem !important' }} />}
+                      startIcon={isParticipant(campaign)
+                        ? <CheckIcon sx={{ fontSize: '0.95rem !important' }} />
+                        : <GroupsIcon sx={{ fontSize: '0.85rem !important' }} />}
                       sx={{
                         bgcolor: isParticipant(campaign) ? '#e2e8f0' : C.dark2,
                         color: isParticipant(campaign) ? C.mid1 : '#fff',
@@ -222,7 +234,7 @@ export default function Campaigns({ onBack, onGoToHome, onGoToMap, onGoToLogin, 
                         '&:disabled': { bgcolor: '#e2e8f0', color: C.mid1 },
                       }}
                     >
-                      {isParticipant(campaign) ? '✓ Joined' : participating[campaign.id] ? 'Processing...' : 'Participate'}
+                      {isParticipant(campaign) ? 'Joined' : participating[campaign.id] ? 'Processing...' : 'Participate'}
                     </Button>
 
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
